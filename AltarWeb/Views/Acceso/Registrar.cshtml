@@ -1,0 +1,74 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nuevo Juez</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/css/site.css" rel="stylesheet">
+    <style>
+        /* Ajustes específicos para replicar la ventana de registro */
+        body {
+            background-color: #2d2d30;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .panel-registro {
+            background-color: #333;
+            padding: 30px;
+            border: 1px solid #555;
+            width: 400px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .form-label {
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            border-radius: 0;
+            border: none;
+        }
+        /* Inputs cuadrados como en la imagen */
+    </style>
+</head>
+<body>
+    <div class="panel-registro">
+        <h3 class="text-center text-orange fw-bold mb-4">REGISTRO DE JUEZ</h3>
+
+        <form method="post" action="/Acceso/Registrar">
+
+            <div class="mb-3">
+                <label class="form-label">Nombre de Usuario:</label>
+                <input type="text" name="usuario" class="form-control" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña:</label>
+                <input type="password" name="password" class="form-control" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Confirmar Contraseña:</label>
+                <input type="password" name="confirmar" class="form-control" required />
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger py-1 text-center small mb-3">@ViewBag.Error</div>
+            }
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-green btn-flat py-2">REGISTRARSE</button>
+                <a href="/Home/Menu" class="btn btn-red btn-flat py-2 text-decoration-none text-center">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,132 @@
+﻿@model AltarWeb.Models.Evaluacion
+@{
+    Layout = "_Layout";
+}
+
+<div style="height: 100vh; display: flex; flex-direction: column;">
+
+    <div class="top-bar d-flex justify-content-between align-items-center flex-shrink-0" style="background-color: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid #ff9800;">
+        <h4 class="text-orange fw-bold m-0">🔍 Consulta de Evaluación</h4>
+        <a href="/Home/Historial" class="btn btn-red btn-flat py-1 px-4">CERRAR / REGRESAR</a>
+    </div>
+
+    <ul class="nav nav-tabs px-3 pt-2 bg-dark flex-shrink-0" id="myTab" role="tablist" style="border-bottom:none;">
+        <li class="nav-item">
+            <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">1. Datos del Equipo</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">2. Evaluación de Altar</button>
+        </li>
+    </ul>
+
+    <div class="tab-content flex-grow-1" style="background-color: #2d2d30; padding: 20px; border-top: 1px solid #555; overflow: hidden;">
+
+        <div class="tab-pane fade show active h-100" id="equipo" style="overflow-y: auto;">
+            <div class="mb-4">
+                <label class="text-orange fw-bold mb-1">Nombre del Equipo:</label>
+                <input value="@Model.NombreEquipo" class="form-control form-control-dark rounded-0"
+                       style="width: 400px; font-weight: bold;" readonly />
+            </div>
+
+            <label class="text-silver mb-1">Lista de Integrantes:</label>
+
+            <div class="dgv-container" style="width: 100%; max-width: 900px;">
+                <table class="table-dgv">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Nombre Completo</th>
+                            <th style="width: 50%;">Matrícula</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var intg in Model.Integrantes)
+                        {
+                            <tr>
+                                <td><input value="@intg.Nombre" readonly style="cursor: default;" /></td>
+                                <td><input value="@intg.Matricula" readonly style="cursor: default;" /></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade h-100" id="altar">
+            <div class="row h-100">
+                <div class="col-md-5 h-100 d-flex flex-column border-end border-secondary pe-3">
+                    <div class="flex-shrink-0">
+                        <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
+                        <label class="text-silver">Difunto:</label>
+                        <input value="@Model.NombreDifunto" class="form-control form-control-dark mb-2" readonly />
+                        <label class="text-silver">Niveles:</label>
+                        <input value="@Model.Niveles" class="form-control form-control-dark mb-2" readonly />
+                        <label class="text-silver">Tipo:</label>
+                        <input value="@Model.TipoAltar" class="form-control form-control-dark mb-4" readonly />
+                    </div>
+
+                    <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist</h5>
+                    <div class="flex-grow-1" style="overflow-y: auto; background-color: #333; padding: 10px; border: 1px solid #444;">
+                        @{
+                            void RenderCheck(string label, bool val)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input bg-dark border-secondary" type="checkbox" checked="@val" disabled>
+                                    <label class="form-check-label text-white" style="opacity: 1;">@label</label>
+                                </div>
+                            }
+                        }
+                        @{
+                            RenderCheck("Foto del Difunto", Model.ChkFoto);
+                        }
+                        @{
+                            RenderCheck("Velas / Luz", Model.ChkVelas);
+                        }
+                        @{
+                            RenderCheck("Flor de Cempasúchil", Model.ChkFlor);
+                        }
+                        @{
+                            RenderCheck("Papel Picado", Model.ChkPapel);
+                        }
+                        @{
+                            RenderCheck("Pan de Muerto", Model.ChkPan);
+                        }
+                        @{
+                            RenderCheck("Vaso de Agua", Model.ChkAgua);
+                        }
+                        @{
+                            RenderCheck("Sal", Model.ChkSal);
+                        }
+                        @{
+                            RenderCheck("Incienso / Copal", Model.ChkIncienso);
+                        }
+                        @{
+                            RenderCheck("Calaveritas", Model.ChkCalaveritas);
+                        }
+                        @{
+                            RenderCheck("Objetos Personales", Model.ChkObjetos);
+                        }
+
+                        <div class="mt-3 pt-2 border-top border-secondary text-orange small">
+                            Bonus Temáticos Detectados: @Model.BonusTematicos
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-7 h-100 ps-4 d-flex flex-column">
+                    <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Calificación</h5>
+
+                    <label class="text-silver">Hobbies / Temática:</label>
+                    <textarea class="form-control form-control-dark mb-3 flex-grow-1" style="max-height: 150px;" readonly>@Model.Hobbies</textarea>
+
+                    <div class="row mb-2"><div class="col-6"><label class="text-silver pt-1">Tradición:</label></div><div class="col-4"><input value="@Model.NotaTradicion" class="form-control form-control-dark" readonly /></div></div>
+                    <div class="row mb-2"><div class="col-6"><label class="text-orange fw-bold pt-1">Personalización:</label></div><div class="col-4"><input value="@Model.NotaPersonalizacion" class="form-control form-control-dark" readonly /></div></div>
+                    <div class="row mb-4"><div class="col-6"><label class="text-silver pt-1">Estética:</label></div><div class="col-4"><input value="@Model.NotaEstetica" class="form-control form-control-dark" readonly /></div></div>
+
+                    <div class="mt-auto p-3 text-center" style="background-color: #2E8B57; color: white;">
+                        <h2 class="m-0 fw-bold">NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+﻿@model AltarWeb.Models.Evaluacion
+
+@{
+    void RenderCheck(string label, string aspFor, string id)
+    {
+        <div class="form-check mb-2">
+            <input class="form-check-input bg-dark border-secondary" type="checkbox" name="@aspFor" id="@id" value="true" onchange="toggleBonus(this)">
+            <label class="form-check-label text-white" for="@id">@label</label>
+            <div class="bonus-area ms-4 d-none text-orange fst-italic small">
+                <input type="checkbox" class="bonus-check form-check-input bg-dark border-warning" onchange="calcBonus()"> ¿Está Tematizado?
+            </div>
+        </div>
+    }
+}
+
+@{
+    RenderCheck("Foto del Difunto", "ChkFoto", "c1");
+}
+@{
+    RenderCheck("Velas / Luz", "ChkVelas", "c2");
+}
+@{
+    RenderCheck("Flor de Cempasúchil", "ChkFlor", "c3");
+}
+@{
+    RenderCheck("Papel Picado", "ChkPapel", "c4");
+}
+@{
+    RenderCheck("Pan de Muerto", "ChkPan", "c5");
+}
+@{
+    RenderCheck("Vaso de Agua", "ChkAgua", "c6");
+}
+@{
+    RenderCheck("Sal", "ChkSal", "c7");
+}
+@{
+    RenderCheck("Incienso / Copal", "ChkIncienso", "c8");
+}
+@{
+    RenderCheck("Calaveritas", "ChkCalaveritas", "c9");
+}
+@{
+    RenderCheck("Objetos Personales", "ChkObjetos", "c10");
+}

@@ -1,0 +1,157 @@
+﻿@model AltarWeb.Models.Evaluacion
+@{
+    Layout = "_Layout";
+}
+
+<form id="mainForm" asp-action="Crear" method="post" style="height: 100vh; display: flex; flex-direction: column;">
+
+    <div class="top-bar d-flex justify-content-between align-items-center flex-shrink-0" style="background-color: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid white;">
+        <h4 class="text-orange fw-bold m-0">Evaluación de Altar de Muertos</h4>
+        <a href="/Home/Menu" class="btn btn-red btn-flat py-1 px-4" onclick="return confirm('¿Salir? Se perderán los datos.')">🚪 SALIR</a>
+    </div>
+
+    <ul class="nav nav-tabs px-3 pt-2 bg-dark flex-shrink-0" id="myTab" role="tablist" style="border-bottom:none;">
+        <li class="nav-item">
+            <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">1. Datos del Equipo</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">2. Evaluación de Altar</button>
+        </li>
+    </ul>
+
+    <div class="tab-content flex-grow-1" id="myTabContent" style="background-color: #2d2d30; padding: 20px; border-top: 1px solid #555; overflow: hidden;">
+
+        <div class="tab-pane fade show active h-100" id="equipo" style="overflow-y: auto;">
+
+            <div class="mb-4">
+                <label class="text-orange fw-bold mb-1">Nombre del Equipo:</label>
+                <input asp-for="NombreEquipo" class="form-control form-control-dark rounded-0"
+                       style="width: 400px; font-weight: bold;" required />
+            </div>
+
+            <label class="text-silver mb-1">Lista de Integrantes:</label>
+
+            <div class="dgv-container" style="width: 100%; max-width: 900px; height: 350px;">
+                <table class="table-dgv" id="tblIntegrantes">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Nombre Completo</th>
+                            <th style="width: 50%;">Matrícula</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <input type="text" name="NombresIntegrantes" placeholder="" autocomplete="off" />
+                            </td>
+                            <td>
+                                <input type="text" name="MatriculasIntegrantes" placeholder="" autocomplete="off" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-muted small mt-2 fst-italic">* Comienza a escribir en la última fila para agregar una nueva automáticamente.</p>
+        </div>
+
+        <div class="tab-pane fade h-100" id="altar">
+            <div class="row h-100">
+                <div class="col-md-5 h-100 d-flex flex-column border-end border-secondary pe-3">
+                    <div class="flex-shrink-0">
+                        <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
+                        <label class="text-silver">Difunto:</label>
+                        <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required />
+
+                        <label class="text-silver">Niveles:</label>
+                        <select asp-for="Niveles" class="form-select form-control-dark mb-2" required>
+                            <option value="" selected disabled>-- Seleccionar --</option>
+                            <option>2 Niveles</option>
+                            <option>3 Niveles</option>
+                            <option>7 Niveles</option>
+                        </select>
+
+                        <label class="text-silver">Tipo:</label>
+                        <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required>
+                            <option value="" selected disabled>-- Seleccionar --</option>
+                            <option>Tradicional</option>
+                            <option>Niños</option>
+                            <option>Mascotas</option>
+                        </select>
+                    </div>
+
+                    <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist</h5>
+                    <div class="flex-grow-1" style="overflow-y: auto; background-color: #333; padding: 10px; border: 1px solid #444;">
+                        @await Html.PartialAsync("_ChecklistPartial", Model)
+                    </div>
+                </div>
+
+                <div class="col-md-7 h-100 ps-4 d-flex flex-column">
+                    <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Calificación</h5>
+
+                    <label class="text-silver">Hobbies / Temática:</label>
+                    <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3 flex-grow-1" style="max-height: 150px;" required></textarea>
+
+                    <div class="row mb-2"><div class="col-6"><label class="text-silver pt-1">Tradición (0-10):</label></div><div class="col-4"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark" step="0.1" min="0" max="10" /></div></div>
+                    <div class="row mb-2"><div class="col-6"><label class="text-orange fw-bold pt-1">Personalización (0-10):</label></div><div class="col-4"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark" step="0.1" min="0" max="10" /></div></div>
+                    <div class="row mb-4"><div class="col-6"><label class="text-silver pt-1">Estética (0-10):</label></div><div class="col-4"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark" step="0.1" min="0" max="10" /></div></div>
+
+                    <button type="submit" class="btn btn-purple btn-flat w-100 py-3 fs-5 shadow mt-auto">💾 GUARDAR EVALUACIÓN</button>
+                    <input type="hidden" asp-for="BonusTematicos" id="BonusTotal" value="0" />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // 1. Lógica Grid Infinito
+        const tableBody = document.querySelector("#tblIntegrantes tbody");
+
+        // Escuchar cuando el usuario escribe en cualquier input de la tabla
+        tableBody.addEventListener("input", function (e) {
+            const targetInput = e.target;
+            const currentRow = targetInput.closest("tr");
+            const allRows = tableBody.querySelectorAll("tr");
+            const lastRow = allRows[allRows.length - 1];
+
+            // Si el usuario está escribiendo en la ÚLTIMA fila...
+            if (currentRow === lastRow) {
+                // Y si esa fila ya tiene algo de texto...
+                if (targetInput.value.trim() !== "") {
+                    agregarFilaVacia();
+                }
+            }
+        });
+
+        function agregarFilaVacia() {
+            // Clonamos la última fila
+            const newRow = tableBody.rows[0].cloneNode(true);
+
+            // Limpiamos los inputs de la nueva fila clonada
+            const inputs = newRow.querySelectorAll("input");
+            inputs.forEach(input => input.value = "");
+
+            // La agregamos al final
+            tableBody.appendChild(newRow);
+        }
+    });
+
+    // 2. Lógica Bonus Temático (Checklist)
+    function toggleBonus(chk) {
+        let bonusDiv = chk.parentElement.querySelector('.bonus-area');
+        if(chk.checked) bonusDiv.classList.remove('d-none');
+        else {
+            bonusDiv.classList.add('d-none');
+            bonusDiv.querySelector('input').checked = false;
+            calcBonus();
+        }
+    }
+
+    function calcBonus() {
+        let count = document.querySelectorAll('.bonus-check:checked').length;
+        document.getElementById('BonusTotal').value = count;
+    }
+</script>
