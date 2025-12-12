@@ -1,0 +1,59 @@
+﻿@model IEnumerable<AltarWeb.Models.Evaluacion>
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    /* Efecto visual para indicar que la fila es interactiva */
+    tbody tr:hover {
+        background-color: rgba(255, 152, 0, 0.1) !important; /* Naranja muy sutil */
+        cursor: pointer;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+        <h2 class="text-white m-0">Generar Constancias</h2>
+        <a href="/Home/Menu" class="btn btn-red btn-flat">Regresar</a>
+    </div>
+
+    <div class="p-4 shadow-lg" style="background-color: #2d2d30; border: 1px solid #555;">
+        <p class="text-silver mb-3">Haz <b>doble clic</b> en un equipo para descargar su constancia o usa el botón.</p>
+
+        <div style="height: 500px; overflow-y: auto;">
+            <table class="table-theme" id="tablaConstancias">
+                <thead style="position: sticky; top: 0; background-color: #333337; z-index: 1;">
+                    <tr>
+                        <th style="width: 40%;">Equipo</th>
+                        <th style="width: 30%;">Difunto</th>
+                        <th style="width: 15%;">Fecha</th>
+                        <th style="width: 15%; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr ondblclick="abrirPdf('@item.Id')">
+                            <td class="text-orange fw-bold">@item.NombreEquipo</td>
+                            <td class="text-white">@item.NombreDifunto</td>
+                            <td class="text-silver">@item.Fecha.ToShortDateString()</td>
+                            <td class="text-center">
+                                <a href="/Constancia/Descargar/@item.Id" class="btn btn-success btn-sm fw-bold px-3 shadow-sm btn-pdf" target="_blank">
+                                    📄 PDF
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirPdf(id) {
+        // Abre el PDF en una nueva pestaña simulando el click en el enlace
+        const url = '/Constancia/Descargar/' + id;
+        window.open(url, '_blank');
+    }
+</script>

@@ -6,29 +6,74 @@
 <head>
     <title>Login - Juez de Altares</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="~/css/site.css" rel="stylesheet">
+    <style>
+        /* === ESTRUCTURA BASE (Igual que Crear/Detalle) === */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Cero scroll */
+            background-color: #1e1e1e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* === ESTILOS INPUTS OSCUROS === */
+        .form-control-dark {
+            background-color: #3e3e42;
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+        }
+
+            .form-control-dark:focus {
+                background-color: #454548;
+                color: white;
+                border-color: #ff9800; /* Naranja temático */
+                box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25);
+            }
+
+        /* === TARJETA CENTRAL === */
+        .login-card {
+            background-color: #2d2d30;
+            border: 1px solid #555;
+            width: 100%;
+            max-width: 450px;
+            border-top: 4px solid #ff9800; /* Detalle naranja superior */
+            box-shadow: 0 0 30px rgba(0,0,0,0.7); /* Sombra profunda */
+        }
+
+        .text-silver {
+            color: #ccc;
+        }
+    </style>
 </head>
-<body class="d-flex align-items-center justify-content-center" style="height: 100vh;">
-    <div class="panel-dark shadow-lg" style="width: 400px; padding: 40px;">
-        <h2 class="text-center text-orange fw-bold mb-4">ACCESO JUECES</h2>
+<body class="d-flex align-items-center justify-content-center">
+
+    <div class="login-card p-5">
+        <h2 class="text-center text-white fw-bold mb-4">ACCESO JUECES</h2>
 
         <form method="post" action="/Acceso/Login">
             <div class="mb-3">
-                <label class="lbl-form">Usuario:</label>
-                <input type="text" name="usuario" class="form-control form-control-dark" required />
+                <label class="text-silver mb-1 fw-bold small">Usuario:</label>
+                <input type="text" name="usuario" class="form-control form-control-dark" placeholder="Ingresa tu usuario" required autocomplete="off" />
             </div>
             <div class="mb-4">
-                <label class="lbl-form">Contraseña:</label>
-                <input type="password" name="password" class="form-control form-control-dark" required />
+                <label class="text-silver mb-1 fw-bold small">Contraseña:</label>
+                <input type="password" name="password" class="form-control form-control-dark" placeholder="••••••••" required />
             </div>
 
             @if (ViewBag.Error != null)
             {
-                <div class="alert alert-danger py-1 mb-3 text-center small">@ViewBag.Error</div>
+                <div class="alert alert-danger py-2 mb-3 text-center small border-0 rounded-0 fw-bold">
+                    ⚠️ @ViewBag.Error
+                </div>
             }
 
-            <button type="submit" class="btn btn-purple btn-flat w-100 fs-5">INICIAR SESIÓN</button>
+            <button type="submit" class="btn w-100 py-3 fs-5 fw-bold text-white shadow"
+                    style="background-color: #6f42c1; border: none; transition: all 0.2s;">
+                INICIAR SESIÓN
+            </button>
         </form>
     </div>
+
 </body>
 </html>

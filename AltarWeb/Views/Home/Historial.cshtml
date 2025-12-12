@@ -3,66 +3,100 @@
     Layout = "_Layout";
 }
 
-<div class="d-flex flex-column" style="height: 100vh;">
-    <div class="d-flex justify-content-between align-items-center p-3 flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 1px solid white;">
-        <h3 class="text-white fw-bold m-0">Historial de Evaluaciones</h3>
+<style>
+    body, html {
+        height: 100%;
+        overflow: hidden;
+        background-color: #1e1e1e;
+    }
+
+    .main-panel {
+        background-color: #2d2d30;
+        border: 1px solid #555;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    /* Feedback visual para doble clic */
+    tbody tr:hover {
+        background-color: rgba(255, 152, 0, 0.1) !important;
+        cursor: pointer;
+    }
+</style>
+
+<div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+        <div class="d-flex align-items-center">
+            <span style="font-size: 1.5rem; margin-right: 10px;">🎓</span>
+            <h2 class="text-white m-0">Historial de Evaluaciones</h2>
+        </div>
         <div>
-            <a href="/Evaluacion/Crear" class="btn btn-green btn-flat me-2">+ NUEVA EVALUACIÓN</a>
-            <a href="/Home/Menu" class="btn btn-red btn-flat">🔙 Regresar</a>
+            <a href="/Evaluacion/Crear" class="btn btn-success btn-flat me-2">+ Nueva Evaluación</a>
+            <a href="/Home/Menu" class="btn btn-red btn-flat">Regresar</a>
         </div>
     </div>
 
-    <div class="p-4 flex-grow-1" style="background-color: #2d2d30;">
-        <p class="text-silver fst-italic small mb-2">* Haz Doble Click en una fila para ver los detalles.</p>
+    <div class="main-panel p-4">
+        <p class="text-silver mb-3 flex-shrink-0">Haz <b>doble clic</b> en una fila para ver el detalle completo.</p>
 
-        <div style="border: 1px solid #555; height: calc(100vh - 150px); overflow-y: auto;">
-            <table class="table-theme mb-0">
-                <thead style="position: sticky; top: 0; z-index: 1;">
+        <div class="flex-grow-1" style="overflow-y: auto; border: 1px solid #444;">
+            <table class="table-theme w-100">
+                <thead style="position: sticky; top: 0; background-color: #333337; z-index: 1;">
                     <tr>
-                        <th style="width: 50%;">Detalle Evaluación</th>
-                        <th style="width: 20%;">Calificación</th>
-                        <th style="width: 20%;">Fecha</th>
+                        <th style="width: 30%;">Equipo</th>
+                        <th style="width: 20%;">Difunto</th>
+                        <th style="width: 15%;">Juez Evaluador</th>
+                        <th style="width: 10%;">Calif.</th>
+                        <th style="width: 15%;">Fecha</th>
                         <th style="width: 10%; text-align: center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr ondblclick="window.location.href='/Evaluacion/Detalle/@item.Id'">
-                            <td>
-                                <span class="text-orange fw-bold">@item.NombreEquipo</span>
-                                <span class="text-silver"> - @item.NombreDifunto - </span>
-                                <span class="text-silver fst-italic small">(@(item.Juez?.Usuario))</span>
-                            </td>
+                        <tr ondblclick="verDetalle('@item.Id')">
+                            <td><span class="text-orange fw-bold">@item.NombreEquipo</span></td>
+
+                            <td><span class="text-white">@item.NombreDifunto</span></td>
+                            <td><span class="text-secondary small fst-italic">@(item.Juez?.Usuario ?? "N/A")</span></td>
+
                             <td>
                                 @if (item.NotaFinal >= 8.0m)
                                 {
-                                    <span class="grade-green fw-bold fs-5">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="text-success fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else if (item.NotaFinal >= 6.0m)
                                 {
-                                    <span class="grade-yellow fw-bold fs-5">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="text-warning fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else
                                 {
-                                    <span class="grade-red fw-bold fs-5">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="text-danger fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                             </td>
-                            <td class="text-silver">@item.Fecha.ToString("g")</td>
-                            <td style="text-align: center;">
-                                <a href="/Evaluacion/Detalle/@item.Id" style="text-decoration: none; font-size: 1.2rem;">👁️</a>
+                            <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-success btn-sm fw-bold px-3 shadow-sm">VER</a>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
-
             @if (!Model.Any())
             {
-                <div class="p-5 text-center text-silver fst-italic" style="background-color: #333;">
-                    No hay evaluaciones registradas aún.
-                </div>
+                <div class="p-5 text-center text-secondary fst-italic">No hay evaluaciones registradas aún.</div>
             }
         </div>
     </div>
 </div>
+
+<script>
+    function verDetalle(id) {
+        // Redirecciona a la vista de detalle
+        window.location.href = '/Evaluacion/Detalle/' + id;
+    }
+</script>
