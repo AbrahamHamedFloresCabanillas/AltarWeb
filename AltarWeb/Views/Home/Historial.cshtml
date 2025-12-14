@@ -28,23 +28,35 @@
 
 @if (TempData["Mensaje"] != null)
 {
-    <div class="alert alert-info text-center m-0 fw-bold rounded-0">@TempData["Mensaje"]</div>
+    <div class="alert alert-info text-center m-0 fw-bold rounded-0">
+        <i class="fa-solid fa-circle-info me-2"></i>@TempData["Mensaje"]
+    </div>
 }
 
 <div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
+
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
         <div class="d-flex align-items-center">
-            <span style="font-size: 1.5rem; margin-right: 10px;">🎓</span>
+            <span style="font-size: 1.5rem; margin-right: 10px;">
+                <i class="fa-solid fa-clock-rotate-left text-warning"></i>
+            </span>
             <h2 class="text-white m-0">Historial de Evaluaciones</h2>
         </div>
         <div>
-            <a href="/Evaluacion/Crear" class="btn btn-success btn-flat me-2">+ Nueva Evaluación</a>
-            <a href="/Home/Menu" class="btn btn-danger btn-flat">Regresar</a>
+            <a href="/Evaluacion/Crear" class="btn btn-success btn-flat me-2 shadow-sm">
+                <i class="fa-solid fa-plus me-1"></i> Nueva Evaluación
+            </a>
+            <a href="/Home/Menu" class="btn btn-danger btn-flat shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Regresar
+            </a>
         </div>
     </div>
 
     <div class="main-panel p-4">
-        <p class="text-silver mb-3 flex-shrink-0">Haz <b>doble clic</b> para ver detalle o usa el botón 📧 para enviar resultados.</p>
+        <p class="text-silver mb-3 flex-shrink-0">
+            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+            Haz <b>doble clic</b> para ver detalle o usa el botón <i class="fa-solid fa-paper-plane text-secondary"></i> para enviar resultados.
+        </p>
 
         <div class="flex-grow-1" style="overflow-y: auto; border: 1px solid #444;">
             <table class="table-theme w-100">
@@ -72,23 +84,23 @@
                                 }
                                 else if (item.NotaFinal >= 6.0m)
                                 {
-
                                     <span class="text-warning fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else
                                 {
-
                                     <span class="text-danger fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                             </td>
                             <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>
                             <td class="text-center">
-                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-primary btn-sm fw-bold px-2 shadow-sm me-1" title="Ver Detalle">VER</a>
+                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-primary btn-sm fw-bold px-2 shadow-sm me-1" title="Ver Detalle">
+                                    <i class="fa-solid fa-eye me-1"></i> VER
+                                </a>
                                 <a href="/Evaluacion/EnviarResultados/@item.Id"
                                    class="btn btn-secondary btn-sm fw-bold px-2 shadow-sm"
                                    title="Enviar Resultados por Correo"
                                    onclick="return confirm('¿Enviar resultados y constancia a los integrantes de @item.NombreEquipo?')">
-                                    📧
+                                    <i class="fa-solid fa-paper-plane"></i>
                                 </a>
                             </td>
                         </tr>

@@ -1,0 +1,82 @@
+﻿@model IEnumerable<AltarWeb.Models.Juez>
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    body {
+        background-color: #1e1e1e;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .table-theme thead {
+        background-color: #333;
+        color: #ccc;
+    }
+
+    .table-theme th, .table-theme td {
+        padding: 12px;
+        border-bottom: 1px solid #444;
+        vertical-align: middle;
+    }
+
+    .table-theme tbody tr:hover {
+        background-color: rgba(255, 152, 0, 0.1);
+    }
+</style>
+
+<div class="container mt-5" style="max-width: 900px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+        <h2 class="text-white m-0">
+            <i class="fa-solid fa-users-gear me-2"></i>Gestión de Jueces
+        </h2>
+        <div>
+            <a href="/Jueces/Crear" class="btn btn-success fw-bold shadow-sm me-2">
+                <i class="fa-solid fa-user-plus me-1"></i> Nuevo Juez
+            </a>
+            <a href="/Home/Menu" class="btn btn-danger fw-bold shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Regresar
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center fw-bold rounded-0 mb-3">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    <div class="p-4 shadow-lg rounded" style="background-color: #2d2d30; border: 1px solid #555;">
+        <table class="w-100 table-theme text-white">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th><i class="fa-solid fa-user me-2"></i>Usuario / Juez</th>
+                    <th><i class="fa-solid fa-key me-2"></i>Contraseña</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-secondary">@item.Id</td>
+                        <td class="fw-bold text-orange">@item.Usuario</td>
+                        <td class="text-muted" style="font-family: monospace;">******</td>
+                        <td class="text-center">
+                            <a href="/Jueces/Editar/@item.Id" class="btn btn-primary btn-sm fw-bold px-3 me-1">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+                            </a>
+                            <a href="/Jueces/Eliminar/@item.Id"
+                               class="btn btn-dark btn-sm fw-bold px-3 border-secondary"
+                               onclick="return confirm('¿Eliminar al juez @item.Usuario? Esta acción es irreversible.')">
+                                <i class="fa-solid fa-trash-can me-1"></i> Borrar
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

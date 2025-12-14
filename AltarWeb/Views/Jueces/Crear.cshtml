@@ -1,0 +1,50 @@
+﻿@model AltarWeb.Models.Juez
+@{
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-center align-items-center w-100"
+     style="min-height: 100vh; background-color: #1e1e1e; margin: 0; padding: 0;">
+
+    <div class="p-5 shadow-lg rounded"
+         style="background-color: #2d2d30; border: 1px solid #444; width: 100%; max-width: 450px;">
+
+        <h3 class="text-white text-center mb-4 pb-2" style="border-bottom: 2px solid #28a745;">
+            <i class="fa-solid fa-user-plus me-2"></i>Nuevo Juez
+        </h3>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger text-center fw-bold rounded-0 mb-4">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>@ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Crear" method="post">
+            <div class="mb-4">
+                <label class="text-secondary mb-2 fw-bold">Nombre de Usuario:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
+                    <input asp-for="Usuario" class="form-control form-control-lg text-white border-secondary"
+                           style="background-color: #3e3e42;" required autocomplete="off" placeholder="Ej. profe_juan" />
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label class="text-secondary mb-2 fw-bold">Contraseña:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
+                    <input asp-for="Password" type="password" class="form-control form-control-lg text-white border-secondary"
+                           style="background-color: #3e3e42;" required placeholder="••••••" />
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Guardar Juez
+                </button>
+                <a href="/Jueces/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

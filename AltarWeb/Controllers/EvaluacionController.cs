@@ -68,7 +68,7 @@ namespace AltarWeb.Controllers
             }
 
             // 2. VALIDACIONES
-            // A. Nombre de Equipo (Manejo seguro de nulos con ?.)
+            // A. Nombre de Equipo
             if (_context.Evaluaciones.Any(e => e.NombreEquipo == (eval.NombreEquipo != null ? eval.NombreEquipo.Trim() : "")))
             {
                 TempData["Error"] = $"El equipo '{eval.NombreEquipo}' ya existe.";
@@ -79,14 +79,11 @@ namespace AltarWeb.Controllers
             // B. Matrículas duplicadas
             if (MatriculasIntegrantes != null)
             {
-                // Limpieza de lista para evitar errores por espacios
                 var listaLimpia = MatriculasIntegrantes
                     .Where(m => !string.IsNullOrWhiteSpace(m))
                     .Select(m => m.Trim())
                     .ToList();
 
-                // Validación local (en el formulario actual)
-                // Preferencia de Count > 1 sobre Any() por rendimiento y claridad
                 var dups = listaLimpia.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
 
                 if (dups.Count != 0)
@@ -96,7 +93,6 @@ namespace AltarWeb.Controllers
                     return View(eval);
                 }
 
-                // Validación en Base de Datos
                 foreach (var mat in listaLimpia)
                 {
                     var existe = _context.Integrantes.Include(i => i.Evaluacion).FirstOrDefault(i => i.Matricula == mat);
@@ -178,9 +174,15 @@ namespace AltarWeb.Controllers
                 try
                 {
                     bool enviado = ProcesarEnvioDeCorreos(eval);
-                    TempData["Mensaje"] = enviado ? "✅ Correos enviados." : "❌ Error SMTP.";
+                    // CAMBIO AQUÍ: Mensajes de texto puro (sin emojis)
+                    TempData["Mensaje"] = enviado
+                        ? "Correos enviados exitosamente."
+                        : "Error de autenticación con el servidor de correo.";
                 }
-                catch { TempData["Mensaje"] = "❌ Error al intentar enviar."; }
+                catch
+                {
+                    TempData["Mensaje"] = "Ocurrió un error inesperado al intentar enviar.";
+                }
             }
             return RedirectToAction("Historial", "Home");
         }
@@ -189,7 +191,6 @@ namespace AltarWeb.Controllers
         {
             var pdfBytes = GenerarPdfBytes(eval);
 
-            // 'using' simplificado (sin llaves)
             using var smtp = new SmtpClient("smtp.gmail.com", 587);
             smtp.EnableSsl = true;
             smtp.Credentials = new NetworkCredential(
@@ -202,7 +203,6 @@ namespace AltarWeb.Controllers
             mail.Subject = $"Resultados: {eval.NombreEquipo}";
             mail.Body = $"Hola equipo {eval.NombreEquipo},\n\nSu calificación final es: {eval.NotaFinal:F1}/10.\n\nAdjunto encontrarán su Constancia de Participación.\n\n¡Gracias por participar!";
 
-            // Stream simplificado
             using var stream = new MemoryStream(pdfBytes);
             mail.Attachments.Add(new Attachment(stream, $"Constancia_{eval.NombreEquipo}.pdf"));
 
@@ -285,7 +285,6 @@ namespace AltarWeb.Controllers
                 });
             });
 
-            // CORRECCIÓN CRÍTICA AQUÍ: Se agregó 'return'
             return documento.GeneratePdf();
         }
     }

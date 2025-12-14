@@ -124,22 +124,32 @@
     <form id="mainForm" asp-action="Crear" method="post" style="height: 100%; display: flex; flex-direction: column;">
 
         <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
-            <h2 class="text-white m-0">Nueva Evaluación</h2>
-            <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('¿Salir? Se perderán los datos.')">SALIR</a>
+            <h2 class="text-white m-0"><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Nueva Evaluación</h2>
+            <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('¿Salir? Se perderán los datos.')">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> SALIR
+            </a>
         </div>
 
         @if (TempData["Error"] != null || ViewBag.Error != null)
         {
             <div class="alert alert-danger text-center fw-bold mb-3 shadow rounded-0 flex-shrink-0">
-                ⚠️ @(TempData["Error"] ?? ViewBag.Error)
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>@(TempData["Error"] ?? ViewBag.Error)
             </div>
         }
 
         <div class="panel-principal">
             <div class="tabs-header">
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">1. Datos del Equipo</button></li>
-                    <li class="nav-item"><button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">2. Evaluación de Altar</button></li>
+                    <li class="nav-item">
+                        <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">
+                            <i class="fa-solid fa-users me-1"></i> 1. Datos del Equipo
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">
+                            <i class="fa-solid fa-star me-1"></i> 2. Evaluación de Altar
+                        </button>
+                    </li>
                 </ul>
             </div>
 
@@ -154,9 +164,9 @@
 
                     <div class="dgv-wrapper">
                         <div class="dgv-header">
-                            <div style="width: 40%;">Nombre Completo</div>
-                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
-                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Correo Electrónico</div>
+                            <div style="width: 40%;"><i class="fa-solid fa-user me-2"></i>Nombre Completo</div>
+                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
+                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-envelope me-2"></i>Correo Electrónico</div>
                         </div>
                         <div class="dgv-body">
                             <table class="w-100" style="border-collapse: collapse;" id="tblIntegrantes">
@@ -173,7 +183,6 @@
                                                 </tr>
                                             }
                                         }
-
                                         <tr class="dgv-row">
                                             <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
                                             <td style="width: 20%; padding:0; border-left: 1px solid #444;"><input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="Matrícula..." autocomplete="off" /></td>
@@ -191,22 +200,24 @@
                     <div class="row h-100 g-0">
                         <div class="col-md-5 d-flex flex-column h-100 border-end border-secondary pe-3">
                             <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-                                <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
+                                <h5 class="text-white border-bottom border-secondary pb-2 mb-3"><i class="fa-solid fa-list-check me-2"></i>Datos Generales</h5>
                                 <label class="text-secondary small">Difunto:</label> <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required autocomplete="off" />
                                 <label class="text-secondary small">Niveles:</label> <select asp-for="Niveles" class="form-select form-control-dark mb-2" required><option value="" selected disabled>-- Seleccionar --</option><option>2 Niveles</option><option>3 Niveles</option><option>7 Niveles</option></select>
                                 <label class="text-secondary small">Tipo:</label> <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required><option value="" selected disabled>-- Seleccionar --</option><option>Tradicional</option><option>Niños</option><option>Mascotas</option></select>
-                                <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist</h5>
+                                <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist</h5>
                                 <div class="p-2 rounded mb-3" style="background-color: #222; border: 1px solid #444;">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
                             </div>
                         </div>
                         <div class="col-md-7 d-flex flex-column h-100 ps-4">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0">Calificación</h5>
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0"><i class="fa-solid fa-calculator me-2"></i>Calificación</h5>
                             <label class="text-secondary small flex-shrink-0">Hobbies / Temática:</label> <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" required></textarea>
                             <div class="flex-shrink-0 bg-dark p-3 rounded border border-secondary">
                                 <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
                                 <div class="row mb-2"><div class="col-5"><label class="text-warning fw-bold">Personalización (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
                                 <div class="row mb-3"><div class="col-5"><label class="text-secondary">Estética (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
-                                <button type="submit" class="btn w-100 py-3 fs-5 shadow fw-bold text-white" style="background-color: #6f42c1;">GUARDAR EVALUACIÓN</button>
+                                <button type="submit" class="btn w-100 py-3 fs-5 shadow fw-bold text-white" style="background-color: #6f42c1;">
+                                    <i class="fa-solid fa-floppy-disk me-2"></i>GUARDAR EVALUACIÓN
+                                </button>
                                 <input type="hidden" asp-for="BonusTematicos" id="BonusTotal" value="0" />
                             </div>
                         </div>

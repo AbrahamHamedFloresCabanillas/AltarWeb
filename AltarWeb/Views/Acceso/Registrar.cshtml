@@ -6,6 +6,7 @@
 <head>
     <title>Nuevo Juez</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         /* === ESTRUCTURA BASE === */
         html, body {
@@ -31,6 +32,12 @@
                 box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25);
             }
 
+        .input-group-text {
+            background-color: #2d2d30;
+            border: 1px solid #555;
+            color: #ccc;
+        }
+
         /* === TARJETA CENTRAL === */
         .register-card {
             background-color: #2d2d30;
@@ -53,35 +60,50 @@
 <body class="d-flex align-items-center justify-content-center">
 
     <div class="register-card p-5">
-        <h3 class="text-center text-orange fw-bold mb-4">REGISTRO DE JUEZ</h3>
+        <h3 class="text-center text-orange fw-bold mb-4">
+            <i class="fa-solid fa-user-plus me-2"></i>REGISTRO DE JUEZ
+        </h3>
 
         <form method="post" action="/Acceso/Registrar">
 
             <div class="mb-3">
                 <label class="text-silver mb-1 fw-bold small">Nombre de Usuario:</label>
-                <input type="text" name="usuario" class="form-control form-control-dark" required autocomplete="off" />
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" name="usuario" class="form-control form-control-dark" required autocomplete="off" />
+                </div>
             </div>
 
             <div class="mb-3">
                 <label class="text-silver mb-1 fw-bold small">Contraseña:</label>
-                <input type="password" name="password" class="form-control form-control-dark" required />
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+                    <input type="password" name="password" class="form-control form-control-dark" required />
+                </div>
             </div>
 
             <div class="mb-4">
                 <label class="text-silver mb-1 fw-bold small">Confirmar Contraseña:</label>
-                <input type="password" name="confirmar" class="form-control form-control-dark" required />
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-check-double"></i></span>
+                    <input type="password" name="confirmar" class="form-control form-control-dark" required />
+                </div>
             </div>
 
             @if (ViewBag.Error != null)
             {
                 <div class="alert alert-danger py-2 text-center small mb-3 border-0 rounded-0 fw-bold">
-                    ⚠️ @ViewBag.Error
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> @ViewBag.Error
                 </div>
             }
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-success py-2 fw-bold shadow">REGISTRARSE</button>
-                <a href="/Home/Menu" class="btn btn-danger py-2 text-decoration-none text-center shadow">Cancelar</a>
+                <button type="submit" class="btn btn-success py-2 fw-bold shadow">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> REGISTRARSE
+                </button>
+                <a href="/Home/Menu" class="btn btn-danger py-2 text-decoration-none text-center shadow">
+                    <i class="fa-solid fa-xmark me-1"></i> Cancelar
+                </a>
             </div>
         </form>
     </div>

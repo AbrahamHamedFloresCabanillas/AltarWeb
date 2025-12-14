@@ -119,20 +119,32 @@
 
 <div class="app-container">
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
-        <h2 class="text-white m-0">🔍 Consulta de Evaluación</h2>
-        <a href="/Home/Historial" class="btn btn-danger rounded-0 px-4 fw-bold">REGRESAR</a>
+        <h2 class="text-white m-0"><i class="fa-solid fa-magnifying-glass me-2 text-warning"></i>Consulta de Evaluación</h2>
+        <a href="/Home/Historial" class="btn btn-danger rounded-0 px-4 fw-bold">
+            <i class="fa-solid fa-arrow-left me-1"></i> REGRESAR
+        </a>
     </div>
 
     @if (ViewBag.Mensaje != null)
     {
-        <div class="alert alert-success text-center fw-bold m-0 rounded-0">@ViewBag.Mensaje</div>
+        <div class="alert alert-success text-center fw-bold m-0 rounded-0">
+            <i class="fa-solid fa-circle-check me-2"></i>@ViewBag.Mensaje
+        </div>
     }
 
     <div class="panel-principal">
         <div class="tabs-header">
             <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item"><button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo">1. Datos del Equipo</button></li>
-                <li class="nav-item"><button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar">2. Evaluación de Altar</button></li>
+                <li class="nav-item">
+                    <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo">
+                        <i class="fa-solid fa-users me-1"></i> 1. Datos del Equipo
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar">
+                        <i class="fa-solid fa-star me-1"></i> 2. Evaluación de Altar
+                    </button>
+                </li>
             </ul>
         </div>
 
@@ -145,9 +157,9 @@
                 <label class="text-secondary mb-1 flex-shrink-0">Lista de Integrantes:</label>
                 <div class="dgv-wrapper">
                     <div class="dgv-header">
-                        <div style="width: 40%;">Nombre Completo</div>
-                        <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
-                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Correo</div>
+                        <div style="width: 40%;"><i class="fa-solid fa-user me-2"></i>Nombre Completo</div>
+                        <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
+                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-envelope me-2"></i>Correo</div>
                     </div>
                     <div class="dgv-body">
                         @foreach (var intg in Model.Integrantes)
@@ -166,34 +178,39 @@
                 <div class="row h-100 g-0">
                     <div class="col-md-5 d-flex flex-column h-100 border-end border-secondary pe-3">
                         <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3"><i class="fa-solid fa-list-check me-2"></i>Datos Generales</h5>
                             <label class="text-secondary small">Difunto:</label> <input value="@Model.NombreDifunto" class="form-control form-control-dark mb-2" readonly />
                             <label class="text-secondary small">Niveles:</label> <input value="@Model.Niveles" class="form-control form-control-dark mb-2" readonly />
                             <label class="text-secondary small">Tipo:</label> <input value="@Model.TipoAltar" class="form-control form-control-dark mb-4" readonly />
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist Realizado</h5>
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist Realizado</h5>
                             <div class="p-3 mb-3 border border-secondary bg-dark rounded">
                                 @{
                                     void RenderCheck(string l, bool v)
                                     {
-                                        <div class="form-check mb-1"><input class="form-check-input bg-secondary border-0" type="checkbox" checked="@v" disabled><label class="form-check-label text-silver">@l</label></div>
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input bg-secondary border-0" type="checkbox" checked="@v" disabled>
+                                            <label class="form-check-label text-silver">@l</label>
+                                        </div>
                                     }
-
                                 }
                                 @{
-                                    RenderCheck("Foto", Model.ChkFoto); RenderCheck("Velas", Model.ChkVelas); RenderCheck("Flor", Model.ChkFlor); RenderCheck("Papel", Model.ChkPapel); RenderCheck("Pan", Model.ChkPan); RenderCheck("Agua", Model.ChkAgua); RenderCheck("Sal", Model.ChkSal); RenderCheck("Incienso", Model.ChkIncienso); RenderCheck("Calaveritas", Model.ChkCalaveritas); RenderCheck("Objetos", Model.ChkObjetos);
+                                    RenderCheck("Foto", Model.ChkFoto); RenderCheck("Velas", Model.ChkVelas); RenderCheck("Flor", Model.ChkFlor); RenderCheck("Papel", Model.ChkPapel); RenderCheck("Pan", Model.ChkPan);
+                                    RenderCheck("Agua", Model.ChkAgua); RenderCheck("Sal", Model.ChkSal); RenderCheck("Incienso", Model.ChkIncienso); RenderCheck("Calaveritas", Model.ChkCalaveritas); RenderCheck("Objetos", Model.ChkObjetos);
                                 }
-                                <div class="mt-3 pt-2 border-top border-secondary text-orange small">Bonus Detectados: @Model.BonusTematicos</div>
+                                <div class="mt-3 pt-2 border-top border-secondary text-orange small"><i class="fa-solid fa-plus me-1"></i> Bonus Detectados: @Model.BonusTematicos</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-7 d-flex flex-column h-100 ps-4">
-                        <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0">Resultados</h5>
+                        <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0"><i class="fa-solid fa-square-poll-vertical me-2"></i>Resultados</h5>
                         <label class="text-secondary small flex-shrink-0">Hobbies:</label> <textarea class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" readonly>@Model.Hobbies</textarea>
                         <div class="flex-shrink-0">
                             <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición:</label></div><div class="col-7"><input value="@Model.NotaTradicion" class="form-control form-control-dark text-center" readonly /></div></div>
                             <div class="row mb-2"><div class="col-5"><label class="text-orange fw-bold">Personalización:</label></div><div class="col-7"><input value="@Model.NotaPersonalizacion" class="form-control form-control-dark text-center" readonly /></div></div>
                             <div class="row mb-4"><div class="col-5"><label class="text-secondary">Estética:</label></div><div class="col-7"><input value="@Model.NotaEstetica" class="form-control form-control-dark text-center" readonly /></div></div>
-                            <div class="p-4 text-center rounded shadow" style="background-color: #2E8B57; color: white;"><h2 class="m-0 fw-bold">NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2></div>
+                            <div class="p-4 text-center rounded shadow" style="background-color: #2E8B57; color: white;">
+                                <h2 class="m-0 fw-bold"><i class="fa-solid fa-award me-2"></i>NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2>
+                            </div>
                         </div>
                     </div>
                 </div>
