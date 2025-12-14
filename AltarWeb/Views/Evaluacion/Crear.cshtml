@@ -4,22 +4,18 @@
 }
 
 <style>
-    /* === 1. ESTRUCTURA BASE (Bloqueo de Scroll Global) === */
     html, body {
         height: 100%;
         margin: 0;
-        padding: 0;
-        overflow: hidden; /* IMPORTANTE: Cero scroll en la ventana principal */
+        overflow: hidden;
         background-color: #1e1e1e;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    /* === 2. CONTENEDOR FLEXIBLE PRINCIPAL === */
     .app-container {
         display: flex;
         flex-direction: column;
-        height: 100vh; /* Ocupa toda la pantalla */
-        width: 100%;
+        height: 100vh;
         padding: 20px;
         box-sizing: border-box;
     }
@@ -27,50 +23,36 @@
     .panel-principal {
         display: flex;
         flex-direction: column;
-        flex-grow: 1; /* Ocupa todo el espacio restante bajo el header */
+        flex-grow: 1;
         background-color: #2d2d30;
         border: 1px solid #555;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        overflow: hidden; /* Contiene a los hijos */
-        position: relative; /* Para anclar los tabs */
+        overflow: hidden;
+        position: relative;
     }
 
-    /* === 3. ESTILOS DE PESTAÑAS (TABS) === */
     .tabs-header {
         background-color: #252526;
         padding: 10px 20px 0 20px;
         border-bottom: 1px solid #555;
-        flex-shrink: 0; /* No se encoge */
+        flex-shrink: 0;
     }
 
-    .nav-tabs {
-        border-bottom: none;
+    .nav-tabs .nav-link {
+        color: #aaa;
+        border: 1px solid transparent;
     }
 
-        .nav-tabs .nav-link {
-            color: #aaa;
-            border: 1px solid transparent;
-            border-radius: 4px 4px 0 0;
+        .nav-tabs .nav-link.active {
+            background-color: #2d2d30;
+            color: #ff9800;
+            border-color: #555 #555 #2d2d30;
+            font-weight: bold;
         }
 
-            .nav-tabs .nav-link:hover {
-                color: #fff;
-                background-color: #3e3e42;
-            }
-
-            .nav-tabs .nav-link.active {
-                background-color: #2d2d30; /* Mismo color que el panel */
-                color: #ff9800; /* Naranja */
-                border-color: #555 #555 #2d2d30; /* Borde inferior invisible para fusionar */
-                font-weight: bold;
-            }
-
-    /* === 4. ÁREA DE CONTENIDO (LA SOLUCIÓN AL BUG) === */
     .tab-content {
         position: relative;
         flex-grow: 1;
-        width: 100%;
-        height: 100%; /* Llena el panel */
+        height: 100%;
         overflow: hidden;
     }
 
@@ -79,39 +61,30 @@
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0; /* SE FUERZA A LLENAR TODO */
+        bottom: 0;
         padding: 20px;
-        overflow: hidden; /* Scroll interno en los hijos, no aquí */
-        display: none; /* Oculto por defecto */
+        overflow: hidden;
+        display: none;
         flex-direction: column;
     }
 
         .tab-pane.active {
-            display: flex !important; /* Se muestra como FLEX */
+            display: flex !important;
         }
 
-    /* === 5. ESTILOS DE INPUTS Y TABLAS OSCURAS === */
     .form-control-dark {
         background-color: #3e3e42;
         border: 1px solid #555;
         color: white;
     }
 
-        .form-control-dark:focus {
-            background-color: #454548;
-            border-color: #ff9800;
-            color: white;
-            box-shadow: none;
-        }
-
-    /* Tabla Grid Personalizada */
     .dgv-wrapper {
         display: flex;
         flex-direction: column;
-        flex-grow: 1; /* Crece para llenar espacio */
+        flex-grow: 1;
         border: 1px solid #555;
         background-color: #1e1e1e;
-        overflow: hidden; /* Scroll manejado internamente */
+        overflow: hidden;
     }
 
     .dgv-header {
@@ -125,16 +98,12 @@
 
     .dgv-body {
         flex-grow: 1;
-        overflow-y: auto; /* Scroll vertical */
-    }
-
-    .dgv-table {
-        width: 100%;
-        border-collapse: collapse;
+        overflow-y: auto;
     }
 
     .dgv-row {
         border-bottom: 1px solid #444;
+        display: flex;
     }
 
     .dgv-input {
@@ -149,62 +118,33 @@
         .dgv-input:focus {
             background-color: rgba(255, 152, 0, 0.1);
         }
-    /* Feedback visual sutil */
-
-    /* Scrollbars oscuros (Chrome/Edge/Safari) */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #2d2d30;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 5px;
-    }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #777;
-        }
 </style>
 
 <div class="app-container">
-
     <form id="mainForm" asp-action="Crear" method="post" style="height: 100%; display: flex; flex-direction: column;">
+
         <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
-            <div class="d-flex align-items-center">
-                <span style="font-size: 1.5rem; margin-right: 10px;"></span>
-                <h2 class="text-white m-0">Nueva Evaluación</h2>
-            </div>
+            <h2 class="text-white m-0">Nueva Evaluación</h2>
             <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('¿Salir? Se perderán los datos.')">SALIR</a>
         </div>
 
-        @if (ViewBag.Error != null)
+        @if (TempData["Error"] != null || ViewBag.Error != null)
         {
             <div class="alert alert-danger text-center fw-bold mb-3 shadow rounded-0 flex-shrink-0">
-                ⚠️ @ViewBag.Error
+                ⚠️ @(TempData["Error"] ?? ViewBag.Error)
             </div>
         }
 
         <div class="panel-principal">
-
             <div class="tabs-header">
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">1. Datos del Equipo</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button" role="tab">2. Evaluación de Altar</button>
-                    </li>
+                    <li class="nav-item"><button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">1. Datos del Equipo</button></li>
+                    <li class="nav-item"><button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">2. Evaluación de Altar</button></li>
                 </ul>
             </div>
 
             <div class="tab-content" id="myTabContent">
-
-                <div class="tab-pane fade show active" id="equipo" role="tabpanel">
-
+                <div class="tab-pane fade show active" id="equipo">
                     <div class="mb-3 flex-shrink-0">
                         <label class="text-warning fw-bold mb-1">Nombre del Equipo:</label>
                         <input asp-for="NombreEquipo" class="form-control form-control-dark rounded-0" style="max-width: 500px; font-weight: bold; font-size: 1.2rem;" required autocomplete="off" />
@@ -214,20 +154,32 @@
 
                     <div class="dgv-wrapper">
                         <div class="dgv-header">
-                            <div style="width: 60%;">Nombre Completo</div>
-                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
+                            <div style="width: 40%;">Nombre Completo</div>
+                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
+                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Correo Electrónico</div>
                         </div>
                         <div class="dgv-body">
-                            <table class="dgv-table" id="tblIntegrantes">
+                            <table class="w-100" style="border-collapse: collapse;" id="tblIntegrantes">
                                 <tbody>
-                                    <tr class="dgv-row">
-                                        <td style="width: 60%; padding: 0;">
-                                            <input type="text" name="NombresIntegrantes" class="dgv-input" placeholder="Escribe aquí..." autocomplete="off" />
-                                        </td>
-                                        <td style="width: 40%; padding: 0; border-left: 1px solid #444;">
-                                            <input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="..." autocomplete="off" />
-                                        </td>
-                                    </tr>
+                                    @{
+                                        if (Model.Integrantes != null && Model.Integrantes.Count > 0)
+                                        {
+                                            foreach (var intg in Model.Integrantes)
+                                            {
+                                                <tr class="dgv-row">
+                                                    <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" value="@intg.Nombre" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
+                                                    <td style="width: 20%; padding:0; border-left: 1px solid #444;"><input type="text" name="MatriculasIntegrantes" value="@intg.Matricula" class="dgv-input" placeholder="Matrícula..." autocomplete="off" /></td>
+                                                    <td style="width: 40%; padding:0; border-left: 1px solid #444;"><input type="email" name="CorreosIntegrantes" value="@intg.Correo" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
+                                                </tr>
+                                            }
+                                        }
+
+                                        <tr class="dgv-row">
+                                            <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
+                                            <td style="width: 20%; padding:0; border-left: 1px solid #444;"><input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="Matrícula..." autocomplete="off" /></td>
+                                            <td style="width: 40%; padding:0; border-left: 1px solid #444;"><input type="email" name="CorreosIntegrantes" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
+                                        </tr>
+                                    }
                                 </tbody>
                             </table>
                         </div>
@@ -235,71 +187,31 @@
                     <p class="text-secondary small fst-italic flex-shrink-0 mt-2">* Escribe en la última fila para agregar otra.</p>
                 </div>
 
-                <div class="tab-pane fade" id="altar" role="tabpanel">
+                <div class="tab-pane fade" id="altar">
                     <div class="row h-100 g-0">
-
                         <div class="col-md-5 d-flex flex-column h-100 border-end border-secondary pe-3">
                             <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-
                                 <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
-
-                                <label class="text-secondary small">Nombre del Difunto:</label>
-                                <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required autocomplete="off" />
-
-                                <label class="text-secondary small">Niveles:</label>
-                                <select asp-for="Niveles" class="form-select form-control-dark mb-2" required>
-                                    <option value="" selected disabled>-- Seleccionar --</option>
-                                    <option>2 Niveles</option>
-                                    <option>3 Niveles</option>
-                                    <option>7 Niveles</option>
-                                </select>
-
-                                <label class="text-secondary small">Tipo de Altar:</label>
-                                <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required>
-                                    <option value="" selected disabled>-- Seleccionar --</option>
-                                    <option>Tradicional</option>
-                                    <option>Niños</option>
-                                    <option>Mascotas</option>
-                                </select>
-
+                                <label class="text-secondary small">Difunto:</label> <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required autocomplete="off" />
+                                <label class="text-secondary small">Niveles:</label> <select asp-for="Niveles" class="form-select form-control-dark mb-2" required><option value="" selected disabled>-- Seleccionar --</option><option>2 Niveles</option><option>3 Niveles</option><option>7 Niveles</option></select>
+                                <label class="text-secondary small">Tipo:</label> <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required><option value="" selected disabled>-- Seleccionar --</option><option>Tradicional</option><option>Niños</option><option>Mascotas</option></select>
                                 <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist</h5>
-                                <div class="p-2 rounded mb-3" style="background-color: #222; border: 1px solid #444;">
-                                    @await Html.PartialAsync("_ChecklistPartial", Model)
-                                </div>
+                                <div class="p-2 rounded mb-3" style="background-color: #222; border: 1px solid #444;">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
                             </div>
                         </div>
-
                         <div class="col-md-7 d-flex flex-column h-100 ps-4">
-
                             <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0">Calificación</h5>
-
-                            <label class="text-secondary small flex-shrink-0">Hobbies / Temática (Explicación):</label>
-                            <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" required></textarea>
-
+                            <label class="text-secondary small flex-shrink-0">Hobbies / Temática:</label> <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" required></textarea>
                             <div class="flex-shrink-0 bg-dark p-3 rounded border border-secondary">
-                                <div class="row mb-2 align-items-center">
-                                    <div class="col-5"><label class="text-secondary">Tradición (0-10):</label></div>
-                                    <div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div>
-                                </div>
-                                <div class="row mb-2 align-items-center">
-                                    <div class="col-5"><label class="text-warning fw-bold">Personalización (0-10):</label></div>
-                                    <div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div>
-                                </div>
-                                <div class="row mb-3 align-items-center">
-                                    <div class="col-5"><label class="text-secondary">Estética (0-10):</label></div>
-                                    <div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div>
-                                </div>
-
-                                <button type="submit" class="btn w-100 py-3 fs-5 shadow fw-bold text-white" style="background-color: #6f42c1; border: none;">
-                                    GUARDAR EVALUACIÓN
-                                </button>
+                                <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                                <div class="row mb-2"><div class="col-5"><label class="text-warning fw-bold">Personalización (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                                <div class="row mb-3"><div class="col-5"><label class="text-secondary">Estética (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                                <button type="submit" class="btn w-100 py-3 fs-5 shadow fw-bold text-white" style="background-color: #6f42c1;">GUARDAR EVALUACIÓN</button>
                                 <input type="hidden" asp-for="BonusTematicos" id="BonusTotal" value="0" />
                             </div>
                         </div>
-
                     </div>
                 </div>
-
             </div>
         </div>
     </form>
@@ -307,48 +219,21 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // --- 1. Lógica para Grid Infinito ---
         const tableBody = document.querySelector("#tblIntegrantes tbody");
         if (tableBody) {
             tableBody.addEventListener("input", function (e) {
                 const target = e.target;
                 if (target.tagName !== "INPUT") return;
-
                 const currentRow = target.closest("tr");
                 const rows = tableBody.querySelectorAll("tr");
-                const lastRow = rows[rows.length - 1];
-
-                // Si se escribe en la última fila, agregar una nueva
-                if (currentRow === lastRow && target.value.trim() !== "") {
+                if (currentRow === rows[rows.length - 1] && target.value.trim() !== "") {
                     const clone = currentRow.cloneNode(true);
-                    const inputs = clone.querySelectorAll("input");
-                    inputs.forEach(input => input.value = ""); // Limpiar inputs
+                    clone.querySelectorAll("input").forEach(input => input.value = "");
                     tableBody.appendChild(clone);
                 }
             });
         }
     });
-
-    // --- 2. Lógica para Bonus (Checkboxes) ---
-    function toggleBonus(chk) {
-        // Busca el div oculto "bonus-area" hermano del checkbox
-        let bonusDiv = chk.parentElement.querySelector('.bonus-area');
-        if (bonusDiv) {
-            if (chk.checked) {
-                bonusDiv.classList.remove('d-none');
-            } else {
-                bonusDiv.classList.add('d-none');
-                let innerChk = bonusDiv.querySelector('input');
-                if(innerChk) innerChk.checked = false;
-                calcBonus();
-            }
-        }
-    }
-
-    function calcBonus() {
-        // Cuenta cuántos checks con clase 'bonus-check' están activos
-        let count = document.querySelectorAll('.bonus-check:checked').length;
-        let totalInput = document.getElementById('BonusTotal');
-        if(totalInput) totalInput.value = count;
-    }
+    function toggleBonus(chk) { let area = chk.parentElement.querySelector('.bonus-area'); if(chk.checked) area.classList.remove('d-none'); else { area.classList.add('d-none'); area.querySelector('input').checked = false; calcBonus(); } }
+    function calcBonus() { document.getElementById('BonusTotal').value = document.querySelectorAll('.bonus-check:checked').length; }
 </script>

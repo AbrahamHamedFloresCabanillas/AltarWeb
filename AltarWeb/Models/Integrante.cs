@@ -9,10 +9,12 @@ namespace AltarWeb.Models
         public int Id { get; set; }
         public int EvaluacionId { get; set; }
 
-        public string Nombre { get; set; } = string.Empty; // Inicializado
-        public string Matricula { get; set; } = string.Empty; // Inicializado
+        public string Nombre { get; set; } = string.Empty;
+        public string Matricula { get; set; } = string.Empty;
+
+        public string Correo { get; set; } = string.Empty;
 
         [ForeignKey("EvaluacionId")]
-        public virtual Evaluacion Evaluacion { get; set; } = null!; // EF lo llenará
+        public virtual Evaluacion Evaluacion { get; set; } = null!;
     }
 }

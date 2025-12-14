@@ -16,6 +16,20 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        AltarWeb.Models.SeedData.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al insertar el Juez inicial.");
+    }
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

@@ -20,15 +20,18 @@
         box-shadow: 0 0 15px rgba(0,0,0,0.5);
     }
 
-    /* Feedback visual para doble clic */
     tbody tr:hover {
         background-color: rgba(255, 152, 0, 0.1) !important;
         cursor: pointer;
     }
 </style>
 
-<div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-info text-center m-0 fw-bold rounded-0">@TempData["Mensaje"]</div>
+}
 
+<div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
         <div class="d-flex align-items-center">
             <span style="font-size: 1.5rem; margin-right: 10px;">🎓</span>
@@ -36,23 +39,23 @@
         </div>
         <div>
             <a href="/Evaluacion/Crear" class="btn btn-success btn-flat me-2">+ Nueva Evaluación</a>
-            <a href="/Home/Menu" class="btn btn-red btn-flat">Regresar</a>
+            <a href="/Home/Menu" class="btn btn-danger btn-flat">Regresar</a>
         </div>
     </div>
 
     <div class="main-panel p-4">
-        <p class="text-silver mb-3 flex-shrink-0">Haz <b>doble clic</b> en una fila para ver el detalle completo.</p>
+        <p class="text-silver mb-3 flex-shrink-0">Haz <b>doble clic</b> para ver detalle o usa el botón 📧 para enviar resultados.</p>
 
         <div class="flex-grow-1" style="overflow-y: auto; border: 1px solid #444;">
             <table class="table-theme w-100">
                 <thead style="position: sticky; top: 0; background-color: #333337; z-index: 1;">
                     <tr>
-                        <th style="width: 30%;">Equipo</th>
+                        <th style="width: 25%;">Equipo</th>
                         <th style="width: 20%;">Difunto</th>
-                        <th style="width: 15%;">Juez Evaluador</th>
+                        <th style="width: 15%;">Juez</th>
                         <th style="width: 10%;">Calif.</th>
                         <th style="width: 15%;">Fecha</th>
-                        <th style="width: 10%; text-align: center;">Acción</th>
+                        <th style="width: 15%; text-align: center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,10 +63,8 @@
                     {
                         <tr ondblclick="verDetalle('@item.Id')">
                             <td><span class="text-orange fw-bold">@item.NombreEquipo</span></td>
-
                             <td><span class="text-white">@item.NombreDifunto</span></td>
                             <td><span class="text-secondary small fst-italic">@(item.Juez?.Usuario ?? "N/A")</span></td>
-
                             <td>
                                 @if (item.NotaFinal >= 8.0m)
                                 {
@@ -71,16 +72,24 @@
                                 }
                                 else if (item.NotaFinal >= 6.0m)
                                 {
+
                                     <span class="text-warning fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else
                                 {
+
                                     <span class="text-danger fw-bold">@item.NotaFinal.ToString("F1")</span>
                                 }
                             </td>
                             <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>
                             <td class="text-center">
-                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-success btn-sm fw-bold px-3 shadow-sm">VER</a>
+                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-primary btn-sm fw-bold px-2 shadow-sm me-1" title="Ver Detalle">VER</a>
+                                <a href="/Evaluacion/EnviarResultados/@item.Id"
+                                   class="btn btn-secondary btn-sm fw-bold px-2 shadow-sm"
+                                   title="Enviar Resultados por Correo"
+                                   onclick="return confirm('¿Enviar resultados y constancia a los integrantes de @item.NombreEquipo?')">
+                                    📧
+                                </a>
                             </td>
                         </tr>
                     }
@@ -95,8 +104,5 @@
 </div>
 
 <script>
-    function verDetalle(id) {
-        // Redirecciona a la vista de detalle
-        window.location.href = '/Evaluacion/Detalle/' + id;
-    }
+    function verDetalle(id) { window.location.href = '/Evaluacion/Detalle/' + id; }
 </script>

@@ -1,147 +1,292 @@
 ﻿using AltarWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace AltarWeb.Controllers
 {
     public class EvaluacionController : Controller
     {
         private readonly AltarDbContext _context;
+        private readonly IWebHostEnvironment _host;
 
-        public EvaluacionController(AltarDbContext context)
+        public EvaluacionController(AltarDbContext context, IWebHostEnvironment host)
         {
             _context = context;
+            _host = host;
+            QuestPDF.Settings.License = LicenseType.Community;
         }
 
-        // GET: Mostrar formulario vacío
         public IActionResult Crear()
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
             return View(new Evaluacion());
         }
 
-        // POST: Recibir datos, validar y guardar
         [HttpPost]
-        public IActionResult Crear(Evaluacion eval, List<string> NombresIntegrantes, List<string> MatriculasIntegrantes)
+        public IActionResult Crear(Evaluacion eval, List<string> NombresIntegrantes, List<string> MatriculasIntegrantes, List<string> CorreosIntegrantes)
         {
-            // 1. Validar Sesión
+            // 1. Asignar Juez
             int? juezId = HttpContext.Session.GetInt32("JuezId");
             if (juezId == null) return RedirectToAction("Login", "Acceso");
             eval.JuezId = juezId.Value;
 
-            // --- VALIDACIÓN 1: NOMBRE DE EQUIPO DUPLICADO ---
-            // Buscamos si ya existe alguna evaluación con este nombre exacto
-            bool equipoExiste = _context.Evaluaciones.Any(e => e.NombreEquipo == eval.NombreEquipo);
+            ModelState.Remove("Juez");
+            ModelState.Remove("JuezId");
 
-            if (equipoExiste)
+            // Helper para recargar integrantes (Optimizado para evitar referencias nulas)
+            void RecargarIntegrantes()
             {
-                ViewBag.Error = $"El nombre de equipo '{eval.NombreEquipo}' ya está registrado. Por favor elige otro nombre.";
-                return View(eval); // Detenemos el guardado
-            }
-
-            // --- VALIDACIÓN 2: MATRÍCULAS DUPLICADAS ---
-            if (MatriculasIntegrantes != null)
-            {
-                // A. Duplicados en la misma lista actual (escribió la misma dos veces)
-                var duplicadosEnLista = MatriculasIntegrantes
-                    .Where(m => !string.IsNullOrWhiteSpace(m))
-                    .GroupBy(x => x)
-                    .Where(g => g.Count() > 1)
-                    .Select(g => g.Key)
-                    .ToList();
-
-                if (duplicadosEnLista.Any())
+                eval.Integrantes = new List<Integrante>();
+                if (NombresIntegrantes != null)
                 {
-                    ViewBag.Error = $"Error: Escribiste la matrícula '{duplicadosEnLista.First()}' dos veces en este mismo equipo.";
-                    return View(eval);
-                }
-
-                // B. Duplicados en la Base de Datos (Ya inscrito en otro equipo)
-                foreach (var mat in MatriculasIntegrantes)
-                {
-                    if (!string.IsNullOrWhiteSpace(mat))
+                    for (int i = 0; i < NombresIntegrantes.Count; i++)
                     {
-                        var alumnoExistente = _context.Integrantes
-                            .Include(i => i.Evaluacion)
-                            .FirstOrDefault(i => i.Matricula == mat);
-
-                        if (alumnoExistente != null)
+                        if (!string.IsNullOrWhiteSpace(NombresIntegrantes[i]))
                         {
-                            ViewBag.Error = $"El alumno {alumnoExistente.Nombre} de matrícula {alumnoExistente.Matricula} ya está inscrito en el equipo {alumnoExistente.Evaluacion.NombreEquipo}.";
-                            return View(eval);
+                            string matricula = (MatriculasIntegrantes != null && MatriculasIntegrantes.Count > i)
+                                ? MatriculasIntegrantes[i]?.Trim() ?? ""
+                                : "";
+
+                            string correo = (CorreosIntegrantes != null && CorreosIntegrantes.Count > i)
+                                ? CorreosIntegrantes[i]?.Trim() ?? ""
+                                : "";
+
+                            eval.Integrantes.Add(new Integrante
+                            {
+                                Nombre = NombresIntegrantes[i].Trim(),
+                                Matricula = matricula,
+                                Correo = correo
+                            });
                         }
                     }
                 }
             }
 
-            // 3. Calcular Puntaje
-            int encontrados = 0;
-            if (eval.ChkFoto) encontrados++;
-            if (eval.ChkVelas) encontrados++;
-            if (eval.ChkFlor) encontrados++;
-            if (eval.ChkPapel) encontrados++;
-            if (eval.ChkPan) encontrados++;
-            if (eval.ChkAgua) encontrados++;
-            if (eval.ChkSal) encontrados++;
-            if (eval.ChkIncienso) encontrados++;
-            if (eval.ChkCalaveritas) encontrados++;
-            if (eval.ChkObjetos) encontrados++;
-
-            decimal notaTrad = Math.Min(10, (encontrados + eval.NotaTradicion) / 2);
-            decimal notaPers = Math.Min(10, eval.NotaPersonalizacion + (eval.BonusTematicos * 0.5m));
-
-            eval.NotaFinal = (notaTrad * 0.3m) + (notaPers * 0.4m) + (eval.NotaEstetica * 0.3m);
-            eval.Fecha = DateTime.Now;
-
-            // 4. Preparar Integrantes
-            if (NombresIntegrantes != null)
+            // 2. VALIDACIONES
+            // A. Nombre de Equipo (Manejo seguro de nulos con ?.)
+            if (_context.Evaluaciones.Any(e => e.NombreEquipo == (eval.NombreEquipo != null ? eval.NombreEquipo.Trim() : "")))
             {
-                for (int i = 0; i < NombresIntegrantes.Count; i++)
+                TempData["Error"] = $"El equipo '{eval.NombreEquipo}' ya existe.";
+                RecargarIntegrantes();
+                return View(eval);
+            }
+
+            // B. Matrículas duplicadas
+            if (MatriculasIntegrantes != null)
+            {
+                // Limpieza de lista para evitar errores por espacios
+                var listaLimpia = MatriculasIntegrantes
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .Select(m => m.Trim())
+                    .ToList();
+
+                // Validación local (en el formulario actual)
+                // Preferencia de Count > 1 sobre Any() por rendimiento y claridad
+                var dups = listaLimpia.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+
+                if (dups.Count != 0)
                 {
-                    if (!string.IsNullOrWhiteSpace(NombresIntegrantes[i]))
+                    TempData["Error"] = $"Escribiste la matrícula {dups.First()} dos veces.";
+                    RecargarIntegrantes();
+                    return View(eval);
+                }
+
+                // Validación en Base de Datos
+                foreach (var mat in listaLimpia)
+                {
+                    var existe = _context.Integrantes.Include(i => i.Evaluacion).FirstOrDefault(i => i.Matricula == mat);
+                    if (existe != null)
                     {
-                        eval.Integrantes.Add(new Integrante
-                        {
-                            Nombre = NombresIntegrantes[i],
-                            Matricula = MatriculasIntegrantes[i]
-                        });
+                        string nomEq = existe.Evaluacion?.NombreEquipo ?? "otro equipo";
+                        TempData["Error"] = $"El alumno {existe.Nombre} ({mat}) ya está registrado en '{nomEq}'.";
+                        RecargarIntegrantes();
+                        return View(eval);
                     }
                 }
             }
 
+            // 3. CÁLCULOS
+            int enc = 0;
+            if (eval.ChkFoto) enc++; if (eval.ChkVelas) enc++; if (eval.ChkFlor) enc++; if (eval.ChkPapel) enc++;
+            if (eval.ChkPan) enc++; if (eval.ChkAgua) enc++; if (eval.ChkSal) enc++; if (eval.ChkIncienso) enc++;
+            if (eval.ChkCalaveritas) enc++; if (eval.ChkObjetos) enc++;
+
+            decimal notaTrad = Math.Min(10, (enc + eval.NotaTradicion) / 2);
+            decimal notaPers = Math.Min(10, eval.NotaPersonalizacion + (eval.BonusTematicos * 0.5m));
+            eval.NotaFinal = (notaTrad * 0.3m) + (notaPers * 0.4m) + (eval.NotaEstetica * 0.3m);
+            eval.Fecha = DateTime.Now;
+
+            RecargarIntegrantes();
+
             if (eval.Integrantes.Count == 0)
             {
-                ViewBag.Error = "Debes agregar al menos un integrante al equipo.";
+                TempData["Error"] = "Agrega al menos un integrante.";
                 return View(eval);
             }
 
-            // 5. Guardar en BD
+            // 4. GUARDAR
             if (ModelState.IsValid)
             {
-                _context.Evaluaciones.Add(eval);
-                _context.SaveChanges();
-                return RedirectToAction("Detalle", new { id = eval.Id });
-            }
+                try
+                {
+                    eval.NombreEquipo = eval.NombreEquipo?.Trim() ?? "Equipo Sin Nombre";
 
-            return View(eval);
+                    _context.Evaluaciones.Add(eval);
+                    _context.SaveChanges();
+
+                    if (eval.NotaFinal >= 9.0m)
+                    {
+                        try { ProcesarEnvioDeCorreos(eval); }
+                        catch (Exception ex) { Console.WriteLine("Error Correo: " + ex.Message); }
+                    }
+
+                    return RedirectToAction("Detalle", new { id = eval.Id });
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Error al guardar en BD: " + (ex.InnerException?.Message ?? ex.Message);
+                    return View(eval);
+                }
+            }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["Error"] = "Faltan datos: " + string.Join(", ", errors);
+                return View(eval);
+            }
         }
 
-        // GET: Detalle (Consulta)
         public IActionResult Detalle(int id)
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
-
-            var eval = _context.Evaluaciones
-                .Include(e => e.Integrantes)
-                .Include(e => e.Juez)
-                .FirstOrDefault(e => e.Id == id);
-
+            var eval = _context.Evaluaciones.Include(e => e.Integrantes).Include(e => e.Juez).FirstOrDefault(e => e.Id == id);
             if (eval == null) return NotFound();
-
+            if (TempData["Mensaje"] != null) ViewBag.Mensaje = TempData["Mensaje"];
             return View(eval);
+        }
+
+        public IActionResult EnviarResultados(int id)
+        {
+            var eval = _context.Evaluaciones.Include(e => e.Integrantes).FirstOrDefault(e => e.Id == id);
+            if (eval != null)
+            {
+                try
+                {
+                    bool enviado = ProcesarEnvioDeCorreos(eval);
+                    TempData["Mensaje"] = enviado ? "✅ Correos enviados." : "❌ Error SMTP.";
+                }
+                catch { TempData["Mensaje"] = "❌ Error al intentar enviar."; }
+            }
+            return RedirectToAction("Historial", "Home");
+        }
+
+        private bool ProcesarEnvioDeCorreos(Evaluacion eval)
+        {
+            var pdfBytes = GenerarPdfBytes(eval);
+
+            // 'using' simplificado (sin llaves)
+            using var smtp = new SmtpClient("smtp.gmail.com", 587);
+            smtp.EnableSsl = true;
+            smtp.Credentials = new NetworkCredential(
+                "abrahamhamed05@gmail.com",
+                "rhbl djvv fyoh slth"
+            );
+
+            using var mail = new MailMessage();
+            mail.From = new MailAddress("abrahamhamed05@gmail.com", "Concurso Altares FIM");
+            mail.Subject = $"Resultados: {eval.NombreEquipo}";
+            mail.Body = $"Hola equipo {eval.NombreEquipo},\n\nSu calificación final es: {eval.NotaFinal:F1}/10.\n\nAdjunto encontrarán su Constancia de Participación.\n\n¡Gracias por participar!";
+
+            // Stream simplificado
+            using var stream = new MemoryStream(pdfBytes);
+            mail.Attachments.Add(new Attachment(stream, $"Constancia_{eval.NombreEquipo}.pdf"));
+
+            bool hayDestinatarios = false;
+            foreach (var i in eval.Integrantes)
+            {
+                if (!string.IsNullOrWhiteSpace(i.Correo))
+                {
+                    mail.To.Add(i.Correo);
+                    hayDestinatarios = true;
+                }
+            }
+
+            if (hayDestinatarios) { smtp.Send(mail); return true; }
+            return false;
+        }
+
+        private byte[] GenerarPdfBytes(Evaluacion eval)
+        {
+            string rutaCatrina = Path.Combine(_host.WebRootPath, "images", "catrina.png");
+            string rutaUABC = Path.Combine(_host.WebRootPath, "images", "logo_uabc.png");
+            string rutaFIM = Path.Combine(_host.WebRootPath, "images", "logo_fim.png");
+            string rutaAPFI = Path.Combine(_host.WebRootPath, "images", "logo_apfi.png");
+
+            var documento = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.Letter.Landscape());
+                    page.Margin(1.0f, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+
+                    if (System.IO.File.Exists(rutaCatrina))
+                    {
+                        page.Foreground().AlignLeft().AlignBottom().Height(12.5f, Unit.Centimetre).TranslateX(-1.5f, Unit.Centimetre).Image(rutaCatrina).FitArea();
+                    }
+
+                    page.Content().Column(col =>
+                    {
+                        float anchoLogos = 5.5f;
+                        col.Item().Row(row =>
+                        {
+                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(izq => { if (System.IO.File.Exists(rutaUABC)) izq.RelativeItem().AlignCenter().Width(2.3f, Unit.Centimetre).Image(rutaUABC).FitArea(); });
+                            row.RelativeItem().PaddingHorizontal(0.5f, Unit.Centimetre).AlignMiddle().Column(header => {
+                                header.Item().AlignCenter().Text("UNIVERSIDAD AUTÓNOMA DE BAJA CALIFORNIA").Bold().FontSize(16).FontColor("#00703c");
+                                header.Item().AlignCenter().Text("FACULTAD DE INGENIERÍA").Bold().FontSize(14);
+                                header.Item().AlignCenter().Text("ASOCIACIÓN DE PROFESORES DE LA FACULTAD DE INGENIERÍA (APFI)").FontSize(10);
+                            });
+                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(logosDer => {
+                                if (System.IO.File.Exists(rutaFIM)) logosDer.RelativeItem(1.0f).PaddingTop(5).PaddingRight(5).Image(rutaFIM).FitArea();
+                                if (System.IO.File.Exists(rutaAPFI)) logosDer.RelativeItem(1.5f).Image(rutaAPFI).FitArea();
+                            });
+                        });
+                        col.Item().Height(0.5f, Unit.Centimetre);
+                        col.Item().PaddingHorizontal(4.0f, Unit.Centimetre).Column(textoCentral => {
+                            textoCentral.Item().AlignCenter().Text("OTORGA LA PRESENTE").FontSize(12).LetterSpacing(0.2f);
+                            textoCentral.Item().AlignCenter().Text("CONSTANCIA DE AGRADECIMIENTO").Bold().FontSize(24).FontColor(Colors.Black);
+                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
+                            textoCentral.Item().AlignCenter().Text($"A EL EQUIPO: \"{eval.NombreEquipo.ToUpper()}\"").Bold().FontSize(22).FontColor("#b08d55");
+                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
+                            textoCentral.Item().Text(text => {
+                                text.Justify(); text.ParagraphSpacing(5); text.DefaultTextStyle(x => x.FontSize(12));
+                                text.Span("Por su valiosa participación y creatividad en la elaboración del Altar de Muertos dedicado a ");
+                                text.Span($"{eval.NombreDifunto}").Bold();
+                                text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingeniería de la Universidad Autónoma de Baja California.");
+                                text.EmptyLine();
+                                text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservación de nuestras tradiciones mexicanas.");
+                            });
+                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
+                            textoCentral.Item().AlignCenter().Text($"Mexicali, Baja California a {DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))}").Italic();
+                            textoCentral.Item().AlignCenter().Text("\"Por la realización plena del ser\"").Italic().FontSize(9).FontColor(Colors.Grey.Darken2);
+                            textoCentral.Item().PaddingTop(0.5f, Unit.Centimetre).Row(row => {
+                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Dra. Araceli Celina Justo López").Bold().FontSize(9); firm.Item().AlignCenter().Text("Directora de la Facultad de Ingeniería").FontSize(8); });
+                                row.ConstantItem(2.0f, Unit.Centimetre);
+                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Ing. María Carmiña Reyes Revelez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Presidenta de la APFI").FontSize(8); });
+                            });
+                        });
+                    });
+                });
+            });
+
+            // CORRECCIÓN CRÍTICA AQUÍ: Se agregó 'return'
+            return documento.GeneratePdf();
         }
     }
 }

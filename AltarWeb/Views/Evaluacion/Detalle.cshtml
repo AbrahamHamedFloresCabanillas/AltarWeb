@@ -4,22 +4,18 @@
 }
 
 <style>
-    /* === 1. ESTRUCTURA BASE (Bloqueo de Scroll) === */
     html, body {
         height: 100%;
         margin: 0;
-        padding: 0;
-        overflow: hidden; /* Cero scroll en ventana */
+        overflow: hidden;
         background-color: #1e1e1e;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    /* === 2. CONTENEDOR PRINCIPAL === */
     .app-container {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        width: 100%;
         padding: 20px;
         box-sizing: border-box;
     }
@@ -30,12 +26,10 @@
         flex-grow: 1;
         background-color: #2d2d30;
         border: 1px solid #555;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
         overflow: hidden;
         position: relative;
     }
 
-    /* === 3. PESTAÑAS (TABS) === */
     .tabs-header {
         background-color: #252526;
         padding: 10px 20px 0 20px;
@@ -43,28 +37,21 @@
         flex-shrink: 0;
     }
 
-    .nav-tabs {
-        border-bottom: none;
+    .nav-tabs .nav-link {
+        color: #aaa;
+        border: 1px solid transparent;
     }
 
-        .nav-tabs .nav-link {
-            color: #aaa;
-            border: 1px solid transparent;
-            border-radius: 4px 4px 0 0;
+        .nav-tabs .nav-link.active {
+            background-color: #2d2d30;
+            color: #ff9800;
+            border-color: #555 #555 #2d2d30;
+            font-weight: bold;
         }
 
-            .nav-tabs .nav-link.active {
-                background-color: #2d2d30;
-                color: #ff9800;
-                border-color: #555 #555 #2d2d30;
-                font-weight: bold;
-            }
-
-    /* === 4. ÁREA DE CONTENIDO (SOLUCIÓN BUG) === */
     .tab-content {
         position: relative;
         flex-grow: 1;
-        width: 100%;
         height: 100%;
         overflow: hidden;
     }
@@ -74,7 +61,7 @@
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0; /* FUERZA LLENADO */
+        bottom: 0;
         padding: 20px;
         overflow: hidden;
         display: none;
@@ -85,21 +72,17 @@
             display: flex !important;
         }
 
-    /* === 5. ESTILOS READONLY OSCUROS === */
     .form-control-dark {
         background-color: #3e3e42;
         border: 1px solid #555;
         color: white;
     }
 
-        .form-control-dark[readonly], .form-control-dark:disabled {
-            background-color: #252526; /* Más oscuro para readonly */
+        .form-control-dark[readonly] {
+            background-color: #252526;
             color: #ccc;
-            opacity: 1;
-            cursor: default;
         }
 
-    /* Grid Readonly */
     .dgv-wrapper {
         display: flex;
         flex-direction: column;
@@ -132,67 +115,47 @@
         padding: 10px;
         color: #ddd;
     }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #2d2d30;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 5px;
-    }
 </style>
 
 <div class="app-container">
-
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
-        <div class="d-flex align-items-center">
-            <span style="font-size: 1.5rem; margin-right: 10px;">🔍</span>
-            <h2 class="text-white m-0">Consulta de Evaluación</h2>
-        </div>
+        <h2 class="text-white m-0">🔍 Consulta de Evaluación</h2>
         <a href="/Home/Historial" class="btn btn-danger rounded-0 px-4 fw-bold">REGRESAR</a>
     </div>
 
-    <div class="panel-principal">
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-success text-center fw-bold m-0 rounded-0">@ViewBag.Mensaje</div>
+    }
 
+    <div class="panel-principal">
         <div class="tabs-header">
             <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">1. Datos del Equipo</button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">2. Evaluación de Altar</button>
-                </li>
+                <li class="nav-item"><button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo">1. Datos del Equipo</button></li>
+                <li class="nav-item"><button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar">2. Evaluación de Altar</button></li>
             </ul>
         </div>
 
         <div class="tab-content" id="myTabContent">
-
             <div class="tab-pane fade show active" id="equipo">
-
                 <div class="mb-3 flex-shrink-0">
                     <label class="text-orange fw-bold mb-1">Nombre del Equipo:</label>
                     <input value="@Model.NombreEquipo" class="form-control form-control-dark rounded-0" style="max-width: 500px; font-weight: bold; font-size: 1.2rem;" readonly />
                 </div>
-
                 <label class="text-secondary mb-1 flex-shrink-0">Lista de Integrantes:</label>
-
                 <div class="dgv-wrapper">
                     <div class="dgv-header">
-                        <div style="width: 60%;">Nombre Completo</div>
-                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
+                        <div style="width: 40%;">Nombre Completo</div>
+                        <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;">Matrícula</div>
+                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;">Correo</div>
                     </div>
                     <div class="dgv-body">
                         @foreach (var intg in Model.Integrantes)
                         {
                             <div class="dgv-row">
-                                <div class="dgv-cell" style="width: 60%;">@intg.Nombre</div>
-                                <div class="dgv-cell" style="width: 40%; border-left: 1px solid #444;">@intg.Matricula</div>
+                                <div class="dgv-cell" style="width: 40%;">@intg.Nombre</div>
+                                <div class="dgv-cell" style="width: 20%; border-left: 1px solid #444;">@intg.Matricula</div>
+                                <div class="dgv-cell" style="width: 40%; border-left: 1px solid #444;">@intg.Correo</div>
                             </div>
                         }
                     </div>
@@ -201,76 +164,40 @@
 
             <div class="tab-pane fade" id="altar">
                 <div class="row h-100 g-0">
-
                     <div class="col-md-5 d-flex flex-column h-100 border-end border-secondary pe-3">
                         <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-
                             <h5 class="text-white border-bottom border-secondary pb-2 mb-3">Datos Generales</h5>
-                            <label class="text-secondary small">Difunto:</label>
-                            <input value="@Model.NombreDifunto" class="form-control form-control-dark mb-2" readonly />
-                            <label class="text-secondary small">Niveles:</label>
-                            <input value="@Model.Niveles" class="form-control form-control-dark mb-2" readonly />
-                            <label class="text-secondary small">Tipo:</label>
-                            <input value="@Model.TipoAltar" class="form-control form-control-dark mb-4" readonly />
-
+                            <label class="text-secondary small">Difunto:</label> <input value="@Model.NombreDifunto" class="form-control form-control-dark mb-2" readonly />
+                            <label class="text-secondary small">Niveles:</label> <input value="@Model.Niveles" class="form-control form-control-dark mb-2" readonly />
+                            <label class="text-secondary small">Tipo:</label> <input value="@Model.TipoAltar" class="form-control form-control-dark mb-4" readonly />
                             <h5 class="text-white border-bottom border-secondary pb-2 mb-2">Checklist Realizado</h5>
                             <div class="p-3 mb-3 border border-secondary bg-dark rounded">
                                 @{
-                                    void RenderCheck(string label, bool val)
+                                    void RenderCheck(string l, bool v)
                                     {
-                                        <div class="form-check mb-1">
-                                            <input class="form-check-input bg-secondary border-0" type="checkbox" checked="@val" disabled>
-                                            <label class="form-check-label text-silver" style="opacity: 1;">@label</label>
-                                        </div>
+                                        <div class="form-check mb-1"><input class="form-check-input bg-secondary border-0" type="checkbox" checked="@v" disabled><label class="form-check-label text-silver">@l</label></div>
                                     }
-                                    RenderCheck("Foto del Difunto", Model.ChkFoto);
-                                    RenderCheck("Velas / Luz", Model.ChkVelas);
-                                    RenderCheck("Flor de Cempasúchil", Model.ChkFlor);
-                                    RenderCheck("Papel Picado", Model.ChkPapel);
-                                    RenderCheck("Pan de Muerto", Model.ChkPan);
-                                    RenderCheck("Vaso de Agua", Model.ChkAgua);
-                                    RenderCheck("Sal", Model.ChkSal);
-                                    RenderCheck("Incienso / Copal", Model.ChkIncienso);
-                                    RenderCheck("Calaveritas", Model.ChkCalaveritas);
-                                    RenderCheck("Objetos Personales", Model.ChkObjetos);
+
                                 }
-                                <div class="mt-3 pt-2 border-top border-secondary text-orange small">
-                                    Bonus Detectados: @Model.BonusTematicos
-                                </div>
+                                @{
+                                    RenderCheck("Foto", Model.ChkFoto); RenderCheck("Velas", Model.ChkVelas); RenderCheck("Flor", Model.ChkFlor); RenderCheck("Papel", Model.ChkPapel); RenderCheck("Pan", Model.ChkPan); RenderCheck("Agua", Model.ChkAgua); RenderCheck("Sal", Model.ChkSal); RenderCheck("Incienso", Model.ChkIncienso); RenderCheck("Calaveritas", Model.ChkCalaveritas); RenderCheck("Objetos", Model.ChkObjetos);
+                                }
+                                <div class="mt-3 pt-2 border-top border-secondary text-orange small">Bonus Detectados: @Model.BonusTematicos</div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-7 d-flex flex-column h-100 ps-4">
-
                         <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0">Resultados</h5>
-
-                        <label class="text-secondary small flex-shrink-0">Hobbies / Temática:</label>
-                        <textarea class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" readonly>@Model.Hobbies</textarea>
-
+                        <label class="text-secondary small flex-shrink-0">Hobbies:</label> <textarea class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" readonly>@Model.Hobbies</textarea>
                         <div class="flex-shrink-0">
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-5"><label class="text-secondary">Tradición:</label></div>
-                                <div class="col-7"><input value="@Model.NotaTradicion" class="form-control form-control-dark text-center" readonly /></div>
-                            </div>
-                            <div class="row mb-2 align-items-center">
-                                <div class="col-5"><label class="text-orange fw-bold">Personalización:</label></div>
-                                <div class="col-7"><input value="@Model.NotaPersonalizacion" class="form-control form-control-dark text-center" readonly /></div>
-                            </div>
-                            <div class="row mb-4 align-items-center">
-                                <div class="col-5"><label class="text-secondary">Estética:</label></div>
-                                <div class="col-7"><input value="@Model.NotaEstetica" class="form-control form-control-dark text-center" readonly /></div>
-                            </div>
-
-                            <div class="p-4 text-center rounded shadow" style="background-color: #2E8B57; color: white;">
-                                <h2 class="m-0 fw-bold">NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2>
-                            </div>
+                            <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición:</label></div><div class="col-7"><input value="@Model.NotaTradicion" class="form-control form-control-dark text-center" readonly /></div></div>
+                            <div class="row mb-2"><div class="col-5"><label class="text-orange fw-bold">Personalización:</label></div><div class="col-7"><input value="@Model.NotaPersonalizacion" class="form-control form-control-dark text-center" readonly /></div></div>
+                            <div class="row mb-4"><div class="col-5"><label class="text-secondary">Estética:</label></div><div class="col-7"><input value="@Model.NotaEstetica" class="form-control form-control-dark text-center" readonly /></div></div>
+                            <div class="p-4 text-center rounded shadow" style="background-color: #2E8B57; color: white;"><h2 class="m-0 fw-bold">NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2></div>
                         </div>
                     </div>
-
                 </div>
             </div>
-
         </div>
     </div>
 </div>
