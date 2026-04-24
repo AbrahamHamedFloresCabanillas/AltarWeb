@@ -1,57 +1,110 @@
+/* =========================================
+   ESTILOS BASE INTEGRADOS CON PALETA OFICIAL
+   ========================================= */
+
+:root {
+    /* Mapeo de variables de Bootstrap a la paleta oficial */
+    --bs-primary: var(--color-primario);
+    --bs-success: var(--color-primario);
+    --bs-warning: var(--color-secundario);
+    --bs-secondary: var(--color-secundario);
+    --bs-info: var(--color-secundario);
+    --bs-danger: #8A252C; /* Rojo institucional complementario */
+    --bs-dark: var(--color-fondo);
+    --bs-body-bg: var(--color-fondo);
+    --bs-body-color: var(--color-texto-principal);
+}
+
 /* RESET Y FONDO GENERAL */
 body {
-    background-color: #1e1e1e; /* Fondo negro suave */
-    color: white;
+    background-color: var(--color-fondo) !important;
+    color: var(--color-texto-principal) !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.bg-dark {
+    background-color: var(--color-fondo) !important;
+}
+
+/* SOBRESCRIBIR BOTONES DE BOOTSTRAP */
+.btn-primary, .btn-success {
+    background-color: var(--color-primario) !important;
+    border-color: var(--color-primario-hover) !important;
+    color: var(--color-texto-boton) !important;
+}
+.btn-primary:hover, .btn-success:hover {
+    background-color: var(--color-primario-hover) !important;
+    border-color: var(--color-primario-hover) !important;
+}
+
+.btn-secondary, .btn-warning, .btn-info {
+    background-color: var(--color-secundario) !important;
+    border-color: var(--color-secundario-hover) !important;
+    color: var(--color-texto-boton) !important;
+}
+.btn-secondary:hover, .btn-warning:hover, .btn-info:hover {
+    background-color: var(--color-secundario-hover) !important;
+    border-color: var(--color-secundario-hover) !important;
+}
+
+.btn-danger {
+    background-color: var(--bs-danger) !important;
+    border-color: #731F25 !important;
+    color: white !important;
+}
+
+.btn-dark {
+    background-color: var(--color-superficie) !important;
+    border-color: var(--color-borde) !important;
+    color: var(--color-texto-principal) !important;
+}
+.btn-dark:hover {
+    background-color: var(--color-primario) !important;
+    color: white !important;
 }
 
 /* CONTENEDORES (Paneles) */
-.panel-dark {
-    background-color: #2d2d30; /* Gris VS Code */
-    border: 1px solid #3e3e42;
-    padding: 20px;
-    border-radius: 0; /* Bordes cuadrados como WinForms */
+.panel-dark, .card, .modal-content {
+    background-color: var(--color-superficie) !important;
+    border: 1px solid var(--color-borde) !important;
+    color: var(--color-texto-principal) !important;
+    box-shadow: var(--sombra-superficie);
 }
 
 /* TEXTOS */
-.text-orange {
-    color: #ff9800 !important;
+.text-orange, .text-warning {
+    color: var(--color-secundario) !important;
 }
 
-.text-silver {
-    color: #cccccc !important;
+.text-silver, .text-secondary {
+    color: var(--color-texto-secundario) !important;
 }
 
 .lbl-form {
-    color: #silver;
+    color: var(--color-texto-secundario);
     font-size: 0.9rem;
     margin-bottom: 5px;
     display: block;
+    font-weight: 500;
 }
 
 /* INPUTS (Cajas de texto) */
-.form-control-dark {
-    background-color: #333337;
-    border: 1px solid #434346;
-    color: white;
-    border-radius: 0;
+.form-control-dark, .form-control {
+    background-color: var(--color-fondo) !important;
+    border: 1px solid var(--color-borde) !important;
+    color: var(--color-texto-principal) !important;
 }
 
-    .form-control-dark:focus {
-        background-color: #3e3e42;
-        color: white;
-        border-color: #007acc;
-        box-shadow: none;
-    }
-/* Excepción: El input de Nombre Equipo en tu foto era blanco */
-.input-white {
-    background-color: white !important;
-    color: black !important;
+.form-control-dark:focus, .form-control:focus {
+    background-color: var(--color-superficie) !important;
+    border-color: var(--color-secundario) !important;
+    box-shadow: 0 0 0 0.2rem rgba(204, 138, 0, 0.25) !important;
 }
 
 /* BOTONES (Flat style) */
 .btn-flat {
-    border-radius: 0;
+    border-radius: 4px;
     border: none;
     font-weight: bold;
     text-transform: uppercase;
@@ -59,171 +112,101 @@ body {
     transition: all 0.2s;
 }
 
-.btn-purple {
-    background-color: #9370DB;
-    color: white;
-}
-
-    .btn-purple:hover {
-        background-color: #8A2BE2;
-        color: white;
-    }
-
-.btn-green {
-    background-color: #2E8B57;
-    color: white;
-}
-    /* MediumSeaGreen */
-    .btn-green:hover {
-        background-color: #3CB371;
-        color: white;
-    }
-
-.btn-blue {
-    background-color: #1E90FF;
-    color: white;
-}
-    /* DodgerBlue */
-    .btn-blue:hover {
-        background-color: #4169E1;
-        color: white;
-    }
-
-.btn-red {
-    background-color: #DC143C;
-    color: white;
-}
-    /* Crimson */
-    .btn-red:hover {
-        background-color: #B22222;
-        color: white;
-    }
-
-.btn-orange {
-    background-color: #FF8C00;
-    color: white;
-}
-    /* DarkOrange */
-    .btn-orange:hover {
-        background-color: #FF4500;
-        color: white;
-    }
-
-/* --- ESTILO EXACTO DATAGRIDVIEW DARK --- */
+/* --- DATAGRIDVIEW / TABLES --- */
 .dgv-container {
-    background-color: #2d2d30; /* Fondo del contenedor */
-    border: 1px solid #555; /* Borde exterior gris */
-    overflow-y: auto; /* Scroll si es necesario */
+    background-color: var(--color-superficie); 
+    border: 1px solid var(--color-borde);
+    border-radius: 4px;
 }
 
-.table-dgv {
+.table-dgv, .table-theme {
     width: 100%;
-    border-collapse: collapse; /* Bordes pegados como en Excel/WinForms */
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 0.95rem;
+    border-collapse: collapse; 
+    color: var(--color-texto-principal);
 }
 
-    .table-dgv thead th {
-        background-color: #454548; /* Encabezado Gris Ligeramente más claro */
-        color: #f0f0f0; /* Texto casi blanco */
-        font-weight: 600;
-        border: 1px solid #666; /* Borde de celda */
-        padding: 8px 10px;
-        text-align: left;
-    }
+.table-dgv thead th, .table-theme thead th {
+    background-color: var(--color-primario);
+    color: white; 
+    border: 1px solid var(--color-primario-hover); 
+    padding: 10px 12px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
 
-    .table-dgv tbody td {
-        background-color: #333333; /* Fondo de celda oscuro */
-        border: 1px solid #555; /* Borde de celda gris */
-        padding: 0; /* Sin padding para que el input llene todo */
-    }
+.table-dgv tbody td, .table-theme tbody td {
+    background-color: var(--color-superficie); 
+    border: 1px solid var(--color-borde); 
+}
 
-    /* El input se disfraza de celda */
-    .table-dgv input {
-        width: 100%;
-        height: 100%;
-        border: none; /* Sin borde propio */
-        background-color: transparent;
-        color: white; /* Letra blanca */
-        padding: 8px 10px;
-        outline: none; /* Sin borde azul de navegador */
-    }
+.table-dgv input {
+    background-color: transparent;
+    color: var(--color-texto-principal);
+    border: none;
+    outline: none;
+    width: 100%;
+    padding: 8px;
+}
 
-        /* Efecto al seleccionar una celda (como WinForms) */
-        .table-dgv input:focus {
-            background-color: #3e3e42;
-            border: 2px solid #0078d7; /* Borde azul de selección */
-        }
+.table-dgv input:focus {
+    background-color: var(--color-fondo);
+    border: 2px solid var(--color-secundario);
+}
 
-    /* Ajuste para que la tabla no se vea vacía si hay pocas filas */
-    .table-dgv tbody tr {
-        height: 35px;
-    }
-
-/* PESTAÑAS (Tabs estilo VS) */
+/* PESTAÃ‘AS (Tabs) */
 .nav-tabs {
-    border-bottom: 2px solid #007acc;
+    border-bottom: 2px solid var(--color-primario);
 }
 
-    .nav-tabs .nav-link {
-        background-color: #2d2d30;
-        color: #cccccc;
-        border: none;
-        border-radius: 0;
-        margin-right: 2px;
+.nav-tabs .nav-link {
+    background-color: var(--color-fondo);
+    color: var(--color-texto-secundario);
+    border: 1px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: var(--color-primario) !important;
+    color: white !important;
+    border-color: var(--color-primario) !important;
+}
+
+/* --- LOGOS INSTITUCIONALES (Lowkey) --- */
+.logos-container {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+    z-index: 9999;
+    pointer-events: none; /* No estorba clics */
+}
+
+body:hover .logos-container {
+    opacity: 0.8;
+}
+
+.logo-img {
+    height: 30px; /* TamaÃ±o discreto */
+    width: auto;
+    filter: grayscale(100%) brightness(1.2); /* IntegraciÃ³n lowkey */
+    transition: filter 0.3s;
+}
+
+.logos-container:hover .logo-img {
+    filter: grayscale(0%) brightness(1);
+}
+
+/* Ajuste para mÃ³viles */
+@media (max-width: 768px) {
+    .logos-container {
+        bottom: 10px;
+        right: 10px;
+        gap: 10px;
     }
-
-        .nav-tabs .nav-link.active {
-            background-color: #007acc;
-            color: white;
-            font-weight: bold;
-        }
-
-/* --- TABLA HISTORIAL (MODO DARK EXACTO) --- */
-.table-theme {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Segoe UI', sans-serif;
-    color: white;
-}
-
-    .table-theme thead th {
-        background-color: #454548; /* El mismo gris del encabezado de tu Grid */
-        color: #f0f0f0;
-        font-weight: 600;
-        border: 1px solid #555;
-        padding: 12px 15px;
-        text-align: left;
+    .logo-img {
+        height: 20px;
     }
-
-    .table-theme tbody td {
-        background-color: #333333; /* El mismo fondo oscuro de filas */
-        border: 1px solid #555;
-        padding: 10px 15px;
-        vertical-align: middle;
-    }
-
-    /* Efecto Hover sutil (como al pasar el mouse en WinForms) */
-    .table-theme tbody tr:hover td {
-        background-color: #3e3e42;
-        cursor: pointer;
-    }
-
-/* Color para el texto de "Detalle" */
-.text-detail {
-    color: #e0e0e0;
-    font-weight: 500;
-}
-
-/* --- COLORES DE CALIFICACIÓN (MODO DARK) --- */
-.grade-green {
-    color: #2ecc71 !important; /* Verde Esmeralda Brillante */
-}
-
-.grade-yellow {
-    color: #f1c40f !important; /* Amarillo Sol */
-}
-
-.grade-red {
-    color: #e74c3c !important; /* Rojo Intenso */
 }

@@ -1,15 +1,13 @@
-﻿@model AltarWeb.Models.Juez
+@model AltarWeb.Models.Juez
 @{
     Layout = "_Layout";
 }
 
-<div class="d-flex justify-content-center align-items-center w-100"
-     style="min-height: 100vh; background-color: #1e1e1e; margin: 0; padding: 0;">
+<div class="d-flex justify-content-center align-items-center w-100" style="min-height: 100vh;">
 
-    <div class="p-5 shadow-lg rounded"
-         style="background-color: #2d2d30; border: 1px solid #444; width: 100%; max-width: 450px;">
+    <div class="p-5 shadow-lg rounded panel-dark" style="width: 100%; max-width: 450px;">
 
-        <h3 class="text-white text-center mb-4 pb-2" style="border-bottom: 2px solid #007bff;">
+        <h3 class="text-white text-center mb-4 pb-2" style="border-bottom: 2px solid var(--color-primario);">
             <i class="fa-solid fa-user-pen me-2"></i>Editar Juez
         </h3>
 
@@ -24,23 +22,21 @@
             <input type="hidden" asp-for="Id" />
 
             <div class="mb-4">
-                <label class="text-secondary mb-2 fw-bold">Usuario:</label>
+                <label class="lbl-form mb-2 fw-bold">Usuario:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
-                    <input asp-for="Usuario" class="form-control form-control-lg text-white border-secondary"
-                           style="background-color: #3e3e42;" required />
+                    <input asp-for="Usuario" class="form-control form-control-lg form-control-dark" required />
                 </div>
             </div>
 
             <div class="mb-5">
-                <label class="text-secondary mb-2 fw-bold">Contraseña:</label>
+                <label class="lbl-form mb-2 fw-bold">Contraseña:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-key"></i></span>
-                    <input asp-for="Password" type="text" class="form-control form-control-lg text-white border-secondary"
-                           style="background-color: #3e3e42;" required />
+                    <input asp-for="Password" type="text" class="form-control form-control-lg form-control-dark" required />
                 </div>
 
-                <div class="mt-2 d-flex align-items-center" style="color: #bbb; font-size: 0.9rem;">
+                <div class="mt-2 d-flex align-items-center text-silver" style="font-size: 0.9rem;">
                     <i class="fa-solid fa-circle-info me-2 text-primary"></i>
                     <i>La contraseña es visible para editar.</i>
                 </div>

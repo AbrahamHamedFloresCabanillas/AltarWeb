@@ -1,17 +1,9 @@
-﻿@model AltarWeb.Models.Evaluacion
+@model AltarWeb.Models.Evaluacion
 @{
     Layout = "_Layout";
 }
 
 <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        background-color: #1e1e1e;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
     .app-container {
         display: flex;
         flex-direction: column;
@@ -24,30 +16,18 @@
         display: flex;
         flex-direction: column;
         flex-grow: 1;
-        background-color: #2d2d30;
-        border: 1px solid #555;
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
         overflow: hidden;
         position: relative;
     }
 
     .tabs-header {
-        background-color: #252526;
+        background-color: var(--color-fondo);
         padding: 10px 20px 0 20px;
-        border-bottom: 1px solid #555;
+        border-bottom: 1px solid var(--color-borde);
         flex-shrink: 0;
     }
-
-    .nav-tabs .nav-link {
-        color: #aaa;
-        border: 1px solid transparent;
-    }
-
-        .nav-tabs .nav-link.active {
-            background-color: #2d2d30;
-            color: #ff9800;
-            border-color: #555 #555 #2d2d30;
-            font-weight: bold;
-        }
 
     .tab-content {
         position: relative;
@@ -68,36 +48,25 @@
         flex-direction: column;
     }
 
-        .tab-pane.active {
-            display: flex !important;
-        }
-
-    .form-control-dark {
-        background-color: #3e3e42;
-        border: 1px solid #555;
-        color: white;
+    .tab-pane.active {
+        display: flex !important;
     }
-
-        .form-control-dark[readonly] {
-            background-color: #252526;
-            color: #ccc;
-        }
 
     .dgv-wrapper {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
-        border: 1px solid #555;
-        background-color: #1e1e1e;
+        border: 1px solid var(--color-borde);
+        background-color: var(--color-fondo);
         overflow: hidden;
     }
 
     .dgv-header {
-        background-color: #333;
-        color: #ccc;
+        background-color: var(--color-superficie);
+        color: var(--color-texto-secundario);
         font-weight: bold;
         padding: 10px;
-        border-bottom: 1px solid #555;
+        border-bottom: 1px solid var(--color-borde);
         display: flex;
     }
 
@@ -107,18 +76,18 @@
     }
 
     .dgv-row {
-        border-bottom: 1px solid #444;
+        border-bottom: 1px solid var(--color-borde);
         display: flex;
     }
 
     .dgv-cell {
         padding: 10px;
-        color: #ddd;
+        color: var(--color-texto-principal);
     }
 </style>
 
 <div class="app-container">
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark flex-shrink-0" style="border-bottom: 2px solid var(--color-secundario);">
         <h2 class="text-white m-0"><i class="fa-solid fa-magnifying-glass me-2 text-warning"></i>Consulta de Evaluación</h2>
         <a href="/Home/Historial" class="btn btn-danger rounded-0 px-4 fw-bold">
             <i class="fa-solid fa-arrow-left me-1"></i> REGRESAR
@@ -151,23 +120,23 @@
         <div class="tab-content" id="myTabContent">
             <div class="tab-pane fade show active" id="equipo">
                 <div class="mb-3 flex-shrink-0">
-                    <label class="text-orange fw-bold mb-1">Nombre del Equipo:</label>
+                    <label class="lbl-form text-orange fw-bold mb-1">Nombre del Equipo:</label>
                     <input value="@Model.NombreEquipo" class="form-control form-control-dark rounded-0" style="max-width: 500px; font-weight: bold; font-size: 1.2rem;" readonly />
                 </div>
                 <label class="text-secondary mb-1 flex-shrink-0">Lista de Integrantes:</label>
                 <div class="dgv-wrapper">
                     <div class="dgv-header">
                         <div style="width: 40%;"><i class="fa-solid fa-user me-2"></i>Nombre Completo</div>
-                        <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
-                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-envelope me-2"></i>Correo</div>
+                        <div style="width: 20%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
+                        <div style="width: 40%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-envelope me-2"></i>Correo</div>
                     </div>
                     <div class="dgv-body">
                         @foreach (var intg in Model.Integrantes)
                         {
                             <div class="dgv-row">
                                 <div class="dgv-cell" style="width: 40%;">@intg.Nombre</div>
-                                <div class="dgv-cell" style="width: 20%; border-left: 1px solid #444;">@intg.Matricula</div>
-                                <div class="dgv-cell" style="width: 40%; border-left: 1px solid #444;">@intg.Correo</div>
+                                <div class="dgv-cell" style="width: 20%; border-left: 1px solid var(--color-borde);">@intg.Matricula</div>
+                                <div class="dgv-cell" style="width: 40%; border-left: 1px solid var(--color-borde);">@intg.Correo</div>
                             </div>
                         }
                     </div>
@@ -183,7 +152,7 @@
                             <label class="text-secondary small">Niveles:</label> <input value="@Model.Niveles" class="form-control form-control-dark mb-2" readonly />
                             <label class="text-secondary small">Tipo:</label> <input value="@Model.TipoAltar" class="form-control form-control-dark mb-4" readonly />
                             <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist Realizado</h5>
-                            <div class="p-3 mb-3 border border-secondary bg-dark rounded">
+                            <div class="p-3 mb-3 panel-dark rounded">
                                 @{
                                     void RenderCheck(string l, bool v)
                                     {
@@ -208,7 +177,7 @@
                             <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición:</label></div><div class="col-7"><input value="@Model.NotaTradicion" class="form-control form-control-dark text-center" readonly /></div></div>
                             <div class="row mb-2"><div class="col-5"><label class="text-orange fw-bold">Personalización:</label></div><div class="col-7"><input value="@Model.NotaPersonalizacion" class="form-control form-control-dark text-center" readonly /></div></div>
                             <div class="row mb-4"><div class="col-5"><label class="text-secondary">Estética:</label></div><div class="col-7"><input value="@Model.NotaEstetica" class="form-control form-control-dark text-center" readonly /></div></div>
-                            <div class="p-4 text-center rounded shadow" style="background-color: #2E8B57; color: white;">
+                            <div class="p-4 text-center rounded shadow" style="background-color: var(--color-primario); color: white;">
                                 <h2 class="m-0 fw-bold"><i class="fa-solid fa-award me-2"></i>NOTA FINAL: @Model.NotaFinal.ToString("F1") / 10</h2>
                             </div>
                         </div>

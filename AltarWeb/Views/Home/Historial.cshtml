@@ -1,30 +1,7 @@
-﻿@model IEnumerable<AltarWeb.Models.Evaluacion>
+@model IEnumerable<AltarWeb.Models.Evaluacion>
 @{
     Layout = "_Layout";
 }
-
-<style>
-    body, html {
-        height: 100%;
-        overflow: hidden;
-        background-color: #1e1e1e;
-    }
-
-    .main-panel {
-        background-color: #2d2d30;
-        border: 1px solid #555;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        overflow: hidden;
-        box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-
-    tbody tr:hover {
-        background-color: rgba(255, 152, 0, 0.1) !important;
-        cursor: pointer;
-    }
-</style>
 
 @if (TempData["Mensaje"] != null)
 {
@@ -35,7 +12,7 @@
 
 <div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
 
-    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+    <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
         <div class="d-flex align-items-center">
             <span style="font-size: 1.5rem; margin-right: 10px;">
                 <i class="fa-solid fa-clock-rotate-left text-warning"></i>
@@ -52,15 +29,15 @@
         </div>
     </div>
 
-    <div class="main-panel p-4">
+    <div class="panel-dark p-4 d-flex flex-column flex-grow-1 overflow-hidden">
         <p class="text-silver mb-3 flex-shrink-0">
             <i class="fa-solid fa-circle-info text-primary me-1"></i>
             Haz <b>doble clic</b> para ver detalle o usa el botón <i class="fa-solid fa-paper-plane text-secondary"></i> para enviar resultados.
         </p>
 
-        <div class="flex-grow-1" style="overflow-y: auto; border: 1px solid #444;">
+        <div class="flex-grow-1 overflow-auto border-secondary">
             <table class="table-theme w-100">
-                <thead style="position: sticky; top: 0; background-color: #333337; z-index: 1;">
+                <thead style="position: sticky; top: 0; z-index: 1;">
                     <tr>
                         <th style="width: 25%;">Equipo</th>
                         <th style="width: 20%;">Difunto</th>
@@ -80,15 +57,15 @@
                             <td>
                                 @if (item.NotaFinal >= 8.0m)
                                 {
-                                    <span class="text-success fw-bold">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="grade-green">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else if (item.NotaFinal >= 6.0m)
                                 {
-                                    <span class="text-warning fw-bold">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="grade-yellow">@item.NotaFinal.ToString("F1")</span>
                                 }
                                 else
                                 {
-                                    <span class="text-danger fw-bold">@item.NotaFinal.ToString("F1")</span>
+                                    <span class="grade-red">@item.NotaFinal.ToString("F1")</span>
                                 }
                             </td>
                             <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>

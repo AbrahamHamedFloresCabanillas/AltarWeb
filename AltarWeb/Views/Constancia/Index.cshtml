@@ -1,18 +1,10 @@
-﻿@model IEnumerable<AltarWeb.Models.Evaluacion>
+@model IEnumerable<AltarWeb.Models.Evaluacion>
 @{
     Layout = "_Layout";
 }
 
-<style>
-    /* Efecto visual para indicar que la fila es interactiva */
-    tbody tr:hover {
-        background-color: rgba(255, 152, 0, 0.1) !important; /* Naranja muy sutil */
-        cursor: pointer;
-    }
-</style>
-
 <div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
         <h2 class="text-white m-0">
             <i class="fa-solid fa-file-signature me-2"></i>Generar Constancias
         </h2>
@@ -21,15 +13,15 @@
         </a>
     </div>
 
-    <div class="p-4 shadow-lg" style="background-color: #2d2d30; border: 1px solid #555;">
+    <div class="p-4 shadow-lg panel-dark">
         <p class="text-silver mb-3">
             <i class="fa-solid fa-circle-info text-primary me-1"></i>
             Haz <b>doble clic</b> en un equipo para descargar su constancia o usa el botón de descarga.
         </p>
 
-        <div style="height: 500px; overflow-y: auto;">
+        <div style="height: 500px; overflow-y: auto; border: 1px solid var(--color-borde);">
             <table class="table-theme w-100" id="tablaConstancias">
-                <thead style="position: sticky; top: 0; background-color: #333337; z-index: 1;">
+                <thead style="position: sticky; top: 0; z-index: 1;">
                     <tr>
                         <th style="width: 40%;"><i class="fa-solid fa-users me-2"></i>Equipo</th>
                         <th style="width: 30%;"><i class="fa-solid fa-cross me-2"></i>Difunto</th>

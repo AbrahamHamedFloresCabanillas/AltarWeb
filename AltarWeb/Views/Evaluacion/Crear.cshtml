@@ -1,17 +1,9 @@
-﻿@model AltarWeb.Models.Evaluacion
+@model AltarWeb.Models.Evaluacion
 @{
     Layout = "_Layout";
 }
 
 <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        background-color: #1e1e1e;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
     .app-container {
         display: flex;
         flex-direction: column;
@@ -24,30 +16,18 @@
         display: flex;
         flex-direction: column;
         flex-grow: 1;
-        background-color: #2d2d30;
-        border: 1px solid #555;
+        background-color: var(--color-superficie);
+        border: 1px solid var(--color-borde);
         overflow: hidden;
         position: relative;
     }
 
     .tabs-header {
-        background-color: #252526;
+        background-color: var(--color-fondo);
         padding: 10px 20px 0 20px;
-        border-bottom: 1px solid #555;
+        border-bottom: 1px solid var(--color-borde);
         flex-shrink: 0;
     }
-
-    .nav-tabs .nav-link {
-        color: #aaa;
-        border: 1px solid transparent;
-    }
-
-        .nav-tabs .nav-link.active {
-            background-color: #2d2d30;
-            color: #ff9800;
-            border-color: #555 #555 #2d2d30;
-            font-weight: bold;
-        }
 
     .tab-content {
         position: relative;
@@ -68,31 +48,25 @@
         flex-direction: column;
     }
 
-        .tab-pane.active {
-            display: flex !important;
-        }
-
-    .form-control-dark {
-        background-color: #3e3e42;
-        border: 1px solid #555;
-        color: white;
+    .tab-pane.active {
+        display: flex !important;
     }
 
     .dgv-wrapper {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
-        border: 1px solid #555;
-        background-color: #1e1e1e;
+        border: 1px solid var(--color-borde);
+        background-color: var(--color-fondo);
         overflow: hidden;
     }
 
     .dgv-header {
-        background-color: #333;
-        color: #ccc;
+        background-color: var(--color-superficie);
+        color: var(--color-texto-secundario);
         font-weight: bold;
         padding: 10px;
-        border-bottom: 1px solid #555;
+        border-bottom: 1px solid var(--color-borde);
         display: flex;
     }
 
@@ -102,7 +76,7 @@
     }
 
     .dgv-row {
-        border-bottom: 1px solid #444;
+        border-bottom: 1px solid var(--color-borde);
         display: flex;
     }
 
@@ -110,20 +84,20 @@
         width: 100%;
         background: transparent;
         border: none;
-        color: white;
+        color: var(--color-texto-principal);
         padding: 10px;
         outline: none;
     }
 
-        .dgv-input:focus {
-            background-color: rgba(255, 152, 0, 0.1);
-        }
+    .dgv-input:focus {
+        background-color: rgba(204, 138, 0, 0.1);
+    }
 </style>
 
 <div class="app-container">
-    <form id="mainForm" asp-action="Crear" method="post" style="height: 100%; display: flex; flex-direction: column;">
+    <form id="mainForm" asp-action="Crear" method="post" novalidate style="height: 100%; display: flex; flex-direction: column;">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded flex-shrink-0" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark flex-shrink-0" style="border-bottom: 2px solid var(--color-secundario);">
             <h2 class="text-white m-0"><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Nueva Evaluación</h2>
             <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('¿Salir? Se perderán los datos.')">
                 <i class="fa-solid fa-right-from-bracket me-1"></i> SALIR
@@ -156,7 +130,7 @@
             <div class="tab-content" id="myTabContent">
                 <div class="tab-pane fade show active" id="equipo">
                     <div class="mb-3 flex-shrink-0">
-                        <label class="text-warning fw-bold mb-1">Nombre del Equipo:</label>
+                        <label class="lbl-form text-warning fw-bold mb-1">Nombre del Equipo:</label>
                         <input asp-for="NombreEquipo" class="form-control form-control-dark rounded-0" style="max-width: 500px; font-weight: bold; font-size: 1.2rem;" required autocomplete="off" />
                     </div>
 
@@ -165,8 +139,8 @@
                     <div class="dgv-wrapper">
                         <div class="dgv-header">
                             <div style="width: 40%;"><i class="fa-solid fa-user me-2"></i>Nombre Completo</div>
-                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
-                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid #555;"><i class="fa-solid fa-envelope me-2"></i>Correo Electrónico</div>
+                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
+                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-envelope me-2"></i>Correo Electrónico</div>
                         </div>
                         <div class="dgv-body">
                             <table class="w-100" style="border-collapse: collapse;" id="tblIntegrantes">
@@ -178,15 +152,15 @@
                                             {
                                                 <tr class="dgv-row">
                                                     <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" value="@intg.Nombre" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
-                                                    <td style="width: 20%; padding:0; border-left: 1px solid #444;"><input type="text" name="MatriculasIntegrantes" value="@intg.Matricula" class="dgv-input" placeholder="Matrícula..." autocomplete="off" /></td>
-                                                    <td style="width: 40%; padding:0; border-left: 1px solid #444;"><input type="email" name="CorreosIntegrantes" value="@intg.Correo" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
+                                                    <td style="width: 20%; padding:0; border-left: 1px solid var(--color-borde);"><input type="text" name="MatriculasIntegrantes" value="@intg.Matricula" class="dgv-input" placeholder="Matrícula..." autocomplete="off" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" /></td>
+                                                    <td style="width: 40%; padding:0; border-left: 1px solid var(--color-borde);"><input type="email" name="CorreosIntegrantes" value="@intg.Correo" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
                                                 </tr>
                                             }
                                         }
                                         <tr class="dgv-row">
                                             <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
-                                            <td style="width: 20%; padding:0; border-left: 1px solid #444;"><input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="Matrícula..." autocomplete="off" /></td>
-                                            <td style="width: 40%; padding:0; border-left: 1px solid #444;"><input type="email" name="CorreosIntegrantes" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
+                                            <td style="width: 20%; padding:0; border-left: 1px solid var(--color-borde);"><input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="Matrícula..." autocomplete="off" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" /></td>
+                                            <td style="width: 40%; padding:0; border-left: 1px solid var(--color-borde);"><input type="email" name="CorreosIntegrantes" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
                                         </tr>
                                     }
                                 </tbody>
@@ -205,17 +179,17 @@
                                 <label class="text-secondary small">Niveles:</label> <select asp-for="Niveles" class="form-select form-control-dark mb-2" required><option value="" selected disabled>-- Seleccionar --</option><option>2 Niveles</option><option>3 Niveles</option><option>7 Niveles</option></select>
                                 <label class="text-secondary small">Tipo:</label> <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required><option value="" selected disabled>-- Seleccionar --</option><option>Tradicional</option><option>Niños</option><option>Mascotas</option></select>
                                 <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist</h5>
-                                <div class="p-2 rounded mb-3" style="background-color: #222; border: 1px solid #444;">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
+                                <div class="p-2 rounded mb-3 bg-dark border-secondary">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
                             </div>
                         </div>
                         <div class="col-md-7 d-flex flex-column h-100 ps-4">
                             <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0"><i class="fa-solid fa-calculator me-2"></i>Calificación</h5>
                             <label class="text-secondary small flex-shrink-0">Hobbies / Temática:</label> <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" required></textarea>
-                            <div class="flex-shrink-0 bg-dark p-3 rounded border border-secondary">
+                            <div class="flex-shrink-0 panel-dark p-3 rounded">
                                 <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
                                 <div class="row mb-2"><div class="col-5"><label class="text-warning fw-bold">Personalización (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
                                 <div class="row mb-3"><div class="col-5"><label class="text-secondary">Estética (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
-                                <button type="submit" class="btn w-100 py-3 fs-5 shadow fw-bold text-white" style="background-color: #6f42c1;">
+                                <button type="submit" class="btn btn-primary w-100 py-3 fs-5 shadow fw-bold">
                                     <i class="fa-solid fa-floppy-disk me-2"></i>GUARDAR EVALUACIÓN
                                 </button>
                                 <input type="hidden" asp-for="BonusTematicos" id="BonusTotal" value="0" />
@@ -243,6 +217,27 @@
                     tableBody.appendChild(clone);
                 }
             });
+        }
+    });
+
+    document.getElementById('mainForm').addEventListener('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            var firstInvalid = this.querySelector(':invalid');
+            if (firstInvalid) {
+                var tabPane = firstInvalid.closest('.tab-pane');
+                if (tabPane) {
+                    var tabId = tabPane.id;
+                    var tabButton = document.querySelector('button[data-bs-target="#' + tabId + '"]');
+                    if (tabButton) {
+                        tabButton.click();
+                    }
+                }
+                setTimeout(function() {
+                    firstInvalid.focus();
+                    firstInvalid.reportValidity();
+                }, 150);
+            }
         }
     });
     function toggleBonus(chk) { let area = chk.parentElement.querySelector('.bonus-area'); if(chk.checked) area.classList.remove('d-none'); else { area.classList.add('d-none'); area.querySelector('input').checked = false; calcBonus(); } }

@@ -1,32 +1,10 @@
-﻿@model IEnumerable<AltarWeb.Models.Juez>
+@model IEnumerable<AltarWeb.Models.Juez>
 @{
     Layout = "_Layout";
 }
 
-<style>
-    body {
-        background-color: #1e1e1e;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    .table-theme thead {
-        background-color: #333;
-        color: #ccc;
-    }
-
-    .table-theme th, .table-theme td {
-        padding: 12px;
-        border-bottom: 1px solid #444;
-        vertical-align: middle;
-    }
-
-    .table-theme tbody tr:hover {
-        background-color: rgba(255, 152, 0, 0.1);
-    }
-</style>
-
 <div class="container mt-5" style="max-width: 900px;">
-    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded" style="background-color: #1e1e1e; border-bottom: 2px solid #ff9800;">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
         <h2 class="text-white m-0">
             <i class="fa-solid fa-users-gear me-2"></i>Gestión de Jueces
         </h2>
@@ -47,8 +25,8 @@
         </div>
     }
 
-    <div class="p-4 shadow-lg rounded" style="background-color: #2d2d30; border: 1px solid #555;">
-        <table class="w-100 table-theme text-white">
+    <div class="p-4 shadow-lg rounded panel-dark">
+        <table class="w-100 table-theme">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -69,7 +47,7 @@
                                 <i class="fa-solid fa-pen-to-square me-1"></i> Editar
                             </a>
                             <a href="/Jueces/Eliminar/@item.Id"
-                               class="btn btn-dark btn-sm fw-bold px-3 border-secondary"
+                               class="btn btn-dark btn-sm fw-bold px-3"
                                onclick="return confirm('¿Eliminar al juez @item.Usuario? Esta acción es irreversible.')">
                                 <i class="fa-solid fa-trash-can me-1"></i> Borrar
                             </a>

@@ -1,0 +1,79 @@
+/* =========================================
+   TEMA CLARO (Por defecto)
+   ========================================= */
+:root,
+.tema-claro {
+    /* Identidad UABC */
+    --color-primario: #00723F;
+    --color-primario-hover: #1A8453;
+    --color-primario-texto: #00723F;
+    /* Verde estándar para textos/iconos */
+
+    --color-secundario: #CC8A00;
+    --color-secundario-hover: #D69D26;
+
+    /* Fondos y Superficies */
+    --color-fondo: #F4F6F5;
+    /* Gris claro con tinte verde para el cuerpo de la PWA */
+    --color-superficie: #FFFFFF;
+    /* Tarjetas, modales, barra de navegación inferior */
+    --color-borde: #E2E8E5;
+    /* Separadores finos */
+
+    /* Textos */
+    --color-texto-principal: #1E2924;
+    /* Títulos y lectura principal */
+    --color-texto-secundario: #5C6B63;
+    /* Descripciones y placeholders */
+    --color-texto-boton: #FFFFFF;
+    /* Texto sobre botones primarios/secundarios */
+
+    /* Sombras para PWA */
+    --sombra-superficie: 0 4px 6px -1px rgba(0, 114, 63, 0.05);
+}
+
+/* =========================================
+   TEMA OSCURO
+   ========================================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* La identidad se mantiene para botones rellenados, 
+       pero aclaramos el verde para cuando se use en texto o iconos interactivos */
+        --color-primario: #00723F;
+        --color-primario-hover: #00542E;
+        --color-primario-texto: #20C97A;
+        /* Verde más brillante para legibilidad en oscuro */
+
+        --color-secundario: #CC8A00;
+        --color-secundario-hover: #A36E00;
+
+        /* Fondos y Superficies (Grises con tinte verde profundo) */
+        --color-fondo: #121A16;
+        /* Fondo general de la PWA */
+        --color-superficie: #1E2924;
+        /* Tarjetas, modales, barra de navegación inferior */
+        --color-borde: #2A3B30;
+        /* Separadores sutiles oscuros */
+
+        /* Textos */
+        --color-texto-principal: #E2E8E5;
+        /* Blanco hueso para no lastimar la vista */
+        --color-texto-secundario: #9CA8A1;
+        /* Gris verdoso para texto de apoyo */
+        --color-texto-boton: #FFFFFF;
+
+        /* Sombras para PWA */
+        --sombra-superficie: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Duplicamos las variables oscuras en una clase para forzar el tema mediante JS */
+.tema-oscuro {
+    --color-primario-texto: #20C97A;
+    --color-fondo: #121A16;
+    --color-superficie: #1E2924;
+    --color-borde: #2A3B30;
+    --color-texto-principal: #E2E8E5;
+    --color-texto-secundario: #9CA8A1;
+    --sombra-superficie: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}

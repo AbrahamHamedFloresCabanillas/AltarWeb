@@ -1,4 +1,4 @@
-﻿using AltarWeb.Models;
+using AltarWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -84,6 +84,13 @@ namespace AltarWeb.Controllers
                     .Select(m => m.Trim())
                     .ToList();
 
+                if (listaLimpia.Any(m => !m.All(char.IsDigit)))
+                {
+                    TempData["Error"] = "Las matrículas deben contener solo números.";
+                    RecargarIntegrantes();
+                    return View(eval);
+                }
+
                 var dups = listaLimpia.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
 
                 if (dups.Count != 0)
@@ -141,6 +148,7 @@ namespace AltarWeb.Controllers
                         catch (Exception ex) { Console.WriteLine("Error Correo: " + ex.Message); }
                     }
 
+                    TempData["Mensaje"] = "Evaluación guardada exitosamente.";
                     return RedirectToAction("Detalle", new { id = eval.Id });
                 }
                 catch (Exception ex)
