@@ -37,6 +37,8 @@ namespace AltarWeb.Controllers
 
             ModelState.Remove("Juez");
             ModelState.Remove("JuezId");
+            ModelState.Remove("Periodo");
+            ModelState.Remove("NombreJuez");
 
             // Helper para recargar integrantes (Optimizado para evitar referencias nulas)
             void RecargarIntegrantes()
@@ -102,13 +104,30 @@ namespace AltarWeb.Controllers
 
                 foreach (var mat in listaLimpia)
                 {
-                    var existe = _context.Integrantes.Include(i => i.Evaluacion).FirstOrDefault(i => i.Matricula == mat);
+                    // Buscar incluyendo soft-deleted para manejar reactivaciones
+                    var existe = _context.Integrantes
+                        .IgnoreQueryFilters()
+                        .Include(i => i.Evaluacion)
+                        .FirstOrDefault(i => i.Matricula == mat);
+
                     if (existe != null)
                     {
-                        string nomEq = existe.Evaluacion?.NombreEquipo ?? "otro equipo";
-                        TempData["Error"] = $"El alumno {existe.Nombre} ({mat}) ya está registrado en '{nomEq}'.";
-                        RecargarIntegrantes();
-                        return View(eval);
+                        // Si el estudiante está soft-deleted, lo reactivamos silenciosamente
+                        if (existe.IsDeleted)
+                        {
+                            existe.IsDeleted = false;
+                            existe.FechaEliminado = null;
+                            _context.Integrantes.Update(existe);
+                            _context.SaveChanges();
+                            // Continuar — ya no bloquea la creación
+                        }
+                        else
+                        {
+                            string nomEq = existe.Evaluacion?.NombreEquipo ?? "otro equipo";
+                            TempData["Error"] = $"El alumno {existe.Nombre} ({mat}) ya está registrado en '{nomEq}'.";
+                            RecargarIntegrantes();
+                            return View(eval);
+                        }
                     }
                 }
             }
@@ -123,6 +142,17 @@ namespace AltarWeb.Controllers
             decimal notaPers = Math.Min(10, eval.NotaPersonalizacion + (eval.BonusTematicos * 0.5m));
             eval.NotaFinal = (notaTrad * 0.3m) + (notaPers * 0.4m) + (eval.NotaEstetica * 0.3m);
             eval.Fecha = DateTime.Now;
+
+            // --- PERIODO ACADÉMICO DINÁMICO ---
+            // Enero-Julio → YYYY-1, Agosto-Diciembre → YYYY-2
+            var now = DateTime.Now;
+            eval.Periodo = now.Month <= 7 ? $"{now.Year}-1" : $"{now.Year}-2";
+
+            // --- SNAPSHOT DEL NOMBRE DEL JUEZ ---
+            var juez = _context.Jueces.Find(juezId.Value);
+            eval.NombreJuez = !string.IsNullOrEmpty(juez?.NombreCompleto) 
+                ? juez.NombreCompleto 
+                : juez?.Usuario ?? "Desconocido";
 
             RecargarIntegrantes();
 
@@ -168,7 +198,10 @@ namespace AltarWeb.Controllers
         public IActionResult Detalle(int id)
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
-            var eval = _context.Evaluaciones.Include(e => e.Integrantes).Include(e => e.Juez).FirstOrDefault(e => e.Id == id);
+            var eval = _context.Evaluaciones
+                .Include(e => e.Integrantes)
+                .Include(e => e.Juez)
+                .FirstOrDefault(e => e.Id == id);
             if (eval == null) return NotFound();
             if (TempData["Mensaje"] != null) ViewBag.Mensaje = TempData["Mensaje"];
             return View(eval);
@@ -182,7 +215,6 @@ namespace AltarWeb.Controllers
                 try
                 {
                     bool enviado = ProcesarEnvioDeCorreos(eval);
-                    // CAMBIO AQUÍ: Mensajes de texto puro (sin emojis)
                     TempData["Mensaje"] = enviado
                         ? "Correos enviados exitosamente."
                         : "Error de autenticación con el servidor de correo.";
@@ -209,7 +241,7 @@ namespace AltarWeb.Controllers
             using var mail = new MailMessage();
             mail.From = new MailAddress("abrahamhamed05@gmail.com", "Concurso Altares FIM");
             mail.Subject = $"Resultados: {eval.NombreEquipo}";
-            mail.Body = $"Hola equipo {eval.NombreEquipo},\n\nSu calificación final es: {eval.NotaFinal:F1}/10.\n\nAdjunto encontrarán su Constancia de Participación.\n\n¡Gracias por participar!";
+            mail.Body = $"Hola equipo {eval.NombreEquipo},\n\nSu calificación final es: {eval.NotaFinal:F1}/10.\n\nAdjunto encontrarán su Constancia de Participación.\n\nGracias por participar!";
 
             using var stream = new MemoryStream(pdfBytes);
             mail.Attachments.Add(new Attachment(stream, $"Constancia_{eval.NombreEquipo}.pdf"));
@@ -256,9 +288,9 @@ namespace AltarWeb.Controllers
                         {
                             row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(izq => { if (System.IO.File.Exists(rutaUABC)) izq.RelativeItem().AlignCenter().Width(2.3f, Unit.Centimetre).Image(rutaUABC).FitArea(); });
                             row.RelativeItem().PaddingHorizontal(0.5f, Unit.Centimetre).AlignMiddle().Column(header => {
-                                header.Item().AlignCenter().Text("UNIVERSIDAD AUTÓNOMA DE BAJA CALIFORNIA").Bold().FontSize(16).FontColor("#00703c");
-                                header.Item().AlignCenter().Text("FACULTAD DE INGENIERÍA").Bold().FontSize(14);
-                                header.Item().AlignCenter().Text("ASOCIACIÓN DE PROFESORES DE LA FACULTAD DE INGENIERÍA (APFI)").FontSize(10);
+                                header.Item().AlignCenter().Text("UNIVERSIDAD AUT\u00d3NOMA DE BAJA CALIFORNIA").Bold().FontSize(16).FontColor("#00703c");
+                                header.Item().AlignCenter().Text("FACULTAD DE INGENIER\u00cdA").Bold().FontSize(14);
+                                header.Item().AlignCenter().Text("ASOCIACI\u00d3N DE PROFESORES DE LA FACULTAD DE INGENIER\u00cdA (APFI)").FontSize(10);
                             });
                             row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(logosDer => {
                                 if (System.IO.File.Exists(rutaFIM)) logosDer.RelativeItem(1.0f).PaddingTop(5).PaddingRight(5).Image(rutaFIM).FitArea();
@@ -274,19 +306,19 @@ namespace AltarWeb.Controllers
                             textoCentral.Item().Height(0.5f, Unit.Centimetre);
                             textoCentral.Item().Text(text => {
                                 text.Justify(); text.ParagraphSpacing(5); text.DefaultTextStyle(x => x.FontSize(12));
-                                text.Span("Por su valiosa participación y creatividad en la elaboración del Altar de Muertos dedicado a ");
+                                text.Span("Por su valiosa participaci\u00f3n y creatividad en la elaboraci\u00f3n del Altar de Muertos dedicado a ");
                                 text.Span($"{eval.NombreDifunto}").Bold();
-                                text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingeniería de la Universidad Autónoma de Baja California.");
+                                text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingenier\u00eda de la Universidad Aut\u00f3noma de Baja California.");
                                 text.EmptyLine();
-                                text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservación de nuestras tradiciones mexicanas.");
+                                text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservaci\u00f3n de nuestras tradiciones mexicanas.");
                             });
                             textoCentral.Item().Height(0.5f, Unit.Centimetre);
                             textoCentral.Item().AlignCenter().Text($"Mexicali, Baja California a {DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))}").Italic();
-                            textoCentral.Item().AlignCenter().Text("\"Por la realización plena del ser\"").Italic().FontSize(9).FontColor(Colors.Grey.Darken2);
+                            textoCentral.Item().AlignCenter().Text("\"Por la realizaci\u00f3n plena del ser\"").Italic().FontSize(9).FontColor(Colors.Grey.Darken2);
                             textoCentral.Item().PaddingTop(0.5f, Unit.Centimetre).Row(row => {
-                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Dra. Araceli Celina Justo López").Bold().FontSize(9); firm.Item().AlignCenter().Text("Directora de la Facultad de Ingeniería").FontSize(8); });
+                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Dra. Araceli Celina Justo L\u00f3pez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Directora de la Facultad de Ingenier\u00eda").FontSize(8); });
                                 row.ConstantItem(2.0f, Unit.Centimetre);
-                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Ing. María Carmiña Reyes Revelez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Presidenta de la APFI").FontSize(8); });
+                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Ing. Mar\u00eda Carmi\u00f1a Reyes Revelez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Presidenta de la APFI").FontSize(8); });
                             });
                         });
                     });

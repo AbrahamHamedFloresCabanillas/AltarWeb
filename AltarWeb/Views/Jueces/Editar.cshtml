@@ -5,10 +5,10 @@
 
 <div class="d-flex justify-content-center align-items-center w-100" style="min-height: 100vh;">
 
-    <div class="p-5 shadow-lg rounded panel-dark" style="width: 100%; max-width: 450px;">
+    <div class="p-5 shadow-lg rounded panel-dark" style="width: 100%; max-width: 500px;">
 
         <h3 class="text-white text-center mb-4 pb-2" style="border-bottom: 2px solid var(--color-primario);">
-            <i class="fa-solid fa-user-pen me-2"></i>Editar Juez
+            <i class="fa-solid fa-user-pen me-2"></i>Editar Usuario
         </h3>
 
         @if (ViewBag.Error != null)
@@ -21,7 +21,7 @@
         <form asp-action="Editar" method="post">
             <input type="hidden" asp-for="Id" />
 
-            <div class="mb-4">
+            <div class="mb-3">
                 <label class="lbl-form mb-2 fw-bold">Usuario:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-user"></i></span>
@@ -29,7 +29,15 @@
                 </div>
             </div>
 
-            <div class="mb-5">
+            <div class="mb-3">
+                <label class="lbl-form mb-2 fw-bold">Nombre Completo:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-id-card"></i></span>
+                    <input asp-for="NombreCompleto" class="form-control form-control-lg form-control-dark" autocomplete="off" placeholder="Ej. Juan Pérez García" />
+                </div>
+            </div>
+
+            <div class="mb-3">
                 <label class="lbl-form mb-2 fw-bold">Contraseña:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-key"></i></span>
@@ -41,6 +49,9 @@
                     <i>La contraseña es visible para editar.</i>
                 </div>
             </div>
+
+            <input type="hidden" asp-for="Rol" />
+
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">

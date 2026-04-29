@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace AltarWeb.Models
 {
@@ -13,17 +13,20 @@ namespace AltarWeb.Models
                 context.Database.EnsureCreated();
 
                 // Si ya hay jueces registrados, no hacemos nada
-                if (context.Jueces.Any())
+                // Nota: IgnoreQueryFilters() para incluir soft-deleted en la verificación
+                if (context.Jueces.IgnoreQueryFilters().Any())
                 {
                     return;
                 }
 
-                // SI NO HAY JUECES, AGREGAMOS AL PRINCIPAL:
+                // SI NO HAY JUECES, AGREGAMOS AL ADMINISTRADOR PRINCIPAL:
                 context.Jueces.AddRange(
                     new Juez
                     {
                         Usuario = "abram",
-                        Password = "1234"
+                        Password = "1234",
+                        Rol = "Admin",
+                        NombreCompleto = "Abram (Administrador)"
                     }
                 );
 

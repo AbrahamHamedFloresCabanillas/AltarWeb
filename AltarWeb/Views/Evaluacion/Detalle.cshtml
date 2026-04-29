@@ -88,7 +88,32 @@
 
 <div class="app-container">
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark flex-shrink-0" style="border-bottom: 2px solid var(--color-secundario);">
-        <h2 class="text-white m-0"><i class="fa-solid fa-magnifying-glass me-2 text-warning"></i>Consulta de Evaluación</h2>
+        <div>
+            <h2 class="text-white m-0"><i class="fa-solid fa-magnifying-glass me-2 text-warning"></i>Consulta de Evaluación</h2>
+            <div class="mt-1">
+                <span class="text-secondary small me-3">
+                    <i class="fa-solid fa-calendar-days me-1"></i>Periodo: <b class="text-white">@(string.IsNullOrEmpty(Model.Periodo) ? "N/A" : Model.Periodo)</b>
+                </span>
+                <span class="text-secondary small">
+                    <i class="fa-solid fa-user-tie me-1"></i>Juez:
+                    <b class="text-white">
+                        @if (Model.Juez != null)
+                        {
+                            @Model.Juez.Usuario
+                        }
+                        else if (!string.IsNullOrEmpty(Model.NombreJuez))
+                        {
+                            @Model.NombreJuez
+                            <i class="fa-solid fa-user-slash ms-1 text-muted" title="Juez desactivado" style="font-size: 0.7rem;"></i>
+                        }
+                        else
+                        {
+                            @("N/A")
+                        }
+                    </b>
+                </span>
+            </div>
+        </div>
         <a href="/Home/Historial" class="btn btn-danger rounded-0 px-4 fw-bold">
             <i class="fa-solid fa-arrow-left me-1"></i> REGRESAR
         </a>

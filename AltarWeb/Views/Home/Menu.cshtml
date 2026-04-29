@@ -1,6 +1,8 @@
 @{
-    ViewData["Title"] = "Menú Principal"; 
+    ViewData["Title"] = "Menú Principal";
     Layout = null;
+    bool esAdmin = ViewBag.EsAdmin == true;
+    string nombre = ViewBag.JuezNombre ?? "Usuario";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -12,10 +14,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="~/css/paleta-de-colores.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/apple-design.css" />
 </head>
 <body class="tema-oscuro">
 
-    <div class="position-absolute top-0 end-0 m-3">
+    <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-3">
+        <span class="text-secondary small">
+            <i class="fa-solid fa-user-circle me-1"></i> @nombre
+            @if (esAdmin)
+            {
+                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">ADMIN</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary ms-1" style="font-size: 0.65rem;">JUEZ</span>
+            }
+        </span>
         <a href="/Acceso/Salir" class="text-secondary text-decoration-none small hover-white">
             <i class="fa-solid fa-right-from-bracket me-1"></i> Cerrar Sesión
         </a>
@@ -41,12 +55,22 @@
             <i class="fa-solid fa-award me-2"></i> Generar Constancias
         </a>
 
-        <div style="border-top: 1px solid var(--color-borde); width: 200px; margin-bottom: 20px;"></div>
+        @if (esAdmin)
+        {
+            <div style="border-top: 1px solid var(--color-borde); width: 200px; margin-bottom: 20px;"></div>
 
-        <a href="/Jueces/Index" class="btn btn-dark text-secondary btn-sm rounded-pill px-4 py-2">
-            <i class="fa-solid fa-user-gear me-2"></i> Gestión de Jueces
-        </a>
+            <p class="text-secondary small mb-3">
+                <i class="fa-solid fa-shield-halved me-1 text-warning"></i> Zona de Administración
+            </p>
 
+            <a href="/Jueces/Index" class="btn btn-dark text-secondary btn-sm rounded-pill px-4 py-2 me-2">
+                <i class="fa-solid fa-user-gear me-2"></i> Gestión de Jueces
+            </a>
+
+            <a href="/Estudiantes/Index" class="btn btn-dark text-secondary btn-sm rounded-pill px-4 py-2">
+                <i class="fa-solid fa-graduation-cap me-2"></i> Gestión de Estudiantes
+            </a>
+        }
     </div>
 
     <!-- Logos Institucionales Lowkey -->

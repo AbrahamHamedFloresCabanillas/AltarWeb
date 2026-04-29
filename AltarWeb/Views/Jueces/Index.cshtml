@@ -1,16 +1,17 @@
 @model IEnumerable<AltarWeb.Models.Juez>
 @{
     Layout = "_Layout";
+    var inactivos = ViewBag.Inactivos as List<AltarWeb.Models.Juez> ?? new List<AltarWeb.Models.Juez>();
 }
 
-<div class="container mt-5" style="max-width: 900px;">
+<div class="container mt-5" style="max-width: 1000px;">
     <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
         <h2 class="text-white m-0">
             <i class="fa-solid fa-users-gear me-2"></i>Gestión de Jueces
         </h2>
         <div>
             <a href="/Jueces/Crear" class="btn btn-success fw-bold shadow-sm me-2">
-                <i class="fa-solid fa-user-plus me-1"></i> Nuevo Juez
+                <i class="fa-solid fa-user-plus me-1"></i> Nuevo Usuario
             </a>
             <a href="/Home/Menu" class="btn btn-danger fw-bold shadow-sm">
                 <i class="fa-solid fa-arrow-left me-1"></i> Regresar
@@ -25,12 +26,22 @@
         </div>
     }
 
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success text-center fw-bold rounded-0 mb-3">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["Mensaje"]
+        </div>
+    }
+
+    <!-- ========== JUECES ACTIVOS ========== -->
     <div class="p-4 shadow-lg rounded panel-dark">
         <table class="w-100 table-theme">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th><i class="fa-solid fa-user me-2"></i>Usuario / Juez</th>
+                    <th><i class="fa-solid fa-user me-2"></i>Usuario</th>
+                    <th><i class="fa-solid fa-id-badge me-2"></i>Nombre Completo</th>
+                    <th><i class="fa-solid fa-shield-halved me-2"></i>Rol</th>
                     <th><i class="fa-solid fa-key me-2"></i>Contraseña</th>
                     <th class="text-center">Acciones</th>
                 </tr>
@@ -41,20 +52,103 @@
                     <tr>
                         <td class="text-secondary">@item.Id</td>
                         <td class="fw-bold text-orange">@item.Usuario</td>
+                        <td class="text-silver">
+                            @(string.IsNullOrEmpty(item.NombreCompleto) ? "—" : item.NombreCompleto)
+                        </td>
+                        <td>
+                            @if (item.Rol == "Admin")
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fa-solid fa-crown me-1"></i>Admin
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    <i class="fa-solid fa-gavel me-1"></i>Juez
+                                </span>
+                            }
+                        </td>
                         <td class="text-muted" style="font-family: monospace;">******</td>
                         <td class="text-center">
                             <a href="/Jueces/Editar/@item.Id" class="btn btn-primary btn-sm fw-bold px-3 me-1">
                                 <i class="fa-solid fa-pen-to-square me-1"></i> Editar
                             </a>
+                            @if (item.Rol != "Admin")
+                            {
+                                <form method="post" action="/Jueces/Promover/@item.Id" style="display: inline;">
+                                    <button type="submit" class="btn btn-warning btn-sm fw-bold px-2 me-1 text-dark"
+                                            onclick="return confirm('¿Promover a @item.Usuario a Administrador?')"
+                                            title="Promover a Admin">
+                                        <i class="fa-solid fa-arrow-up me-1"></i> Admin
+                                    </button>
+                                </form>
+                            }
                             <a href="/Jueces/Eliminar/@item.Id"
                                class="btn btn-dark btn-sm fw-bold px-3"
-                               onclick="return confirm('¿Eliminar al juez @item.Usuario? Esta acción es irreversible.')">
-                                <i class="fa-solid fa-trash-can me-1"></i> Borrar
+                               onclick="return confirm('¿Desactivar al juez @item.Usuario? Sus evaluaciones se conservarán.')">
+                                <i class="fa-solid fa-user-slash me-1"></i> Desactivar
                             </a>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+
+        @if (!Model.Any())
+        {
+            <div class="p-4 text-center text-secondary fst-italic">No hay jueces activos.</div>
+        }
     </div>
+
+    <!-- ========== JUECES INACTIVOS ========== -->
+    @if (inactivos.Any())
+    {
+        <div class="mt-5 mb-4">
+            <div class="d-flex align-items-center mb-3 p-3 rounded" style="background-color: var(--color-superficie); border-left: 4px solid #dc3545;">
+                <i class="fa-solid fa-user-slash text-danger me-2"></i>
+                <h4 class="m-0 text-white">Jueces Inactivos</h4>
+                <span class="badge bg-danger ms-2">@inactivos.Count</span>
+            </div>
+
+            <div class="p-4 shadow-lg rounded panel-dark" style="opacity: 0.85;">
+                <table class="w-100 table-theme">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th><i class="fa-solid fa-user me-2"></i>Usuario</th>
+                            <th><i class="fa-solid fa-id-badge me-2"></i>Nombre</th>
+                            <th><i class="fa-solid fa-shield-halved me-2"></i>Rol</th>
+                            <th><i class="fa-solid fa-calendar-xmark me-2"></i>Desactivado</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in inactivos)
+                        {
+                            <tr class="row-inactive">
+                                <td class="text-secondary">@item.Id</td>
+                                <td class="text-muted fst-italic">@item.Usuario</td>
+                                <td class="text-muted">
+                                    @(string.IsNullOrEmpty(item.NombreCompleto) ? "—" : item.NombreCompleto)
+                                </td>
+                                <td><span class="badge bg-dark text-muted">@item.Rol</span></td>
+                                <td class="text-muted small">
+                                    @(item.FechaEliminado?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A")
+                                </td>
+                                <td class="text-center">
+                                    <form method="post" action="/Jueces/Reactivar/@item.Id" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm fw-bold px-3"
+                                                onclick="return confirm('¿Reactivar al juez @item.Usuario?')">
+                                            <i class="fa-solid fa-user-check me-1"></i> Reactivar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 </div>

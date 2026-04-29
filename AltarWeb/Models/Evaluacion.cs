@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,8 +9,16 @@ namespace AltarWeb.Models
     {
         [Key]
         public int Id { get; set; }
-        public int JuezId { get; set; }
+
+        // FK nullable para que al eliminar un juez no se borren las evaluaciones
+        public int? JuezId { get; set; }
         public DateTime Fecha { get; set; } = DateTime.Now;
+
+        // Periodo académico dinámico (ej: "2026-1", "2026-2")
+        public string Periodo { get; set; } = string.Empty;
+
+        // Snapshot del nombre del juez al momento de crear la evaluación
+        public string NombreJuez { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El nombre del equipo es obligatorio")]
         public string NombreEquipo { get; set; } = string.Empty; // Inicializado
@@ -44,9 +52,9 @@ namespace AltarWeb.Models
 
         public int BonusTematicos { get; set; }
 
-        // Relaciones (Usamos null! para decirle al compilador que EF se encarga)
+        // Relaciones — Juez es nullable (soft-delete / SET NULL)
         [ForeignKey("JuezId")]
-        public virtual Juez Juez { get; set; } = null!;
+        public virtual Juez? Juez { get; set; }
         public virtual List<Integrante> Integrantes { get; set; } = new List<Integrante>();
     }
 }

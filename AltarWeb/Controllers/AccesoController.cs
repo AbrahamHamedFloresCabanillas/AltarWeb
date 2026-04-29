@@ -1,4 +1,4 @@
-﻿using AltarWeb.Models;
+using AltarWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AltarWeb.Controllers
@@ -19,22 +19,16 @@ namespace AltarWeb.Controllers
             {
                 HttpContext.Session.SetInt32("JuezId", juez.Id); // Guardar sesión
                 HttpContext.Session.SetString("JuezNombre", juez.Usuario);
+                HttpContext.Session.SetString("JuezRol", juez.Rol); // RBAC: guardar rol en sesión
                 return RedirectToAction("Menu", "Home");
             }
             ViewBag.Error = "Usuario o contraseña incorrectos";
             return View();
         }
 
-        public IActionResult Registrar() { return View(); }
-
-        [HttpPost]
-        public IActionResult Registrar(string usuario, string password, string confirmar)
+        // Registro público deshabilitado — solo Admins pueden crear Jueces desde /Jueces/Crear
+        public IActionResult Registrar()
         {
-            if (password != confirmar) { ViewBag.Error = "Las contraseñas no coinciden"; return View(); }
-            if (_context.Jueces.Any(j => j.Usuario == usuario)) { ViewBag.Error = "Usuario ya existe"; return View(); }
-
-            _context.Jueces.Add(new Juez { Usuario = usuario, Password = password });
-            _context.SaveChanges();
             return RedirectToAction("Login");
         }
 

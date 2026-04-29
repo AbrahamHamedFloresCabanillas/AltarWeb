@@ -1,0 +1,144 @@
+@model IEnumerable<AltarWeb.Models.Integrante>
+@{
+    Layout = "_Layout";
+    var inactivos = ViewBag.Inactivos as List<AltarWeb.Models.Integrante> ?? new List<AltarWeb.Models.Integrante>();
+}
+
+<div class="container mt-5" style="max-width: 1100px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
+        <h2 class="text-white m-0">
+            <i class="fa-solid fa-graduation-cap me-2"></i>Gestión de Estudiantes
+        </h2>
+        <div>
+            <a href="/Home/Menu" class="btn btn-danger fw-bold shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> Regresar
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center fw-bold rounded-0 mb-3">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success text-center fw-bold rounded-0 mb-3">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["Mensaje"]
+        </div>
+    }
+
+    <div class="p-3 mb-3 panel-dark rounded">
+        <p class="text-silver m-0 small">
+            <i class="fa-solid fa-circle-info text-primary me-1"></i>
+            Los estudiantes se generan automáticamente al crear evaluaciones. Desde aquí puedes consultar y desactivar registros.
+            Al desactivar un estudiante, su historial en evaluaciones pasadas se conserva.
+        </p>
+    </div>
+
+    <!-- ========== ESTUDIANTES ACTIVOS ========== -->
+    <div class="p-4 shadow-lg rounded panel-dark">
+        <table class="w-100 table-theme">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">ID</th>
+                    <th style="width: 25%;"><i class="fa-solid fa-user me-2"></i>Nombre</th>
+                    <th style="width: 15%;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</th>
+                    <th style="width: 20%;"><i class="fa-solid fa-envelope me-2"></i>Correo</th>
+                    <th style="width: 20%;"><i class="fa-solid fa-users me-2"></i>Equipo</th>
+                    <th style="width: 15%; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="text-secondary">@item.Id</td>
+                        <td class="fw-bold text-orange">@item.Nombre</td>
+                        <td class="text-silver" style="font-family: monospace;">@item.Matricula</td>
+                        <td class="text-silver">
+                            @if (!string.IsNullOrEmpty(item.Correo))
+                            {
+                                <span>@item.Correo</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Sin correo</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="text-white">@(item.Evaluacion?.NombreEquipo ?? "N/A")</span>
+                        </td>
+                        <td class="text-center">
+                            <a href="/Estudiantes/Eliminar/@item.Id"
+                               class="btn btn-dark btn-sm fw-bold px-3"
+                               onclick="return confirm('¿Desactivar al estudiante @item.Nombre? Su historial en evaluaciones se conservará.')">
+                                <i class="fa-solid fa-user-slash me-1"></i> Desactivar
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div class="p-5 text-center text-secondary fst-italic">No hay estudiantes activos registrados.</div>
+        }
+    </div>
+
+    <!-- ========== ESTUDIANTES INACTIVOS ========== -->
+    @if (inactivos.Any())
+    {
+        <div class="mt-5 mb-4">
+            <div class="d-flex align-items-center mb-3 p-3 rounded" style="background-color: var(--color-superficie); border-left: 4px solid #dc3545;">
+                <i class="fa-solid fa-user-slash text-danger me-2"></i>
+                <h4 class="m-0 text-white">Estudiantes Inactivos</h4>
+                <span class="badge bg-danger ms-2">@inactivos.Count</span>
+            </div>
+
+            <div class="p-4 shadow-lg rounded panel-dark" style="opacity: 0.85;">
+                <table class="w-100 table-theme">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">ID</th>
+                            <th style="width: 20%;"><i class="fa-solid fa-user me-2"></i>Nombre</th>
+                            <th style="width: 12%;"><i class="fa-solid fa-id-card me-2"></i>Matrícula</th>
+                            <th style="width: 18%;"><i class="fa-solid fa-envelope me-2"></i>Correo</th>
+                            <th style="width: 15%;"><i class="fa-solid fa-users me-2"></i>Equipo</th>
+                            <th style="width: 15%;"><i class="fa-solid fa-calendar-xmark me-2"></i>Desactivado</th>
+                            <th style="width: 15%; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in inactivos)
+                        {
+                            <tr class="row-inactive">
+                                <td class="text-secondary">@item.Id</td>
+                                <td class="text-muted fst-italic">@item.Nombre</td>
+                                <td class="text-muted" style="font-family: monospace;">@item.Matricula</td>
+                                <td class="text-muted">
+                                    @(string.IsNullOrEmpty(item.Correo) ? "Sin correo" : item.Correo)
+                                </td>
+                                <td class="text-muted">@(item.Evaluacion?.NombreEquipo ?? "N/A")</td>
+                                <td class="text-muted small">
+                                    @(item.FechaEliminado?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "N/A")
+                                </td>
+                                <td class="text-center">
+                                    <form method="post" action="/Estudiantes/Reactivar/@item.Id" style="display: inline;">
+                                        <button type="submit" class="btn btn-success btn-sm fw-bold px-3"
+                                                onclick="return confirm('¿Reactivar al estudiante @item.Nombre?')">
+                                            <i class="fa-solid fa-user-check me-1"></i> Reactivar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

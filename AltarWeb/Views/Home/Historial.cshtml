@@ -1,4 +1,4 @@
-@model IEnumerable<AltarWeb.Models.Evaluacion>
+@model Dictionary<string, List<AltarWeb.Models.Evaluacion>>
 @{
     Layout = "_Layout";
 }
@@ -36,55 +36,86 @@
         </p>
 
         <div class="flex-grow-1 overflow-auto border-secondary">
-            <table class="table-theme w-100">
-                <thead style="position: sticky; top: 0; z-index: 1;">
-                    <tr>
-                        <th style="width: 25%;">Equipo</th>
-                        <th style="width: 20%;">Difunto</th>
-                        <th style="width: 15%;">Juez</th>
-                        <th style="width: 10%;">Calif.</th>
-                        <th style="width: 15%;">Fecha</th>
-                        <th style="width: 15%; text-align: center;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        <tr ondblclick="verDetalle('@item.Id')">
-                            <td><span class="text-orange fw-bold">@item.NombreEquipo</span></td>
-                            <td><span class="text-white">@item.NombreDifunto</span></td>
-                            <td><span class="text-secondary small fst-italic">@(item.Juez?.Usuario ?? "N/A")</span></td>
-                            <td>
-                                @if (item.NotaFinal >= 8.0m)
+            @if (Model.Any())
+            {
+                @foreach (var grupo in Model)
+                {
+                    <div class="mb-4">
+                        <!-- Encabezado del Periodo -->
+                        <div class="d-flex align-items-center mb-2 p-2 rounded" style="background-color: var(--color-superficie); border-left: 4px solid var(--color-secundario);">
+                            <i class="fa-solid fa-calendar-days text-warning me-2"></i>
+                            <h5 class="m-0 text-white fw-bold">Periodo @grupo.Key</h5>
+                            <span class="badge bg-secondary ms-2">@grupo.Value.Count evaluaciones</span>
+                        </div>
+
+                        <table class="table-theme w-100">
+                            <thead style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th style="width: 25%;">Equipo</th>
+                                    <th style="width: 20%;">Difunto</th>
+                                    <th style="width: 15%;">Juez</th>
+                                    <th style="width: 10%;">Calif.</th>
+                                    <th style="width: 15%;">Fecha</th>
+                                    <th style="width: 15%; text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in grupo.Value)
                                 {
-                                    <span class="grade-green">@item.NotaFinal.ToString("F1")</span>
+                                    <tr ondblclick="verDetalle('@item.Id')">
+                                        <td><span class="text-orange fw-bold">@item.NombreEquipo</span></td>
+                                        <td><span class="text-white">@item.NombreDifunto</span></td>
+                                        <td>
+                                            <span class="text-secondary small fst-italic">
+                                                @if (item.Juez != null)
+                                                {
+                                                    @item.Juez.Usuario
+                                                }
+                                                else if (!string.IsNullOrEmpty(item.NombreJuez))
+                                                {
+                                                    @item.NombreJuez
+                                                    <i class="fa-solid fa-user-slash ms-1 text-muted" title="Juez desactivado" style="font-size: 0.7rem;"></i>
+                                                }
+                                                else
+                                                {
+                                                    @("N/A")
+                                                }
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (item.NotaFinal >= 8.0m)
+                                            {
+                                                <span class="grade-green">@item.NotaFinal.ToString("F1")</span>
+                                            }
+                                            else if (item.NotaFinal >= 6.0m)
+                                            {
+                                                <span class="grade-yellow">@item.NotaFinal.ToString("F1")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="grade-red">@item.NotaFinal.ToString("F1")</span>
+                                            }
+                                        </td>
+                                        <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-center">
+                                            <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-primary btn-sm fw-bold px-2 shadow-sm me-1" title="Ver Detalle">
+                                                <i class="fa-solid fa-eye me-1"></i> VER
+                                            </a>
+                                            <a href="/Evaluacion/EnviarResultados/@item.Id"
+                                               class="btn btn-secondary btn-sm fw-bold px-2 shadow-sm"
+                                               title="Enviar Resultados por Correo"
+                                               onclick="return confirm('¿Enviar resultados y constancia a los integrantes de @item.NombreEquipo?')">
+                                                <i class="fa-solid fa-paper-plane"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
                                 }
-                                else if (item.NotaFinal >= 6.0m)
-                                {
-                                    <span class="grade-yellow">@item.NotaFinal.ToString("F1")</span>
-                                }
-                                else
-                                {
-                                    <span class="grade-red">@item.NotaFinal.ToString("F1")</span>
-                                }
-                            </td>
-                            <td class="text-silver">@item.Fecha.ToString("dd/MM/yyyy")</td>
-                            <td class="text-center">
-                                <a href="/Evaluacion/Detalle/@item.Id" class="btn btn-primary btn-sm fw-bold px-2 shadow-sm me-1" title="Ver Detalle">
-                                    <i class="fa-solid fa-eye me-1"></i> VER
-                                </a>
-                                <a href="/Evaluacion/EnviarResultados/@item.Id"
-                                   class="btn btn-secondary btn-sm fw-bold px-2 shadow-sm"
-                                   title="Enviar Resultados por Correo"
-                                   onclick="return confirm('¿Enviar resultados y constancia a los integrantes de @item.NombreEquipo?')">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            @if (!Model.Any())
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else
             {
                 <div class="p-5 text-center text-secondary fst-italic">No hay evaluaciones registradas aún.</div>
             }
