@@ -361,3 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Agents internal directory
+.agents/
+
+# Configuration files containing credentials
+AltarWeb/appsettings.json
+AltarWeb/appsettings.Development.json

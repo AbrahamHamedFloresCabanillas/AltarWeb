@@ -1,112 +1,31 @@
-@model AltarWeb.Models.Evaluacion
+﻿@model AltarWeb.Models.Evaluacion
 @{
     Layout = "_Layout";
 }
 
 <style>
-    .app-container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-
-    .panel-principal {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        background-color: var(--color-superficie);
-        border: 1px solid var(--color-borde);
-        overflow: hidden;
-        position: relative;
-    }
-
-    .tabs-header {
-        background-color: var(--color-fondo);
-        padding: 10px 20px 0 20px;
-        border-bottom: 1px solid var(--color-borde);
-        flex-shrink: 0;
-    }
-
-    .tab-content {
-        position: relative;
-        flex-grow: 1;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    .tab-pane {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        padding: 20px;
-        overflow: hidden;
-        display: none;
-        flex-direction: column;
-    }
-
-    .tab-pane.active {
-        display: flex !important;
-    }
-
-    .dgv-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        border: 1px solid var(--color-borde);
-        background-color: var(--color-fondo);
-        overflow: hidden;
-    }
-
-    .dgv-header {
-        background-color: var(--color-superficie);
-        color: var(--color-texto-secundario);
-        font-weight: bold;
-        padding: 10px;
-        border-bottom: 1px solid var(--color-borde);
-        display: flex;
-    }
-
-    .dgv-body {
-        flex-grow: 1;
-        overflow-y: auto;
-    }
-
-    .dgv-row {
-        border-bottom: 1px solid var(--color-borde);
-        display: flex;
-    }
-
-    .dgv-input {
-        width: 100%;
-        background: transparent;
-        border: none;
-        color: var(--color-texto-principal);
-        padding: 10px;
-        outline: none;
-    }
-
-    .dgv-input:focus {
-        background-color: rgba(204, 138, 0, 0.1);
-    }
+    .app-container { display:flex; flex-direction:column; min-height:100vh; padding:20px; box-sizing:border-box; }
+    .panel-principal { display:flex; flex-direction:column; flex-grow:1; background-color:var(--color-superficie); border:1px solid var(--color-borde); overflow:hidden; }
+    .tabs-header { background-color:var(--color-fondo); padding:10px 20px 0 20px; border-bottom:1px solid var(--color-borde); }
+    .tab-pane { padding:20px; }
+    .lista-dropdown { list-style:none; margin:0; padding:0; position:absolute; z-index:30; background:#151515; border:1px solid var(--color-borde); width:100%; max-height:260px; overflow:auto; }
+    .lista-dropdown li { padding:10px 12px; cursor:pointer; color:#f5f5f5; border-bottom:1px solid rgba(255,255,255,.08); }
+    .lista-dropdown li:hover { background:rgba(204,138,0,.15); }
+    .integrante-item { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08); color:#fff; }
 </style>
 
 <div class="app-container">
-    <form id="mainForm" asp-action="Crear" method="post" novalidate style="height: 100%; display: flex; flex-direction: column;">
-
-        <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark flex-shrink-0" style="border-bottom: 2px solid var(--color-secundario);">
-            <h2 class="text-white m-0"><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Nueva Evaluación</h2>
-            <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('¿Salir? Se perderán los datos.')">
+    <form id="mainForm" asp-action="Crear" method="post" novalidate>
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
+            <h2 class="text-white m-0"><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Nueva Evaluacion</h2>
+            <a href="/Home/Menu" class="btn btn-danger rounded-0 px-4 fw-bold" onclick="return confirm('Salir? Se perderan los datos.')">
                 <i class="fa-solid fa-right-from-bracket me-1"></i> SALIR
             </a>
         </div>
 
         @if (TempData["Error"] != null || ViewBag.Error != null)
         {
-            <div class="alert alert-danger text-center fw-bold mb-3 shadow rounded-0 flex-shrink-0">
+            <div class="alert alert-danger text-center fw-bold mb-3 shadow rounded-0">
                 <i class="fa-solid fa-triangle-exclamation me-2"></i>@(TempData["Error"] ?? ViewBag.Error)
             </div>
         }
@@ -116,12 +35,12 @@
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
                         <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button">
-                            <i class="fa-solid fa-users me-1"></i> 1. Datos del Equipo
+                            <i class="fa-solid fa-users me-1"></i> 1. Equipo
                         </button>
                     </li>
                     <li class="nav-item">
                         <button class="nav-link" id="altar-tab" data-bs-toggle="tab" data-bs-target="#altar" type="button">
-                            <i class="fa-solid fa-star me-1"></i> 2. Evaluación de Altar
+                            <i class="fa-solid fa-star me-1"></i> 2. Evaluacion de Altar
                         </button>
                     </li>
                 </ul>
@@ -129,68 +48,62 @@
 
             <div class="tab-content" id="myTabContent">
                 <div class="tab-pane fade show active" id="equipo">
-                    <div class="mb-3 flex-shrink-0">
-                        <label class="lbl-form text-warning fw-bold mb-1">Nombre del Equipo:</label>
-                        <input asp-for="NombreEquipo" class="form-control form-control-dark rounded-0" style="max-width: 500px; font-weight: bold; font-size: 1.2rem;" required autocomplete="off" />
+                    <div class="campo-busqueda-equipo position-relative mb-3" style="max-width:720px;">
+                        <label class="lbl-form text-warning fw-bold mb-1">Equipo a evaluar</label>
+                        <input type="text" id="buscarEquipo" class="form-control form-control-dark rounded-0" placeholder="Escribe el nombre del equipo..." autocomplete="off" />
+                        <input type="hidden" id="equipoSeleccionadoId" name="EquipoId" />
+                        <ul id="resultadosEquipo" class="lista-dropdown" style="display:none;"></ul>
                     </div>
 
-                    <label class="text-secondary mb-1 flex-shrink-0">Lista de Integrantes:</label>
+                    @if (ViewBag.EsAdmin == true)
+                    {
+                        <div class="form-check mt-2 mb-3">
+                            <input class="form-check-input" type="checkbox" id="incluirHistorico" />
+                            <label class="form-check-label text-secondary" for="incluirHistorico">
+                                Mostrar equipos de periodos anteriores
+                            </label>
+                        </div>
+                    }
 
-                    <div class="dgv-wrapper">
-                        <div class="dgv-header">
-                            <div style="width: 40%;"><i class="fa-solid fa-user me-2"></i>Nombre Completo</div>
-                            <div style="width: 20%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-id-card me-2"></i>Matrícula</div>
-                            <div style="width: 40%; padding-left: 10px; border-left: 1px solid var(--color-borde);"><i class="fa-solid fa-envelope me-2"></i>Correo Electrónico</div>
-                        </div>
-                        <div class="dgv-body">
-                            <table class="w-100" style="border-collapse: collapse;" id="tblIntegrantes">
-                                <tbody>
-                                    @{
-                                        if (Model.Integrantes != null && Model.Integrantes.Count > 0)
-                                        {
-                                            foreach (var intg in Model.Integrantes)
-                                            {
-                                                <tr class="dgv-row">
-                                                    <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" value="@intg.Nombre" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
-                                                    <td style="width: 20%; padding:0; border-left: 1px solid var(--color-borde);"><input type="text" name="MatriculasIntegrantes" value="@intg.Matricula" class="dgv-input" placeholder="Matrícula..." autocomplete="off" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" /></td>
-                                                    <td style="width: 40%; padding:0; border-left: 1px solid var(--color-borde);"><input type="email" name="CorreosIntegrantes" value="@intg.Correo" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
-                                                </tr>
-                                            }
-                                        }
-                                        <tr class="dgv-row">
-                                            <td style="width: 40%; padding:0;"><input type="text" name="NombresIntegrantes" class="dgv-input" placeholder="Nombre..." autocomplete="off" /></td>
-                                            <td style="width: 20%; padding:0; border-left: 1px solid var(--color-borde);"><input type="text" name="MatriculasIntegrantes" class="dgv-input" placeholder="Matrícula..." autocomplete="off" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')" /></td>
-                                            <td style="width: 40%; padding:0; border-left: 1px solid var(--color-borde);"><input type="email" name="CorreosIntegrantes" class="dgv-input" placeholder="correo@ejemplo.com" autocomplete="off" /></td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                    <div id="integrantesEquipo" class="panel-dark p-3 rounded" style="display:none; max-width:720px;">
+                        <h6 class="text-white"><i class="fa-solid fa-list me-2 text-warning"></i>Integrantes del equipo</h6>
+                        <div id="listaIntegrantes"></div>
                     </div>
-                    <p class="text-secondary small fst-italic flex-shrink-0 mt-2">* Escribe en la última fila para agregar otra.</p>
                 </div>
 
                 <div class="tab-pane fade" id="altar">
-                    <div class="row h-100 g-0">
-                        <div class="col-md-5 d-flex flex-column h-100 border-end border-secondary pe-3">
-                            <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
-                                <h5 class="text-white border-bottom border-secondary pb-2 mb-3"><i class="fa-solid fa-list-check me-2"></i>Datos Generales</h5>
-                                <label class="text-secondary small">Difunto:</label> <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required autocomplete="off" />
-                                <label class="text-secondary small">Niveles:</label> <select asp-for="Niveles" class="form-select form-control-dark mb-2" required><option value="" selected disabled>-- Seleccionar --</option><option>2 Niveles</option><option>3 Niveles</option><option>7 Niveles</option></select>
-                                <label class="text-secondary small">Tipo:</label> <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required><option value="" selected disabled>-- Seleccionar --</option><option>Tradicional</option><option>Niños</option><option>Mascotas</option></select>
-                                <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist</h5>
-                                <div class="p-2 rounded mb-3 bg-dark border-secondary">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
-                            </div>
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3"><i class="fa-solid fa-list-check me-2"></i>Datos Generales</h5>
+                            <label class="text-secondary small">Difunto:</label>
+                            <input asp-for="NombreDifunto" class="form-control form-control-dark mb-2" required autocomplete="off" />
+                            <label class="text-secondary small">Niveles:</label>
+                            <select asp-for="Niveles" class="form-select form-control-dark mb-2" required>
+                                <option value="" selected disabled>-- Seleccionar --</option>
+                                <option>2 Niveles</option>
+                                <option>3 Niveles</option>
+                                <option>7 Niveles</option>
+                            </select>
+                            <label class="text-secondary small">Tipo:</label>
+                            <select asp-for="TipoAltar" class="form-select form-control-dark mb-4" required>
+                                <option value="" selected disabled>-- Seleccionar --</option>
+                                <option>Tradicional</option>
+                                <option>Ninos</option>
+                                <option>Mascotas</option>
+                            </select>
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-2"><i class="fa-solid fa-check-double me-2"></i>Checklist</h5>
+                            <div class="p-2 rounded mb-3 bg-dark border-secondary">@await Html.PartialAsync("_ChecklistPartial", Model)</div>
                         </div>
-                        <div class="col-md-7 d-flex flex-column h-100 ps-4">
-                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3 flex-shrink-0"><i class="fa-solid fa-calculator me-2"></i>Calificación</h5>
-                            <label class="text-secondary small flex-shrink-0">Hobbies / Temática:</label> <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" style="flex-grow: 1; resize: none;" required></textarea>
-                            <div class="flex-shrink-0 panel-dark p-3 rounded">
-                                <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradición (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
-                                <div class="row mb-2"><div class="col-5"><label class="text-warning fw-bold">Personalización (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
-                                <div class="row mb-3"><div class="col-5"><label class="text-secondary">Estética (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                        <div class="col-md-7">
+                            <h5 class="text-white border-bottom border-secondary pb-2 mb-3"><i class="fa-solid fa-calculator me-2"></i>Calificacion</h5>
+                            <label class="text-secondary small">Hobbies / Tematica:</label>
+                            <textarea asp-for="Hobbies" class="form-control form-control-dark mb-3" rows="8" required></textarea>
+                            <div class="panel-dark p-3 rounded">
+                                <div class="row mb-2"><div class="col-5"><label class="text-secondary">Tradicion (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaTradicion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                                <div class="row mb-2"><div class="col-5"><label class="text-warning fw-bold">Personalizacion (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaPersonalizacion" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
+                                <div class="row mb-3"><div class="col-5"><label class="text-secondary">Estetica (0-10):</label></div><div class="col-7"><input type="number" asp-for="NotaEstetica" class="form-control form-control-dark text-center fw-bold" step="0.1" min="0" max="10" /></div></div>
                                 <button type="submit" class="btn btn-primary w-100 py-3 fs-5 shadow fw-bold">
-                                    <i class="fa-solid fa-floppy-disk me-2"></i>GUARDAR EVALUACIÓN
+                                    <i class="fa-solid fa-floppy-disk me-2"></i>GUARDAR EVALUACION
                                 </button>
                                 <input type="hidden" asp-for="BonusTematicos" id="BonusTotal" value="0" />
                             </div>
@@ -203,43 +116,78 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const tableBody = document.querySelector("#tblIntegrantes tbody");
-        if (tableBody) {
-            tableBody.addEventListener("input", function (e) {
-                const target = e.target;
-                if (target.tagName !== "INPUT") return;
-                const currentRow = target.closest("tr");
-                const rows = tableBody.querySelectorAll("tr");
-                if (currentRow === rows[rows.length - 1] && target.value.trim() !== "") {
-                    const clone = currentRow.cloneNode(true);
-                    clone.querySelectorAll("input").forEach(input => input.value = "");
-                    tableBody.appendChild(clone);
-                }
-            });
-        }
-    });
+document.getElementById('buscarEquipo').addEventListener('input', async function () {
+    const q = this.value.trim();
+    const historico = document.getElementById('incluirHistorico')?.checked ?? false;
+    const lista = document.getElementById('resultadosEquipo');
 
-    document.getElementById('mainForm').addEventListener('submit', function(e) {
-        if (!this.checkValidity()) {
-            e.preventDefault();
-            var firstInvalid = this.querySelector(':invalid');
-            if (firstInvalid) {
-                var tabPane = firstInvalid.closest('.tab-pane');
-                if (tabPane) {
-                    var tabId = tabPane.id;
-                    var tabButton = document.querySelector('button[data-bs-target="#' + tabId + '"]');
-                    if (tabButton) {
-                        tabButton.click();
-                    }
-                }
-                setTimeout(function() {
-                    firstInvalid.focus();
-                    firstInvalid.reportValidity();
-                }, 150);
-            }
-        }
+    if (!q) {
+        lista.style.display = 'none';
+        limpiarIntegrantes();
+        return;
+    }
+
+    const res = await fetch(`/Evaluacion/BuscarEquipos?q=${encodeURIComponent(q)}&incluirHistorico=${historico}`);
+    const data = await res.json();
+
+    lista.innerHTML = '';
+    data.forEach(equipo => {
+        const li = document.createElement('li');
+        li.textContent = `${equipo.nombreEquipo} (${equipo.periodoAcademico}) - ${equipo.cantidadIntegrantes} integrante(s)`;
+        li.addEventListener('click', () => seleccionarEquipo(equipo));
+        lista.appendChild(li);
     });
-    function toggleBonus(chk) { let area = chk.parentElement.querySelector('.bonus-area'); if(chk.checked) area.classList.remove('d-none'); else { area.classList.add('d-none'); area.querySelector('input').checked = false; calcBonus(); } }
-    function calcBonus() { document.getElementById('BonusTotal').value = document.querySelectorAll('.bonus-check:checked').length; }
+    lista.style.display = data.length > 0 ? 'block' : 'none';
+});
+
+async function seleccionarEquipo(equipo) {
+    document.getElementById('buscarEquipo').value = equipo.nombreEquipo;
+    document.getElementById('equipoSeleccionadoId').value = equipo.id;
+    document.getElementById('resultadosEquipo').style.display = 'none';
+
+    const res = await fetch(`/Evaluacion/ObtenerIntegrantesEquipo?equipoId=${equipo.id}`);
+    const data = await res.json();
+    const lista = document.getElementById('listaIntegrantes');
+    lista.innerHTML = '';
+    data.forEach(i => {
+        const div = document.createElement('div');
+        div.className = 'integrante-item';
+        div.textContent = `${i.nombreCompleto} - ${i.matricula}${i.esCreador ? ' (Creador)' : ''}`;
+        lista.appendChild(div);
+    });
+    document.getElementById('integrantesEquipo').style.display = 'block';
+}
+
+function limpiarIntegrantes() {
+    document.getElementById('equipoSeleccionadoId').value = '';
+    document.getElementById('integrantesEquipo').style.display = 'none';
+    document.getElementById('listaIntegrantes').innerHTML = '';
+}
+
+document.getElementById('mainForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('equipoSeleccionadoId').value) {
+        e.preventDefault();
+        document.getElementById('equipo-tab').click();
+        document.getElementById('buscarEquipo').focus();
+        alert('Selecciona un equipo antes de guardar.');
+        return;
+    }
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        const firstInvalid = this.querySelector(':invalid');
+        if (firstInvalid) {
+            const tabPane = firstInvalid.closest('.tab-pane');
+            const tabButton = document.querySelector('button[data-bs-target="#' + tabPane.id + '"]');
+            if (tabButton) tabButton.click();
+            setTimeout(() => firstInvalid.reportValidity(), 150);
+        }
+    }
+});
+
+function toggleBonus(chk) {
+    let area = chk.parentElement.querySelector('.bonus-area');
+    if (chk.checked) area.classList.remove('d-none');
+    else { area.classList.add('d-none'); area.querySelector('input').checked = false; calcBonus(); }
+}
+function calcBonus() { document.getElementById('BonusTotal').value = document.querySelectorAll('.bonus-check:checked').length; }
 </script>

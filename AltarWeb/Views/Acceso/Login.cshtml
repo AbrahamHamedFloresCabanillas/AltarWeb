@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -12,21 +12,11 @@
     <link rel="stylesheet" href="~/css/paleta-de-colores.css" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/apple-design.css" />
-    <style>
-        .login-card {
-            width: 100%;
-            max-width: 450px;
-            border-top: 4px solid var(--color-secundario) !important;
-        }
-    </style>
+    <style>.login-card{width:100%;max-width:450px;border-top:4px solid var(--color-secundario)!important;}</style>
 </head>
-<body class="tema-oscuro d-flex align-items-center justify-content-center" style="height: 100vh; overflow: hidden;">
-
+<body class="tema-oscuro d-flex align-items-center justify-content-center" style="height:100vh;overflow:hidden;">
     <div class="login-card panel-dark p-5">
-        <h2 class="text-center text-white fw-bold mb-4">
-            <i class="fa-solid fa-gavel me-2 text-warning"></i>ACCESO JUECES
-        </h2>
-
+        <h2 class="text-center text-white fw-bold mb-4"><i class="fa-solid fa-gavel me-2 text-warning"></i>ACCESO JUECES</h2>
         <form method="post" action="/Acceso/Login">
             <div class="mb-3">
                 <label class="lbl-form small fw-bold">Usuario:</label>
@@ -35,33 +25,29 @@
                     <input type="text" name="usuario" class="form-control form-control-dark" placeholder="Ingresa tu usuario" required autocomplete="off" />
                 </div>
             </div>
-
             <div class="mb-4">
-                <label class="lbl-form small fw-bold">Contraseña:</label>
+                <label class="lbl-form small fw-bold">Contrasena:</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" name="password" class="form-control form-control-dark" placeholder="••••••••" required />
+                    <input type="password" name="password" class="form-control form-control-dark" required />
                 </div>
             </div>
-
             @if (ViewBag.Error != null)
             {
-                <div class="alert alert-danger py-2 mb-3 text-center small border-0 rounded-0 fw-bold">
-                    <i class="fa-solid fa-circle-exclamation me-1"></i> @ViewBag.Error
-                </div>
+                <div class="alert alert-danger py-2 mb-3 text-center small border-0 rounded-0 fw-bold">@ViewBag.Error</div>
             }
-
             <button type="submit" class="btn btn-primary w-100 py-3 fs-5 fw-bold shadow">
-                <i class="fa-solid fa-right-to-bracket me-2"></i>INICIAR SESIÓN
+                <i class="fa-solid fa-right-to-bracket me-2"></i>INICIAR SESION
             </button>
         </form>
+        <div class="text-center mt-4 small">
+            <a href="/Alumno/Login" class="text-info text-decoration-none">Ir al portal de alumnos</a>
+        </div>
     </div>
 
-    <!-- Logos Institucionales Lowkey -->
     <div class="logos-container">
         <img src="~/images/logo_uabc.png" alt="UABC" class="logo-img" />
         <img src="~/images/logo_fim.png" alt="FIM" class="logo-img" />
     </div>
-
 </body>
 </html>

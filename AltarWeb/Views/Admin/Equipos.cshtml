@@ -1,0 +1,63 @@
+@model IEnumerable<AltarWeb.Models.Equipo>
+@{
+    Layout = "_Layout";
+    var historico = Context.Request.Path.Value?.Contains("Historico") == true;
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom:2px solid var(--color-secundario);">
+        <h2 class="text-white m-0"><i class="fa-solid fa-users me-2 text-warning"></i>@(historico ? "Equipos Historicos" : "Equipos Actuales")</h2>
+        <div>
+            <a href="/Admin/Equipos" class="btn btn-outline-primary btn-sm">Actuales</a>
+            <a href="/Admin/EquiposHistorico" class="btn btn-outline-secondary btn-sm">Historico</a>
+            <a href="/Home/Menu" class="btn btn-danger btn-sm">Regresar</a>
+        </div>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success rounded-0 fw-bold text-center">@TempData["Mensaje"]</div>
+    }
+
+    <div class="panel-dark p-4 rounded">
+        <table class="table-theme w-100">
+            <thead>
+                <tr>
+                    <th>Equipo</th>
+                    <th>Periodo</th>
+                    <th>Creador</th>
+                    <th>Integrantes</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var equipo in Model)
+            {
+                <tr>
+                    <td class="text-white fw-bold">@equipo.NombreEquipo</td>
+                    <td class="text-silver">@equipo.PeriodoAcademico</td>
+                    <td class="text-silver">@equipo.SnapshotNombreCreador</td>
+                    <td class="text-silver">@equipo.Integrantes.Count</td>
+                    <td>@(equipo.Activo ? Html.Raw("<span class=\"badge bg-success\">Activo</span>") : Html.Raw("<span class=\"badge bg-danger\">Inactivo</span>"))</td>
+                    <td>
+                        <a href="/Admin/EditarEquipo/@equipo.Id" class="btn btn-primary btn-sm">Editar</a>
+                        @if (equipo.Activo)
+                        {
+                            <form method="post" action="/Admin/DesactivarEquipo/@equipo.Id" class="d-inline">
+                                <button class="btn btn-dark btn-sm" onclick="return confirm('Desactivar equipo?')">Desactivar</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" action="/Admin/ReactivarEquipo/@equipo.Id" class="d-inline">
+                                <button class="btn btn-success btn-sm">Reactivar</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,155 @@
+@model AltarWeb.Models.Equipo
+@{
+    Layout = "_Layout";
+    var puedeEditarIntegrantes = ViewBag.PuedeEditarIntegrantes == true;
+    var equipoEvaluado = ViewBag.EquipoEvaluado == true;
+}
+
+<style>
+    .lista-dropdown { list-style:none; margin:0; padding:0; position:absolute; z-index:20; background:#151515; border:1px solid var(--color-borde); width:100%; max-height:240px; overflow:auto; }
+    .lista-dropdown li { padding:10px 12px; cursor:pointer; color:#f5f5f5; border-bottom:1px solid rgba(255,255,255,.08); }
+    .lista-dropdown li:hover { background:rgba(31,157,138,.18); }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom:2px solid #1f9d8a;">
+        <div>
+            <h2 class="text-white m-0">@Model.NombreEquipo</h2>
+            <span class="text-secondary small">Periodo @Model.PeriodoAcademico</span>
+        </div>
+        <a href="/Alumno/Dashboard" class="btn btn-outline-secondary">Dashboard</a>
+    </div>
+
+    @if (puedeEditarIntegrantes)
+    {
+        <div class="panel-dark p-4 rounded mb-4">
+            <label class="lbl-form">Agregar integrante</label>
+            <div class="campo-busqueda-integrante position-relative">
+                <input type="text" id="buscarIntegrante" class="form-control form-control-dark"
+                       placeholder="Buscar por nombre o matricula..." autocomplete="off" />
+                <ul id="resultadosBusqueda" class="lista-dropdown" style="display:none;"></ul>
+            </div>
+            <div id="mensajeEquipo" class="small mt-3"></div>
+        </div>
+    }
+    else if (equipoEvaluado)
+    {
+        <div class="alert alert-info">
+            Este equipo ya fue evaluado. La lista de integrantes queda cerrada.
+        </div>
+    }
+
+    <div class="panel-dark p-4 rounded">
+        <table class="table-theme w-100">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Matricula</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    @if (puedeEditarIntegrantes)
+                    {
+                        <th class="text-end">Acciones</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var integrante in Model.Integrantes.OrderByDescending(i => i.EsCreador).ThenBy(i => i.Alumno.NombreCompleto))
+                {
+                    <tr>
+                        <td class="text-white">@integrante.Alumno.NombreCompleto</td>
+                        <td class="text-silver">@integrante.Alumno.Matricula</td>
+                        <td class="text-silver">@integrante.Alumno.CorreoElectronico</td>
+                        <td>
+                            @if (integrante.EsCreador)
+                            {
+                                <span class="badge bg-success">Creador</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Integrante</span>
+                            }
+                        </td>
+                        @if (puedeEditarIntegrantes)
+                        {
+                            <td class="text-end">
+                                @if (!integrante.EsCreador)
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="quitarIntegrante(@integrante.AlumnoId)">
+                                        <i class="fa-solid fa-user-minus me-1"></i>Quitar
+                                    </button>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (puedeEditarIntegrantes)
+{
+    <script>
+    const mensajeEquipo = document.getElementById('mensajeEquipo');
+
+    document.getElementById('buscarIntegrante').addEventListener('input', async function () {
+        const q = this.value.trim();
+        const lista = document.getElementById('resultadosBusqueda');
+        if (!q) { lista.style.display = 'none'; return; }
+
+        const res = await fetch(`/Alumno/BuscarAlumno?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        lista.innerHTML = '';
+        if (data.length === 0) { lista.style.display = 'none'; return; }
+
+        data.forEach(alumno => {
+            const li = document.createElement('li');
+            li.textContent = `${alumno.nombreCompleto} - ${alumno.matricula}`;
+            li.addEventListener('click', () => agregarIntegrante(alumno.id));
+            lista.appendChild(li);
+        });
+        lista.style.display = 'block';
+    });
+
+    async function agregarIntegrante(integranteId) {
+        const result = await enviarCambio('/Alumno/AgregarIntegrante', integranteId);
+        if (result.ok) {
+            location.reload();
+            return;
+        }
+
+        mostrarMensaje(result.error || 'No se pudo agregar el integrante.', true);
+    }
+
+    async function quitarIntegrante(integranteId) {
+        const result = await enviarCambio('/Alumno/QuitarIntegrante', integranteId);
+        if (result.ok) {
+            location.reload();
+            return;
+        }
+
+        mostrarMensaje(result.error || 'No se pudo quitar el integrante.', true);
+    }
+
+    async function enviarCambio(url, integranteId) {
+        const body = new URLSearchParams();
+        body.append('integranteId', integranteId);
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body
+        });
+
+        return await res.json();
+    }
+
+    function mostrarMensaje(texto, esError) {
+        mensajeEquipo.textContent = texto;
+        mensajeEquipo.className = esError ? 'small mt-3 text-danger' : 'small mt-3 text-success';
+    }
+    </script>
+}

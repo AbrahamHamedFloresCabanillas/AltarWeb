@@ -1,0 +1,81 @@
+@model AltarWeb.Models.ViewModels.EditarEquipoViewModel
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    .lista-dropdown { list-style:none; margin:0; padding:0; position:absolute; z-index:20; background:#151515; border:1px solid var(--color-borde); width:100%; max-height:240px; overflow:auto; }
+    .lista-dropdown li { padding:10px 12px; cursor:pointer; color:#f5f5f5; border-bottom:1px solid rgba(255,255,255,.08); }
+    .lista-dropdown li:hover { background:rgba(204,138,0,.15); }
+    .chip-integrante { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; margin:4px; background:rgba(204,138,0,.15); color:#fff; border:1px solid var(--color-secundario); }
+    .chip-integrante button { width:22px; height:22px; border:0; background:#dc3545; color:#fff; }
+</style>
+
+<div class="container py-5" style="max-width:850px;">
+    <div class="panel-dark p-4 rounded">
+        <h2 class="text-white mb-4"><i class="fa-solid fa-pen me-2 text-warning"></i>Editar Equipo</h2>
+        <form asp-action="EditarEquipo" asp-route-id="@Model.Id" method="post">
+            <input asp-for="Id" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="NombreEquipo" class="lbl-form"></label>
+                <input asp-for="NombreEquipo" class="form-control form-control-dark" />
+                <span asp-validation-for="NombreEquipo" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PeriodoAcademico" class="lbl-form"></label>
+                <input asp-for="PeriodoAcademico" class="form-control form-control-dark" readonly />
+            </div>
+
+            <label class="lbl-form">Integrantes</label>
+            <div class="position-relative mb-3">
+                <input id="buscarAlumnoEquipo" class="form-control form-control-dark" placeholder="Buscar alumno por nombre o matricula..." autocomplete="off" />
+                <ul id="resultadosAlumnoEquipo" class="lista-dropdown" style="display:none;"></ul>
+            </div>
+            <div id="integrantesSeleccionados" class="mb-4">
+                @foreach (var id in Model.IntegranteIds)
+                {
+                    <div class="chip-integrante" data-integrante-id="@id">
+                        <span>Alumno ID @id</span>
+                        <input type="hidden" name="IntegranteIds" value="@id" />
+                        <button type="button" onclick="this.parentElement.remove()">x</button>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-success fw-bold" type="submit">Guardar cambios</button>
+                <a href="/Admin/Equipos" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('buscarAlumnoEquipo').addEventListener('input', async function () {
+    const q = this.value.trim();
+    const lista = document.getElementById('resultadosAlumnoEquipo');
+    if (!q) { lista.style.display = 'none'; return; }
+    const res = await fetch(`/Admin/BuscarAlumnos?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    lista.innerHTML = '';
+    data.forEach(alumno => {
+        const li = document.createElement('li');
+        li.textContent = `${alumno.nombreCompleto} - ${alumno.matricula}`;
+        li.addEventListener('click', () => agregarIntegrante(alumno));
+        lista.appendChild(li);
+    });
+    lista.style.display = data.length ? 'block' : 'none';
+});
+
+function agregarIntegrante(alumno) {
+    if (document.querySelector(`[data-integrante-id="${alumno.id}"]`)) return;
+    const chip = document.createElement('div');
+    chip.className = 'chip-integrante';
+    chip.dataset.integranteId = alumno.id;
+    chip.innerHTML = `<span>${alumno.nombreCompleto} (${alumno.matricula})</span><input type="hidden" name="IntegranteIds" value="${alumno.id}" /><button type="button" onclick="this.parentElement.remove()">x</button>`;
+    document.getElementById('integrantesSeleccionados').appendChild(chip);
+    document.getElementById('buscarAlumnoEquipo').value = '';
+    document.getElementById('resultadosAlumnoEquipo').style.display = 'none';
+}
+</script>

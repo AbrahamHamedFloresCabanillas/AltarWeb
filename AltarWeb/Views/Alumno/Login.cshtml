@@ -1,0 +1,69 @@
+@model AltarWeb.Models.ViewModels.AlumnoLoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acceso Alumnos - AltarWeb</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="~/css/paleta-de-colores.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/apple-design.css" />
+    <style>
+        .alumno-card { width: 100%; max-width: 470px; border-top: 4px solid #1f9d8a !important; }
+        .portal-alumno { background: radial-gradient(circle at top, rgba(31, 157, 138, .18), transparent 35%), #090909; }
+    </style>
+</head>
+<body class="tema-oscuro portal-alumno d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="alumno-card panel-dark p-5">
+        <h2 class="text-center text-white fw-bold mb-4">
+            <i class="fa-solid fa-user-graduate me-2" style="color:#1f9d8a"></i>ACCESO ALUMNOS
+        </h2>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger py-2 text-center small rounded-0 fw-bold">@ViewBag.Error</div>
+        }
+
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="Matricula" class="lbl-form small fw-bold">Matricula:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-id-card"></i></span>
+                    <input asp-for="Matricula" class="form-control form-control-dark" autocomplete="off" />
+                </div>
+                <span asp-validation-for="Matricula" class="text-danger small"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="Password" class="lbl-form small fw-bold">Contrasena:</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-lock"></i></span>
+                    <input asp-for="Password" type="password" class="form-control form-control-dark" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <button type="submit" class="btn btn-success w-100 py-3 fw-bold">
+                <i class="fa-solid fa-right-to-bracket me-2"></i>INICIAR SESION
+            </button>
+        </form>
+
+        <a href="/Alumno/LoginGoogle" class="btn btn-outline-light w-100 mt-3 py-2 fw-bold">
+            <i class="fa-brands fa-google me-2"></i>Iniciar sesion con Google (@@uabc.edu.mx)
+        </a>
+        <div class="d-flex justify-content-between mt-4 small">
+            <a href="/Alumno/Registro" class="text-info text-decoration-none">Crear cuenta de alumno</a>
+            <a href="/Acceso/Login" class="text-secondary text-decoration-none">Portal de jueces</a>
+        </div>
+    </div>
+
+    <div class="logos-container">
+        <img src="~/images/logo_uabc.png" alt="UABC" class="logo-img" />
+        <img src="~/images/logo_fim.png" alt="FIM" class="logo-img" />
+    </div>
+</body>
+</html>

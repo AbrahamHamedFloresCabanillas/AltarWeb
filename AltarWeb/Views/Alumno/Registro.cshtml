@@ -1,0 +1,49 @@
+@model AltarWeb.Models.ViewModels.AlumnoRegistroViewModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container py-5" style="max-width: 720px;">
+    <div class="panel-dark p-4 rounded" style="border-top: 4px solid #1f9d8a;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-white m-0"><i class="fa-solid fa-user-plus me-2" style="color:#1f9d8a"></i>Registro de Alumno</h2>
+            <a href="/Alumno/Login" class="btn btn-outline-secondary btn-sm">Volver</a>
+        </div>
+
+        <form asp-action="Registro" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="NombreCompleto" class="lbl-form"></label>
+                <input asp-for="NombreCompleto" class="form-control form-control-dark" autocomplete="off" />
+                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Matricula" class="lbl-form"></label>
+                <input asp-for="Matricula" class="form-control form-control-dark" autocomplete="off" inputmode="numeric" />
+                <span asp-validation-for="Matricula" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CorreoElectronico" class="lbl-form"></label>
+                <input asp-for="CorreoElectronico" class="form-control form-control-dark" autocomplete="off" />
+                <span asp-validation-for="CorreoElectronico" class="text-danger small"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Password" class="lbl-form"></label>
+                    <input asp-for="Password" type="password" class="form-control form-control-dark" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ConfirmarPassword" class="lbl-form"></label>
+                    <input asp-for="ConfirmarPassword" type="password" class="form-control form-control-dark" />
+                    <span asp-validation-for="ConfirmarPassword" class="text-danger small"></span>
+                </div>
+            </div>
+            <button class="btn btn-success w-100 py-3 fw-bold" type="submit">Crear cuenta</button>
+        </form>
+
+        <a href="/Alumno/LoginGoogle" class="btn btn-outline-light w-100 mt-3">
+            <i class="fa-brands fa-google me-2"></i>Usar Google institucional
+        </a>
+    </div>
+</div>

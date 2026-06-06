@@ -1,331 +1,259 @@
-using AltarWeb.Models;
+﻿using AltarWeb.Models;
+using AltarWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Net.Mail;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace AltarWeb.Controllers
 {
     public class EvaluacionController : Controller
     {
         private readonly AltarDbContext _context;
-        private readonly IWebHostEnvironment _host;
+        private readonly ConstanciaService _constanciaService;
 
-        public EvaluacionController(AltarDbContext context, IWebHostEnvironment host)
+        public EvaluacionController(AltarDbContext context, ConstanciaService constanciaService)
         {
             _context = context;
-            _host = host;
-            QuestPDF.Settings.License = LicenseType.Community;
+            _constanciaService = constanciaService;
         }
 
         public IActionResult Crear()
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
+            ViewBag.EsAdmin = HttpContext.Session.GetString("JuezRol") == "Admin";
             return View(new Evaluacion());
         }
 
         [HttpPost]
-        public IActionResult Crear(Evaluacion eval, List<string> NombresIntegrantes, List<string> MatriculasIntegrantes, List<string> CorreosIntegrantes)
+        public async Task<IActionResult> Crear(Evaluacion eval, int? EquipoId)
         {
-            // 1. Asignar Juez
             int? juezId = HttpContext.Session.GetInt32("JuezId");
             if (juezId == null) return RedirectToAction("Login", "Acceso");
-            eval.JuezId = juezId.Value;
 
             ModelState.Remove("Juez");
-            ModelState.Remove("JuezId");
+            ModelState.Remove("Equipo");
+            ModelState.Remove("Integrantes");
             ModelState.Remove("Periodo");
             ModelState.Remove("NombreJuez");
+            ModelState.Remove("NombreEquipo");
+            ModelState.Remove("SnapshotNombreEquipo");
 
-            // Helper para recargar integrantes (Optimizado para evitar referencias nulas)
-            void RecargarIntegrantes()
+            if (EquipoId == null)
             {
-                eval.Integrantes = new List<Integrante>();
-                if (NombresIntegrantes != null)
-                {
-                    for (int i = 0; i < NombresIntegrantes.Count; i++)
-                    {
-                        if (!string.IsNullOrWhiteSpace(NombresIntegrantes[i]))
-                        {
-                            string matricula = (MatriculasIntegrantes != null && MatriculasIntegrantes.Count > i)
-                                ? MatriculasIntegrantes[i]?.Trim() ?? ""
-                                : "";
-
-                            string correo = (CorreosIntegrantes != null && CorreosIntegrantes.Count > i)
-                                ? CorreosIntegrantes[i]?.Trim() ?? ""
-                                : "";
-
-                            eval.Integrantes.Add(new Integrante
-                            {
-                                Nombre = NombresIntegrantes[i].Trim(),
-                                Matricula = matricula,
-                                Correo = correo
-                            });
-                        }
-                    }
-                }
-            }
-
-            // 2. VALIDACIONES
-            // A. Nombre de Equipo
-            if (_context.Evaluaciones.Any(e => e.NombreEquipo == (eval.NombreEquipo != null ? eval.NombreEquipo.Trim() : "")))
-            {
-                TempData["Error"] = $"El equipo '{eval.NombreEquipo}' ya existe.";
-                RecargarIntegrantes();
+                TempData["Error"] = "Selecciona el equipo a evaluar.";
+                ViewBag.EsAdmin = HttpContext.Session.GetString("JuezRol") == "Admin";
                 return View(eval);
             }
 
-            // B. Matrículas duplicadas
-            if (MatriculasIntegrantes != null)
+            var periodoActual = PeriodoHelper.ObtenerPeriodoActual();
+            var incluirHistorico = HttpContext.Session.GetString("JuezRol") == "Admin";
+            var equipo = await _context.Equipos
+                .IgnoreQueryFilters()
+                .Include(e => e.Integrantes)
+                    .ThenInclude(ae => ae.Alumno)
+                .FirstOrDefaultAsync(e => e.Id == EquipoId.Value && e.Activo && (incluirHistorico || e.PeriodoAcademico == periodoActual));
+
+            if (equipo == null)
             {
-                var listaLimpia = MatriculasIntegrantes
-                    .Where(m => !string.IsNullOrWhiteSpace(m))
-                    .Select(m => m.Trim())
-                    .ToList();
-
-                if (listaLimpia.Any(m => !m.All(char.IsDigit)))
-                {
-                    TempData["Error"] = "Las matrículas deben contener solo números.";
-                    RecargarIntegrantes();
-                    return View(eval);
-                }
-
-                var dups = listaLimpia.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
-
-                if (dups.Count != 0)
-                {
-                    TempData["Error"] = $"Escribiste la matrícula {dups.First()} dos veces.";
-                    RecargarIntegrantes();
-                    return View(eval);
-                }
-
-                foreach (var mat in listaLimpia)
-                {
-                    // Buscar incluyendo soft-deleted para manejar reactivaciones
-                    var existe = _context.Integrantes
-                        .IgnoreQueryFilters()
-                        .Include(i => i.Evaluacion)
-                        .FirstOrDefault(i => i.Matricula == mat);
-
-                    if (existe != null)
-                    {
-                        // Si el estudiante está soft-deleted, lo reactivamos silenciosamente
-                        if (existe.IsDeleted)
-                        {
-                            existe.IsDeleted = false;
-                            existe.FechaEliminado = null;
-                            _context.Integrantes.Update(existe);
-                            _context.SaveChanges();
-                            // Continuar — ya no bloquea la creación
-                        }
-                        else
-                        {
-                            string nomEq = existe.Evaluacion?.NombreEquipo ?? "otro equipo";
-                            TempData["Error"] = $"El alumno {existe.Nombre} ({mat}) ya está registrado en '{nomEq}'.";
-                            RecargarIntegrantes();
-                            return View(eval);
-                        }
-                    }
-                }
+                TempData["Error"] = "El equipo seleccionado no esta disponible.";
+                ViewBag.EsAdmin = incluirHistorico;
+                return View(eval);
             }
 
-            // 3. CÁLCULOS
-            int enc = 0;
-            if (eval.ChkFoto) enc++; if (eval.ChkVelas) enc++; if (eval.ChkFlor) enc++; if (eval.ChkPapel) enc++;
-            if (eval.ChkPan) enc++; if (eval.ChkAgua) enc++; if (eval.ChkSal) enc++; if (eval.ChkIncienso) enc++;
-            if (eval.ChkCalaveritas) enc++; if (eval.ChkObjetos) enc++;
+            var yaEvaluado = await _context.Evaluaciones.AnyAsync(e => e.EquipoId == equipo.Id);
+            if (yaEvaluado)
+            {
+                TempData["Error"] = $"El equipo '{equipo.NombreEquipo}' ya tiene una evaluacion registrada.";
+                ViewBag.EsAdmin = incluirHistorico;
+                return View(eval);
+            }
 
-            decimal notaTrad = Math.Min(10, (enc + eval.NotaTradicion) / 2);
-            decimal notaPers = Math.Min(10, eval.NotaPersonalizacion + (eval.BonusTematicos * 0.5m));
-            eval.NotaFinal = (notaTrad * 0.3m) + (notaPers * 0.4m) + (eval.NotaEstetica * 0.3m);
+            if (!ModelState.IsValid)
+            {
+                ViewBag.EsAdmin = incluirHistorico;
+                return View(eval);
+            }
+
+            var juez = await _context.Jueces.FindAsync(juezId.Value);
+            eval.JuezId = juezId.Value;
+            eval.NombreJuez = !string.IsNullOrWhiteSpace(juez?.NombreCompleto) ? juez.NombreCompleto : juez?.Usuario ?? "Desconocido";
+            eval.EquipoId = equipo.Id;
+            eval.NombreEquipo = equipo.NombreEquipo;
+            eval.SnapshotNombreEquipo = equipo.NombreEquipo;
+            eval.Periodo = equipo.PeriodoAcademico;
             eval.Fecha = DateTime.Now;
+            eval.CalcularNotasFinales();
 
-            // --- PERIODO ACADÉMICO DINÁMICO ---
-            // Enero-Julio → YYYY-1, Agosto-Diciembre → YYYY-2
-            var now = DateTime.Now;
-            eval.Periodo = now.Month <= 7 ? $"{now.Year}-1" : $"{now.Year}-2";
+            _context.Evaluaciones.Add(eval);
+            await _context.SaveChangesAsync();
 
-            // --- SNAPSHOT DEL NOMBRE DEL JUEZ ---
-            var juez = _context.Jueces.Find(juezId.Value);
-            eval.NombreJuez = !string.IsNullOrEmpty(juez?.NombreCompleto) 
-                ? juez.NombreCompleto 
-                : juez?.Usuario ?? "Desconocido";
-
-            RecargarIntegrantes();
-
-            if (eval.Integrantes.Count == 0)
-            {
-                TempData["Error"] = "Agrega al menos un integrante.";
-                return View(eval);
-            }
-
-            // 4. GUARDAR
-            if (ModelState.IsValid)
+            if (eval.NotaFinal >= 9.0m)
             {
                 try
                 {
-                    eval.NombreEquipo = eval.NombreEquipo?.Trim() ?? "Equipo Sin Nombre";
-
-                    _context.Evaluaciones.Add(eval);
-                    _context.SaveChanges();
-
-                    if (eval.NotaFinal >= 9.0m)
-                    {
-                        try { ProcesarEnvioDeCorreos(eval); }
-                        catch (Exception ex) { Console.WriteLine("Error Correo: " + ex.Message); }
-                    }
-
-                    TempData["Mensaje"] = "Evaluación guardada exitosamente.";
-                    return RedirectToAction("Detalle", new { id = eval.Id });
+                    await _constanciaService.EnviarConstancias(eval, equipo.Integrantes.ToList());
                 }
                 catch (Exception ex)
                 {
-                    TempData["Error"] = "Error al guardar en BD: " + (ex.InnerException?.Message ?? ex.Message);
-                    return View(eval);
+                    TempData["Mensaje"] = "Evaluacion guardada. No se pudieron enviar las constancias: " + ex.Message;
+                    return RedirectToAction("Detalle", new { id = eval.Id });
                 }
             }
-            else
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                TempData["Error"] = "Faltan datos: " + string.Join(", ", errors);
-                return View(eval);
-            }
+
+            TempData["Mensaje"] = "Evaluacion guardada exitosamente.";
+            return RedirectToAction("Detalle", new { id = eval.Id });
         }
 
-        public IActionResult Detalle(int id)
+        public async Task<IActionResult> Detalle(int id)
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
-            var eval = _context.Evaluaciones
+            var eval = await _context.Evaluaciones
+                .IgnoreQueryFilters()
                 .Include(e => e.Integrantes)
                 .Include(e => e.Juez)
-                .FirstOrDefault(e => e.Id == id);
+                .Include(e => e.Equipo)
+                    .ThenInclude(eq => eq!.Integrantes)
+                        .ThenInclude(ae => ae.Alumno)
+                .FirstOrDefaultAsync(e => e.Id == id);
             if (eval == null) return NotFound();
             if (TempData["Mensaje"] != null) ViewBag.Mensaje = TempData["Mensaje"];
             return View(eval);
         }
 
-        public IActionResult EnviarResultados(int id)
+        public async Task<IActionResult> BuscarEquipos(string q, bool incluirHistorico = false)
         {
-            var eval = _context.Evaluaciones.Include(e => e.Integrantes).FirstOrDefault(e => e.Id == id);
-            if (eval != null)
+            if (HttpContext.Session.GetInt32("JuezId") == null) return Json(new List<object>());
+            var esAdmin = HttpContext.Session.GetString("JuezRol") == "Admin";
+            var periodo = PeriodoHelper.ObtenerPeriodoActual();
+
+            var query = _context.Equipos
+                .IgnoreQueryFilters()
+                .Include(e => e.Integrantes)
+                .Where(e => e.Activo)
+                .AsQueryable();
+
+            if (!incluirHistorico || !esAdmin)
             {
-                try
-                {
-                    bool enviado = ProcesarEnvioDeCorreos(eval);
-                    TempData["Mensaje"] = enviado
-                        ? "Correos enviados exitosamente."
-                        : "Error de autenticación con el servidor de correo.";
-                }
-                catch
-                {
-                    TempData["Mensaje"] = "Ocurrió un error inesperado al intentar enviar.";
-                }
-            }
-            return RedirectToAction("Historial", "Home");
-        }
-
-        private bool ProcesarEnvioDeCorreos(Evaluacion eval)
-        {
-            var pdfBytes = GenerarPdfBytes(eval);
-
-            using var smtp = new SmtpClient("smtp.gmail.com", 587);
-            smtp.EnableSsl = true;
-            smtp.Credentials = new NetworkCredential(
-                "abrahamhamed05@gmail.com",
-                "rhbl djvv fyoh slth"
-            );
-
-            using var mail = new MailMessage();
-            mail.From = new MailAddress("abrahamhamed05@gmail.com", "Concurso Altares FIM");
-            mail.Subject = $"Resultados: {eval.NombreEquipo}";
-            mail.Body = $"Hola equipo {eval.NombreEquipo},\n\nSu calificación final es: {eval.NotaFinal:F1}/10.\n\nAdjunto encontrarán su Constancia de Participación.\n\nGracias por participar!";
-
-            using var stream = new MemoryStream(pdfBytes);
-            mail.Attachments.Add(new Attachment(stream, $"Constancia_{eval.NombreEquipo}.pdf"));
-
-            bool hayDestinatarios = false;
-            foreach (var i in eval.Integrantes)
-            {
-                if (!string.IsNullOrWhiteSpace(i.Correo))
-                {
-                    mail.To.Add(i.Correo);
-                    hayDestinatarios = true;
-                }
+                query = query.Where(e => e.PeriodoAcademico == periodo);
             }
 
-            if (hayDestinatarios) { smtp.Send(mail); return true; }
-            return false;
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var texto = q.ToLower();
+                query = query.Where(e => e.NombreEquipo.ToLower().Contains(texto));
+            }
+
+            var resultados = await query
+                .OrderBy(e => e.NombreEquipo)
+                .Take(10)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.NombreEquipo,
+                    e.PeriodoAcademico,
+                    CantidadIntegrantes = e.Integrantes.Count
+                })
+                .ToListAsync();
+
+            return Json(resultados);
         }
 
-        private byte[] GenerarPdfBytes(Evaluacion eval)
+        public async Task<IActionResult> ObtenerIntegrantesEquipo(int equipoId)
         {
-            string rutaCatrina = Path.Combine(_host.WebRootPath, "images", "catrina.png");
-            string rutaUABC = Path.Combine(_host.WebRootPath, "images", "logo_uabc.png");
-            string rutaFIM = Path.Combine(_host.WebRootPath, "images", "logo_fim.png");
-            string rutaAPFI = Path.Combine(_host.WebRootPath, "images", "logo_apfi.png");
+            if (HttpContext.Session.GetInt32("JuezId") == null) return Json(new List<object>());
 
-            var documento = Document.Create(container =>
-            {
-                container.Page(page =>
+            var integrantes = await _context.AlumnoEquipos
+                .IgnoreQueryFilters()
+                .Include(ae => ae.Alumno)
+                .Where(ae => ae.EquipoId == equipoId)
+                .OrderByDescending(ae => ae.EsCreador)
+                .ThenBy(ae => ae.Alumno.NombreCompleto)
+                .Select(ae => new
                 {
-                    page.Size(PageSizes.Letter.Landscape());
-                    page.Margin(1.0f, Unit.Centimetre);
-                    page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
+                    ae.Alumno.Id,
+                    ae.Alumno.NombreCompleto,
+                    ae.Alumno.Matricula,
+                    ae.Alumno.CorreoElectronico,
+                    ae.EsCreador
+                })
+                .ToListAsync();
 
-                    if (System.IO.File.Exists(rutaCatrina))
-                    {
-                        page.Foreground().AlignLeft().AlignBottom().Height(12.5f, Unit.Centimetre).TranslateX(-1.5f, Unit.Centimetre).Image(rutaCatrina).FitArea();
-                    }
+            return Json(integrantes);
+        }
 
-                    page.Content().Column(col =>
-                    {
-                        float anchoLogos = 5.5f;
-                        col.Item().Row(row =>
-                        {
-                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(izq => { if (System.IO.File.Exists(rutaUABC)) izq.RelativeItem().AlignCenter().Width(2.3f, Unit.Centimetre).Image(rutaUABC).FitArea(); });
-                            row.RelativeItem().PaddingHorizontal(0.5f, Unit.Centimetre).AlignMiddle().Column(header => {
-                                header.Item().AlignCenter().Text("UNIVERSIDAD AUT\u00d3NOMA DE BAJA CALIFORNIA").Bold().FontSize(16).FontColor("#00703c");
-                                header.Item().AlignCenter().Text("FACULTAD DE INGENIER\u00cdA").Bold().FontSize(14);
-                                header.Item().AlignCenter().Text("ASOCIACI\u00d3N DE PROFESORES DE LA FACULTAD DE INGENIER\u00cdA (APFI)").FontSize(10);
-                            });
-                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(logosDer => {
-                                if (System.IO.File.Exists(rutaFIM)) logosDer.RelativeItem(1.0f).PaddingTop(5).PaddingRight(5).Image(rutaFIM).FitArea();
-                                if (System.IO.File.Exists(rutaAPFI)) logosDer.RelativeItem(1.5f).Image(rutaAPFI).FitArea();
-                            });
-                        });
-                        col.Item().Height(0.5f, Unit.Centimetre);
-                        col.Item().PaddingHorizontal(4.0f, Unit.Centimetre).Column(textoCentral => {
-                            textoCentral.Item().AlignCenter().Text("OTORGA LA PRESENTE").FontSize(12).LetterSpacing(0.2f);
-                            textoCentral.Item().AlignCenter().Text("CONSTANCIA DE AGRADECIMIENTO").Bold().FontSize(24).FontColor(Colors.Black);
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-                            textoCentral.Item().AlignCenter().Text($"A EL EQUIPO: \"{eval.NombreEquipo.ToUpper()}\"").Bold().FontSize(22).FontColor("#b08d55");
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-                            textoCentral.Item().Text(text => {
-                                text.Justify(); text.ParagraphSpacing(5); text.DefaultTextStyle(x => x.FontSize(12));
-                                text.Span("Por su valiosa participaci\u00f3n y creatividad en la elaboraci\u00f3n del Altar de Muertos dedicado a ");
-                                text.Span($"{eval.NombreDifunto}").Bold();
-                                text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingenier\u00eda de la Universidad Aut\u00f3noma de Baja California.");
-                                text.EmptyLine();
-                                text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservaci\u00f3n de nuestras tradiciones mexicanas.");
-                            });
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-                            textoCentral.Item().AlignCenter().Text($"Mexicali, Baja California a {DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))}").Italic();
-                            textoCentral.Item().AlignCenter().Text("\"Por la realizaci\u00f3n plena del ser\"").Italic().FontSize(9).FontColor(Colors.Grey.Darken2);
-                            textoCentral.Item().PaddingTop(0.5f, Unit.Centimetre).Row(row => {
-                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Dra. Araceli Celina Justo L\u00f3pez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Directora de la Facultad de Ingenier\u00eda").FontSize(8); });
-                                row.ConstantItem(2.0f, Unit.Centimetre);
-                                row.RelativeItem().Column(firm => { firm.Item().Height(2.5f, Unit.Centimetre); firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black); firm.Item().PaddingTop(5).AlignCenter().Text("Ing. Mar\u00eda Carmi\u00f1a Reyes Revelez").Bold().FontSize(9); firm.Item().AlignCenter().Text("Presidenta de la APFI").FontSize(8); });
-                            });
-                        });
-                    });
-                });
-            });
+        public async Task<IActionResult> EnviarResultados(int id)
+        {
+            return await EnviarConstancias(id);
+        }
 
-            return documento.GeneratePdf();
+        [HttpPost]
+        public async Task<IActionResult> EnviarConstanciasPost(int id)
+        {
+            return await EnviarConstancias(id);
+        }
+
+        [HttpPost]
+        [ActionName("EnviarConstancias")]
+        public async Task<IActionResult> EnviarConstanciasAction(int id)
+        {
+            return await EnviarConstancias(id);
+        }
+
+        private async Task<IActionResult> EnviarConstancias(int id)
+        {
+            if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionConEquipoAsync(id);
+            if (eval?.Equipo == null)
+            {
+                TempData["Mensaje"] = "Esta evaluacion no tiene equipo vinculado para enviar constancias nuevas.";
+                return RedirectToAction("Historial", "Home");
+            }
+
+            try
+            {
+                await _constanciaService.EnviarConstancias(eval, eval.Equipo.Integrantes.ToList());
+                TempData["Mensaje"] = "Constancias enviadas exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = "No se pudieron enviar las constancias: " + ex.Message;
+            }
+
+            return RedirectToAction("Detalle", new { id });
+        }
+
+        public async Task<IActionResult> DescargarConstancia(int id)
+        {
+            return await DescargarGrupal(id);
+        }
+
+        public async Task<IActionResult> DescargarGrupal(int id)
+        {
+            if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionConEquipoAsync(id);
+            if (eval == null) return NotFound();
+
+            var pdf = _constanciaService.GenerarGrupal(eval, eval.ObtenerNombreEquipo());
+            return File(pdf, "application/pdf", $"Constancia_Grupal_{eval.ObtenerNombreEquipo()}.pdf");
+        }
+
+        public async Task<IActionResult> DescargarIndividuales(int id)
+        {
+            if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionConEquipoAsync(id);
+            if (eval?.Equipo == null) return NotFound();
+
+            var zip = _constanciaService.GenerarZipIndividuales(eval, eval.Equipo.Integrantes.ToList());
+            return File(zip, "application/zip", $"Constancias_Individuales_{eval.ObtenerNombreEquipo()}.zip");
+        }
+
+        private async Task<Evaluacion?> ObtenerEvaluacionConEquipoAsync(int id)
+        {
+            return await _context.Evaluaciones
+                .IgnoreQueryFilters()
+                .Include(e => e.Equipo)
+                    .ThenInclude(eq => eq!.Integrantes)
+                        .ThenInclude(ae => ae.Alumno)
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
     }
 }

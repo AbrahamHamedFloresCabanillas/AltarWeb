@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,35 +8,33 @@ namespace AltarWeb.Models
         [Key]
         public int Id { get; set; }
 
-        // FK nullable para que al eliminar un juez no se borren las evaluaciones
         public int? JuezId { get; set; }
         public DateTime Fecha { get; set; } = DateTime.Now;
-
-        // Periodo académico dinámico (ej: "2026-1", "2026-2")
         public string Periodo { get; set; } = string.Empty;
-
-        // Snapshot del nombre del juez al momento de crear la evaluación
         public string NombreJuez { get; set; } = string.Empty;
 
+        public int? EquipoId { get; set; }
+        public string SnapshotNombreEquipo { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "El nombre del equipo es obligatorio")]
-        public string NombreEquipo { get; set; } = string.Empty; // Inicializado
+        public string NombreEquipo { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El nombre del difunto es obligatorio")]
-        public string NombreDifunto { get; set; } = string.Empty; // Inicializado
+        public string NombreDifunto { get; set; } = string.Empty;
 
-        public string Niveles { get; set; } = string.Empty; // Inicializado
-        public string TipoAltar { get; set; } = string.Empty; // Inicializado
+        public string Niveles { get; set; } = string.Empty;
+        public string TipoAltar { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Los hobbies son obligatorios")]
-        public string Hobbies { get; set; } = string.Empty; // Inicializado
+        public string Hobbies { get; set; } = string.Empty;
 
-        // Calificaciones
         public decimal NotaTradicion { get; set; }
         public decimal NotaPersonalizacion { get; set; }
         public decimal NotaEstetica { get; set; }
+        public decimal NotaTradicionFinal { get; set; }
+        public decimal NotaPersonalizacionFinal { get; set; }
         public decimal NotaFinal { get; set; }
 
-        // Checkboxes
         public bool ChkFoto { get; set; }
         public bool ChkVelas { get; set; }
         public bool ChkFlor { get; set; }
@@ -52,9 +48,42 @@ namespace AltarWeb.Models
 
         public int BonusTematicos { get; set; }
 
-        // Relaciones — Juez es nullable (soft-delete / SET NULL)
         [ForeignKey("JuezId")]
         public virtual Juez? Juez { get; set; }
-        public virtual List<Integrante> Integrantes { get; set; } = new List<Integrante>();
+
+        [ForeignKey("EquipoId")]
+        public virtual Equipo? Equipo { get; set; }
+
+        public virtual List<Integrante> Integrantes { get; set; } = new();
+
+        public int ObtenerConteoElementos()
+        {
+            int enc = 0;
+            if (ChkFoto) enc++;
+            if (ChkVelas) enc++;
+            if (ChkFlor) enc++;
+            if (ChkPapel) enc++;
+            if (ChkPan) enc++;
+            if (ChkAgua) enc++;
+            if (ChkSal) enc++;
+            if (ChkIncienso) enc++;
+            if (ChkCalaveritas) enc++;
+            if (ChkObjetos) enc++;
+            return enc;
+        }
+
+        public void CalcularNotasFinales()
+        {
+            NotaTradicionFinal = Math.Min(10, (ObtenerConteoElementos() + NotaTradicion) / 2);
+            NotaPersonalizacionFinal = Math.Min(10, NotaPersonalizacion + (BonusTematicos * 0.5m));
+            NotaFinal = (NotaTradicionFinal * 0.3m) + (NotaPersonalizacionFinal * 0.4m) + (NotaEstetica * 0.3m);
+        }
+
+        public string ObtenerNombreEquipo()
+        {
+            if (!string.IsNullOrWhiteSpace(SnapshotNombreEquipo)) return SnapshotNombreEquipo;
+            if (!string.IsNullOrWhiteSpace(NombreEquipo)) return NombreEquipo;
+            return Equipo?.NombreEquipo ?? string.Empty;
+        }
     }
 }

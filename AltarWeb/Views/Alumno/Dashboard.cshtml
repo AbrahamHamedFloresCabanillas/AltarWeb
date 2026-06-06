@@ -1,0 +1,52 @@
+@model AltarWeb.Models.ViewModels.AlumnoDashboardViewModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded panel-dark" style="border-bottom:2px solid #1f9d8a;">
+        <div>
+            <h2 class="text-white m-0">Hola, @Model.Alumno.NombreCompleto</h2>
+            <span class="text-secondary small">Matricula @Model.Alumno.Matricula</span>
+        </div>
+        <a href="/Alumno/Logout" class="btn btn-outline-danger">Cerrar sesion</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="panel-dark p-4 rounded h-100">
+                <h4 class="text-white"><i class="fa-solid fa-users me-2 text-warning"></i>Mi Equipo</h4>
+                @if (Model.Equipo == null)
+                {
+                    <p class="text-secondary">Aun no perteneces a un equipo en este periodo.</p>
+                    <a href="/Alumno/CrearEquipo" class="btn btn-success">Crear mi equipo</a>
+                }
+                else
+                {
+                    <h5 class="text-info">@Model.Equipo.NombreEquipo</h5>
+                    <p class="text-secondary mb-3">@Model.Equipo.Integrantes.Count integrante(s)</p>
+                    <a href="/Alumno/MiEquipo" class="btn btn-outline-light btn-sm">Ver integrantes</a>
+                }
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel-dark p-4 rounded h-100">
+                <h4 class="text-white"><i class="fa-solid fa-square-poll-vertical me-2 text-warning"></i>Resultado</h4>
+                @if (Model.Evaluacion != null)
+                {
+                    <div class="display-4 fw-bold text-success">@Model.Evaluacion.NotaFinal.ToString("F1")</div>
+                    <a href="/Alumno/MiEvaluacion" class="btn btn-outline-primary btn-sm">Ver desglose completo</a>
+                }
+                else if (Model.Equipo != null)
+                {
+                    <p class="text-secondary">Tu equipo <strong class="text-white">@Model.Equipo.NombreEquipo</strong> aun no ha sido evaluado.</p>
+                    <a href="/Alumno/MiEvaluacion" class="btn btn-outline-secondary btn-sm">Ver estado</a>
+                }
+                else
+                {
+                    <p class="text-secondary">Cuando tengas equipo, aqui aparecera el estado de evaluacion.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
