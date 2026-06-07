@@ -35,6 +35,7 @@
                 @if (Model.Evaluacion != null)
                 {
                     <div class="display-4 fw-bold text-success">@Model.Evaluacion.NotaFinal.ToString("F1")</div>
+                    <p class="text-secondary mb-3">Nota final registrada</p>
                     <a href="/Alumno/MiEvaluacion" class="btn btn-outline-primary btn-sm">Ver desglose completo</a>
                 }
                 else if (Model.Equipo != null)

@@ -1,8 +1,14 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-5">
+    <div class="panel-dark p-5 rounded text-center">
+        <h1 class="text-white mb-3"><i class="fa-solid fa-layer-group me-2 text-warning"></i>Juez de Altares</h1>
+        <p class="text-secondary mb-4">Sistema institucional para evaluaciones, constancias y gestion del concurso.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+            <a href="/Acceso/Login" class="btn btn-primary">Portal de jueces</a>
+            <a href="/Alumno/Login" class="btn btn-outline-secondary">Portal de alumnos</a>
+        </div>
+    </div>
 </div>

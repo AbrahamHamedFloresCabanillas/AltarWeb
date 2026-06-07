@@ -19,7 +19,7 @@
             Haz <b>doble clic</b> en un equipo para descargar su constancia o usa el botón de descarga.
         </p>
 
-        <div style="height: 500px; overflow-y: auto; border: 1px solid var(--color-borde);">
+        <div class="surface-scroll">
             <table class="table-theme w-100" id="tablaConstancias">
                 <thead style="position: sticky; top: 0; z-index: 1;">
                     <tr>
@@ -50,7 +50,7 @@
             </table>
             @if (!Model.Any())
             {
-                <div class="p-5 text-center text-secondary fst-italic">
+                <div class="page-empty">
                     No hay evaluaciones disponibles para generar constancias.
                 </div>
             }

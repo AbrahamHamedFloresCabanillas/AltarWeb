@@ -10,7 +10,7 @@
     </div>
 }
 
-<div style="height: 100vh; display: flex; flex-direction: column; padding: 20px;">
+<div class="app-container">
 
     <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded panel-dark" style="border-bottom: 2px solid var(--color-secundario);">
         <div class="d-flex align-items-center">
@@ -35,7 +35,7 @@
             Haz <b>doble clic</b> para ver detalle o usa el botón <i class="fa-solid fa-paper-plane text-secondary"></i> para enviar resultados.
         </p>
 
-        <div class="flex-grow-1 overflow-auto border-secondary">
+        <div class="flex-grow-1 surface-scroll">
             @if (Model.Any())
             {
                 @foreach (var grupo in Model)
