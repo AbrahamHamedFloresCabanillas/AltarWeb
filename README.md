@@ -38,10 +38,12 @@ Tiene control total sobre el sistema. Además de las funciones del Juez, cuenta 
   - Desactivar jueces mediante **Soft Delete** (desactivación lógica). Esto garantiza que el historial y las evaluaciones realizadas por dicho juez no se pierdan (se asignan de forma segura a `NULL` en la relación de base de datos, manteniendo el snapshot de su nombre en la evaluación).
   - Reactivar jueces previamente desactivados.
   - Promover jueces existentes al rol de Administrador.
-- **Gestión de Estudiantes:**
-  - Visualizar la lista completa de alumnos registrados a través de las evaluaciones.
+- **Gestión de Estudiantes y Equipos:**
+  - Visualizar la lista completa de alumnos auto-registrados en el portal de alumnos (`/Admin/Alumnos`).
   - Desactivar estudiantes de forma individual (**Soft Delete**) en caso de requerirse por incidencias. Sus evaluaciones previas se conservan intactas.
   - Reactivar estudiantes desactivados.
+  - Administrar equipos del periodo actual (`/Admin/Equipos`) e histórico (`/Admin/EquiposHistorico`).
+  - Editar nombre e integrantes de equipos desde `/Admin/EditarEquipo/{id}`.
 
 ---
 
@@ -49,13 +51,11 @@ Tiene control total sobre el sistema. Además de las funciones del Juez, cuenta 
 
 El registro de una nueva evaluación es el núcleo del sistema, accesible desde la vista `Evaluacion/Crear` mediante una interfaz organizada por pestañas y tablas dinámicas:
 
-### 1. Pestaña: Datos del Equipo e Integrantes
-- **Nombre del Equipo:** Campo obligatorio y único. El sistema valida que no existan nombres duplicados para evitar conflictos.
-- **Tabla Dinámica de Integrantes:** Permite ingresar Nombre Completo, Matrícula (solo números) y Correo Electrónico. 
-  - La tabla agrega filas de manera automática al escribir en la última fila.
-  - Se valida que las matrículas no estén duplicadas dentro del mismo equipo.
-  - Si un estudiante ya está registrado en otro equipo activo, el sistema arroja un error e indica el nombre del equipo conflictivo.
-  - Si el estudiante estaba previamente desactivado (soft-deleted), el sistema lo reactiva automáticamente para integrarlo al nuevo equipo.
+### 1. Selección de Equipo
+- **Búsqueda en Tiempo Real:** El juez escribe el nombre del equipo en un campo de búsqueda y el sistema devuelve coincidencias del periodo académico actual (los administradores pueden buscar también en periodos anteriores).
+- **Integrantes en Modo Lectura:** Al seleccionar un equipo, la vista precarga automáticamente los integrantes registrados por los propios alumnos desde el portal. El juez no captura integrantes manualmente.
+- **Validación de Duplicado:** Si el equipo seleccionado ya cuenta con una evaluación registrada, el sistema lo indica con un error antes de procesar el formulario.
+- **Gestión de equipos e integrantes:** Los equipos y sus integrantes son creados y administrados por los propios alumnos desde el Portal de Alumnos (`/Alumno/MiEquipo`) o por administradores desde `/Admin/EditarEquipo/{id}`.
 
 ### 2. Pestaña: Evaluación de Altar
 - **Datos Generales:** Nombre del difunto a quien se dedica el altar, Niveles (2, 3 o 7 Niveles) y Tipo de Altar (Tradicional, Niños o Mascotas).
