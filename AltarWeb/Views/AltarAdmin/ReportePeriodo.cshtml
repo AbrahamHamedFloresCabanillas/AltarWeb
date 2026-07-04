@@ -1,0 +1,232 @@
+@model AltarWeb.ViewModels.Altar.ReportePeriodoViewModel
+@{
+    ViewData["Title"] = "Reporte de Cierre de Periodo";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-flex" style="justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+            <div>
+                <div class="altar-page-title">Reporte de Cierre de Periodo</div>
+                <div class="altar-page-subtitle">Participación, distribución académica, resultados y demografía · @Model.Periodo</div>
+            </div>
+            <div class="altar-flex altar-gap-sm">
+                <form asp-controller="AltarAdmin" asp-action="ReportePeriodo" method="get" class="altar-flex altar-gap-sm">
+                    <select name="periodo" class="altar-select" onchange="this.form.submit()">
+                        @foreach (var p in Model.PeriodosDisponibles)
+                        {
+                            <option value="@p" selected="@(p == Model.Periodo ? "selected" : null)">@p</option>
+                        }
+                    </select>
+                </form>
+                <a asp-controller="AltarAdmin" asp-action="ReportePeriodoPdf" asp-route-periodo="@Model.Periodo" class="altar-btn altar-btn-primary">
+                    <i class="fa-solid fa-file-pdf"></i> Descargar PDF
+                </a>
+            </div>
+        </div>
+
+        <div class="altar-hint" style="border-color:var(--altar-amber); color:var(--altar-amber); margin-bottom:20px;">
+            <i class="fa-solid fa-shield-halved"></i>
+            Umbral de agrupación de privacidad activo: cualquier categoría de género o autodescripción cultural con menos de <strong>@Model.UmbralAgrupacionDemografica</strong> personas en el corte mostrado se agrupa como &quot;@AltarWeb.Services.PrivacidadReporteHelper.EtiquetaGrupoReducido&quot; (configurable en Configuraci&oacute;n).
+        </div>
+
+        <div class="altar-card-title" style="margin-top:8px;">1. Participación general</div>
+        <div class="altar-grid-3" style="margin-bottom:20px;">
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.TotalEquipos</div><div class="altar-stat-label">Equipos inscritos</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.EquiposFichaCompleta</div><div class="altar-stat-label">Ficha completa</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.EquiposFichaIncompleta</div><div class="altar-stat-label">Ficha incompleta</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.EvaluacionesPreliminar</div><div class="altar-stat-label">Evaluaciones Preliminar</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.EvaluacionesFinal</div><div class="altar-stat-label">Evaluaciones Final</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionGeneral.PromedioIntegrantesPorEquipo.ToString("0.0")</div><div class="altar-stat-label">Promedio integrantes/equipo</div></div>
+        </div>
+        <div class="altar-card" style="margin-bottom:20px;">
+            <div class="altar-card-title">Registrantes por tipo</div>
+            <table class="altar-table">
+                <thead><tr><th>Tipo</th><th>Conteo</th></tr></thead>
+                <tbody>
+                    @foreach (var (tipo, conteo) in Model.ParticipacionGeneral.RegistrantesPorTipo)
+                    {
+                        <tr><td>@tipo</td><td>@conteo</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="altar-card-title">2. Distribución académica</div>
+        <div class="altar-grid-2" style="margin-bottom:20px;">
+            <div class="altar-card">
+                <div class="altar-card-title">Equipos por carrera</div>
+                <table class="altar-table">
+                    <thead><tr><th>Carrera</th><th>Equipos</th><th>%</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.DistribucionAcademica.EquiposPorCarrera)
+                        {
+                            <tr><td>@c.Etiqueta</td><td>@c.Conteo</td><td>@c.Porcentaje%</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Alumnos participantes por carrera</div>
+                <table class="altar-table">
+                    <thead><tr><th>Carrera</th><th>Alumnos</th><th>%</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.DistribucionAcademica.RegistrantesAlumnosPorCarrera)
+                        {
+                            <tr><td>@c.Etiqueta</td><td>@c.Conteo</td><td>@c.Porcentaje%</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="altar-grid-3" style="margin-bottom:20px;">
+            <div class="altar-card">
+                <div class="altar-card-title">Tipo de altar</div>
+                @foreach (var (etiqueta, conteo) in Model.DistribucionAcademica.EquiposPorTipoAltar)
+                {
+                    <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>@etiqueta</span><strong>@conteo</strong></div>
+                }
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Niveles (equipos evaluados)</div>
+                @if (!Model.DistribucionAcademica.EquiposPorNiveles.Any())
+                {
+                    <p class="altar-text-muted">Aún no hay equipos evaluados.</p>
+                }
+                @foreach (var (etiqueta, conteo) in Model.DistribucionAcademica.EquiposPorNiveles)
+                {
+                    <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>@etiqueta</span><strong>@conteo</strong></div>
+                }
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Catrina</div>
+                <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>Con Catrina</span><strong>@Model.DistribucionAcademica.EquiposConCatrina</strong></div>
+                <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>Sin Catrina</span><strong>@Model.DistribucionAcademica.EquiposSinCatrina</strong></div>
+            </div>
+        </div>
+
+        <div class="altar-card-title">3. Resultados de evaluación <span class="altar-text-muted" style="font-weight:400; font-size:13px;">(solo evaluaciones Final)</span></div>
+        <div class="altar-grid-3" style="margin-bottom:20px;">
+            <div class="altar-stat-card"><div class="altar-stat-value">@(Model.ResultadosEvaluacion.NotaFinalGeneral.Promedio?.ToString("0.00") ?? "—")</div><div class="altar-stat-label">Nota Final · promedio</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@(Model.ResultadosEvaluacion.NotaFinalGeneral.Maximo?.ToString("0.00") ?? "—")</div><div class="altar-stat-label">Nota Final · máximo</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@(Model.ResultadosEvaluacion.NotaFinalGeneral.Minimo?.ToString("0.00") ?? "—")</div><div class="altar-stat-label">Nota Final · mínimo</div></div>
+        </div>
+        <div class="altar-card" style="margin-bottom:20px;">
+            <div class="altar-card-title">Promedio por componente</div>
+            <div class="altar-grid-3">
+                <div><span class="altar-label">Objetivo Cultural</span>@(Model.ResultadosEvaluacion.PromedioObjetivoCultural?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Esencia y Personalidad</span>@(Model.ResultadosEvaluacion.PromedioEsenciaPersonalidad?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Valoración General</span>@(Model.ResultadosEvaluacion.PromedioValoracionGeneral?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Distribución por Niveles</span>@(Model.ResultadosEvaluacion.PromedioDistribucionNiveles?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Narrador</span>@(Model.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Nota de Catrina</span>@(Model.ResultadosEvaluacion.PromedioNotaCatrina?.ToString("0.00") ?? "—") <span class="altar-text-muted" style="font-size:12px;">(@Model.ResultadosEvaluacion.EquiposConNotaCatrina equipos)</span></div>
+            </div>
+        </div>
+        <div class="altar-card" style="margin-bottom:20px;">
+            <div class="altar-card-title">Nota Final por carrera</div>
+            <table class="altar-table">
+                <thead><tr><th>Carrera</th><th>Promedio</th><th>Máx.</th><th>Mín.</th></tr></thead>
+                <tbody>
+                    @foreach (var (carrera, stats) in Model.ResultadosEvaluacion.NotaFinalPorCarrera)
+                    {
+                        <tr>
+                            <td>@carrera</td>
+                            <td>@(stats.Promedio?.ToString("0.00") ?? "—")</td>
+                            <td>@(stats.Maximo?.ToString("0.00") ?? "—")</td>
+                            <td>@(stats.Minimo?.ToString("0.00") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="altar-grid-2" style="margin-bottom:20px;">
+            <div class="altar-card">
+                <div class="altar-card-title">Podio del altar por carrera</div>
+                <table class="altar-table">
+                    <thead><tr><th>Carrera</th><th>Lugar</th><th>Equipo / Altar</th><th>Nota</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.ResultadosEvaluacion.PodiumAltarPorCarrera)
+                        {
+                            <tr><td>@p.Carrera</td><td>@p.Lugar&deg;</td><td>@p.NombreEquipo &middot; @p.NombreAltar</td><td>@(p.Nota?.ToString("0.00") ?? "—")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Podio de Catrina por carrera</div>
+                @if (!Model.ResultadosEvaluacion.PodiumCatrinaPorCarrera.Any())
+                {
+                    <p class="altar-text-muted">Sin equipos con Catrina evaluada.</p>
+                }
+                <table class="altar-table">
+                    <thead><tr><th>Carrera</th><th>Lugar</th><th>Equipo / Altar</th><th>Nota</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.ResultadosEvaluacion.PodiumCatrinaPorCarrera)
+                        {
+                            <tr><td>@p.Carrera</td><td>@p.Lugar&deg;</td><td>@p.NombreEquipo &middot; @p.NombreAltar</td><td>@(p.Nota?.ToString("0.00") ?? "—")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="altar-grid-2" style="margin-bottom:20px;">
+            <div class="altar-card">
+                <div class="altar-card-title">Elementos con más &quot;No presente&quot;</div>
+                <p>@(Model.ResultadosEvaluacion.TopNoPresente.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopNoPresente.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Elementos con más &quot;Muy satisfactorio&quot;</div>
+                <p>@(Model.ResultadosEvaluacion.TopMuySatisfactorio.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopMuySatisfactorio.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
+            </div>
+        </div>
+
+        <div class="altar-card-title">4. Participación de jueces y maestros</div>
+        <div class="altar-grid-2" style="margin-bottom:20px;">
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionJueces.TotalJuecesActivos</div><div class="altar-stat-label">Jueces activos que evaluaron</div></div>
+            <div class="altar-stat-card"><div class="altar-stat-value">@Model.ParticipacionJueces.TotalMaestrosEncargadosDistintos</div><div class="altar-stat-label">Maestros encargados distintos</div></div>
+        </div>
+        <div class="altar-card" style="margin-bottom:20px;">
+            <div class="altar-card-title">Evaluaciones por juez</div>
+            <table class="altar-table">
+                <thead><tr><th>Juez</th><th>Evaluaciones</th></tr></thead>
+                <tbody>
+                    @foreach (var (juez, conteo) in Model.ParticipacionJueces.EvaluacionesPorJuez)
+                    {
+                        <tr><td>@juez</td><td>@conteo</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="altar-card-title">5. Estadísticas demográficas</div>
+        <p class="altar-card-subtitle">@Model.EstadisticasDemograficas.TotalRegistrantesParticipantes registrantes participantes en este periodo. Categorías reducidas agrupadas por privacidad (ver aviso arriba).</p>
+        <div class="altar-grid-2">
+            <div class="altar-card">
+                <div class="altar-card-title">Género</div>
+                <table class="altar-table">
+                    <thead><tr><th>Categoría</th><th>Conteo</th></tr></thead>
+                    <tbody>
+                        @foreach (var (etiqueta, conteo) in Model.EstadisticasDemograficas.Genero)
+                        {
+                            <tr><td>@etiqueta</td><td>@conteo</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Autodescripción cultural</div>
+                <table class="altar-table">
+                    <thead><tr><th>Categoría</th><th>Conteo</th></tr></thead>
+                    <tbody>
+                        @foreach (var (etiqueta, conteo) in Model.EstadisticasDemograficas.AutodescripcionCultural)
+                        {
+                            <tr><td>@etiqueta</td><td>@conteo</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>

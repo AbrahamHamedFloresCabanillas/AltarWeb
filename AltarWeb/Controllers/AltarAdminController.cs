@@ -1,5 +1,6 @@
 using AltarWeb.Models;
 using AltarWeb.Models.Registro;
+using AltarWeb.Services;
 using AltarWeb.ViewModels.Altar;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +12,12 @@ namespace AltarWeb.Controllers
     public class AltarAdminController : Controller
     {
         private readonly AltarDbContext _context;
+        private readonly ReportePeriodoService _reportePeriodo;
 
-        public AltarAdminController(AltarDbContext context)
+        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo)
         {
             _context = context;
+            _reportePeriodo = reportePeriodo;
         }
 
         // --- Jueces (nuevo controlador/vistas sobre el modelo legado Juez; no toca JuecesController) ---
@@ -221,6 +224,7 @@ namespace AltarWeb.Controllers
                 PesoValoracionGeneralPct = NormalizarPorcentaje(config.PesoValoracionGeneral),
                 PesoDistribucionNivelesPct = NormalizarPorcentaje(config.PesoDistribucionNiveles),
                 PesoNarradorPct = NormalizarPorcentaje(config.PesoNarrador),
+                UmbralAgrupacionDemografica = config.UmbralAgrupacionDemografica,
                 CarrerasCount = await _context.CatalogoCarreras.CountAsync(c => c.Activo),
                 GenerosCount = await _context.CatalogoGeneros.CountAsync(g => g.Activo),
                 ElementosCount = await _context.Elementos.CountAsync(e => e.Activo)
@@ -263,10 +267,47 @@ namespace AltarWeb.Controllers
             config.PesoValoracionGeneral = model.PesoValoracionGeneralPct / 100;
             config.PesoDistribucionNiveles = model.PesoDistribucionNivelesPct / 100;
             config.PesoNarrador = model.PesoNarradorPct / 100;
+            config.UmbralAgrupacionDemografica = model.UmbralAgrupacionDemografica;
 
             await _context.SaveChangesAsync();
             TempData["Mensaje"] = "Configuración del periodo actualizada.";
             return RedirectToAction("Configuracion");
+        }
+
+        // --- Reporte de Cierre de Periodo (vision.md seccion 12) ---
+
+        public async Task<IActionResult> ReportePeriodo(string? periodo)
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+            ViewBag.Nav = ObtenerNavContext("ReportePeriodo");
+
+            var vm = await ConstruirReportePeriodoAsync(periodo ?? PeriodoHelper.ObtenerPeriodoActual());
+            return View(vm);
+        }
+
+        public async Task<IActionResult> ReportePeriodoPdf(string? periodo)
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+
+            var vm = await ConstruirReportePeriodoAsync(periodo ?? PeriodoHelper.ObtenerPeriodoActual());
+            var pdf = _reportePeriodo.GenerarPdf(vm);
+            return File(pdf, "application/pdf", $"ReporteCierre_{vm.Periodo}.pdf");
+        }
+
+        private async Task<ReportePeriodoViewModel> ConstruirReportePeriodoAsync(string periodo)
+        {
+            var vm = await _reportePeriodo.GenerarReporteAsync(periodo);
+
+            var registrantesEnPeriodo = await _context.EquiposConcurso
+                .Where(e => e.Periodo == periodo)
+                .Include(e => e.Integrantes).ThenInclude(ri => ri.Registrante).ThenInclude(r => r!.CatalogoCarrera)
+                .SelectMany(e => e.Integrantes)
+                .Select(ri => ri.Registrante)
+                .ToListAsync();
+            vm.DistribucionAcademica.RegistrantesAlumnosPorCarrera =
+                ReportePeriodoService.CalcularAlumnosPorCarrera(registrantesEnPeriodo.DistinctBy(r => r.Id).ToList());
+
+            return vm;
         }
 
         // decimal(5,4) en BD conserva la escala (30.0000); esto la normaliza para mostrarla limpia (30).

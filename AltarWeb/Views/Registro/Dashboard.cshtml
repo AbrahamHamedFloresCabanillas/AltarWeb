@@ -26,6 +26,15 @@
         </div>
     </div>
 
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+    }
+
     <h2 style="font-weight:800;">&iexcl;Hola, @primerNombre!</h2>
     <p class="altar-text-muted" style="margin-bottom:24px;">
         Periodo acad&eacute;mico <strong>@PeriodoHelper.ObtenerPeriodoActual()</strong>

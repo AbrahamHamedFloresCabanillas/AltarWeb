@@ -37,5 +37,10 @@ namespace AltarWeb.Models.Registro
 
         // Si esta activo, Difunto.FechaDefuncion debe ser al menos 1 año anterior a hoy.
         public bool ExigirMinimoUnAnioFallecimiento { get; set; } = true;
+
+        // Umbral de agrupacion de privacidad para el Reporte de Cierre de Periodo (seccion
+        // 12.2 de vision.md): cualquier categoria de Genero/AutodescripcionCultural con
+        // menos personas que este numero se agrupa bajo "Otros / grupo reducido".
+        public int UmbralAgrupacionDemografica { get; set; } = 5;
     }
 }

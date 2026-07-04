@@ -75,6 +75,16 @@
                 </div>
             </div>
 
+            <div class="altar-card">
+                <div class="altar-card-title">Privacidad del Reporte de Cierre de Periodo</div>
+                <p class="altar-card-subtitle">Cualquier categor&iacute;a de g&eacute;nero o autodescripci&oacute;n cultural con menos personas que este n&uacute;mero se agrupa como &quot;Otros / grupo reducido&quot; en el reporte, para evitar identificar a alguien en un corte peque&ntilde;o.</p>
+                <div class="altar-field" style="max-width:220px;">
+                    <label class="altar-label">Umbral de agrupaci&oacute;n (m&iacute;nimo de personas)</label>
+                    <input asp-for="UmbralAgrupacionDemografica" type="number" step="1" min="1" class="altar-input" />
+                    <span asp-validation-for="UmbralAgrupacionDemografica" class="altar-error"></span>
+                </div>
+            </div>
+
             <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar configuraci&oacute;n</button>
         </form>
 

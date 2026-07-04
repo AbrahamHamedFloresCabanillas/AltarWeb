@@ -41,9 +41,12 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 ## 👥 Equipos y Ficha de Registro del Altar
 
 - Un registrante crea su equipo (`/Registro/CrearEquipo`) y completa la **Ficha de Registro del Altar** (`/Registro/Ficha`): nombre del grupo, nombre del altar, difunto (nombre y fecha de defunción), programa educativo, lugar de exposición, maestro encargado (por matrícula; si aún no está registrado queda pendiente hasta que él mismo se registre) y si el equipo **hará Catrina o no**.
-- La ficha es editable mientras el equipo no tenga una evaluación `Final`.
+- La ficha es editable mientras el equipo no tenga una evaluación `Final` **y** no haya pasado la fecha límite de requisitos.
 - El organizador administra integrantes y designa un narrador; una vez evaluado en `Final`, la lista de integrantes queda cerrada para conservar el historial y las constancias.
 - Un registrante solo puede pertenecer a un equipo activo por periodo (`YYYY-1` / `YYYY-2`).
+- **Fechas límite configurables por el administrador** desde `/AltarAdmin/Configuracion` (aplican por periodo académico):
+  - **Inscripción de equipos:** pasada esa fecha, ya no se pueden crear equipos nuevos (`/Registro/CrearEquipo` se bloquea con un mensaje explicativo). No afecta el registro de participantes, solo la creación de equipos.
+  - **Requisitos completos:** pasada esa fecha, la Ficha de Registro deja de ser editable (independientemente de si el equipo ya fue evaluado o no). Si no hay fecha configurada, no aplica ningún límite.
 
 ---
 
@@ -88,6 +91,16 @@ Las constancias muestran el lugar/posición del equipo cuando aplica.
 ## 🎨 Tema claro / oscuro / sistema
 
 El selector de tema (ícono de sol/luna/escritorio, visible en el sidebar y en el landing) permite elegir Claro, Oscuro o Sistema. La preferencia se guarda en `localStorage` y, en modo Sistema, sigue en vivo los cambios de `prefers-color-scheme` del sistema operativo, sin parpadeo al recargar la página.
+
+---
+
+## 📊 Reporte de Cierre de Periodo
+
+`/AltarAdmin/ReportePeriodo/{periodo}` (solo Administrador) genera un reporte agregado del periodo con participación general, distribución académica, resultados de evaluación (solo evaluaciones `Final`), participación de jueces/maestros y estadísticas demográficas. Puede consultarse para el periodo activo o para cualquier periodo histórico cerrado (selector en la parte superior), y descargarse en PDF (`ReportePeriodoService`, vía QuestPDF).
+
+**Protección de datos sensibles:** cualquier categoría de **Género** o **Autodescripción cultural** con menos de `N` personas en el corte que se esté mostrando (general o desglosado, p. ej. por carrera) se agrupa como *"Otros / grupo reducido"* en vez de mostrarse con su conteo real, para evitar identificar a una persona específica en un corte pequeño. `N` (por defecto `5`) es configurable por periodo desde `/AltarAdmin/Configuracion` (`ConfiguracionPeriodo.UmbralAgrupacionDemografica`). Esta regla vive en `PrivacidadReporteHelper` y aplica **únicamente** a esta reportería agregada — las pantallas de gestión individual de registrantes (`/AltarAdmin/RegistrantesYEquipos`) siguen mostrando el dato real de una persona puntual.
+
+`AutodescripcionCultural` es texto libre, así que antes de contar se normaliza con `Trim().ToLowerInvariant()` para unir variantes triviales de escritura (`"Migrante"` / `"migrante "` → `"migrante"`). Esta normalización es una **decisión temporal**, no definitiva — el comité aún debe decidir si prefiere una normalización manual (catálogo de equivalencias) o heurística (vision.md §13).
 
 ---
 

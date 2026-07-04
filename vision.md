@@ -1,16 +1,16 @@
-# AltarWeb — Visión y Especificación Funcional (v2.4)
+# AltarWeb — Visión y Especificación Funcional (v2.5)
 
 > Documento base para la **re-implementación** del sistema de gestión y evaluación del
 > **Concurso de Altares de Muertos de la Facultad de Ingeniería (FIM) de la UABC**,
 > tras el cambio de requerimientos. Sustituye al README anterior como fuente de verdad
 > del *qué* construir. Está redactado para guiar directamente a los agentes de desarrollo.
 >
-> **v2.4** incorpora la **Ficha de Registro del Altar** (sección 6.1), basada en la ficha
-> histórica en papel de APFI/FIM: agrega `Telefono` al registrante, `NombreAltar` al
-> equipo, y convierte `AnioFallecimiento` en `FechaDefuncion` completa. **No se incluye**
-> adjunto de acta de defunción. Todos estos datos se precargan en la evaluación, igual
-> que ya ocurría con el nombre del difunto. **Pendiente:** escala de satisfacción y regla
-> de empates (sección 13).
+> **v2.5** especifica el **Reporte de Cierre de Periodo** (sección 12): lista completa
+> de métricas a contabilizar (participación, distribución académica, resultados de
+> evaluación, demografía) y una **regla obligatoria de umbral de agrupación (`N = 5`)**
+> para proteger `Genero` y `AutodescripcionCultural` de des-anonimización en cortes
+> reducidos. **Pendiente:** escala de satisfacción, regla de empates, y normalización de
+> `AutodescripcionCultural` para conteo (sección 13).
 
 ---
 
@@ -349,11 +349,81 @@ firmas oficiales).
 
 ---
 
-## 12. Reportería
+## 12. Reportería — Reporte de Cierre de Periodo
 
-- **Resumen de evaluaciones por periodo** (totales, promedios, equipos calificados/pendientes).
-- Desglose por **carrera** y por **lugar**.
-- Estadísticas demográficas agregadas a partir de los campos de **género** y **autodescripción cultural** de los registrantes (para reporte institucional).
+Al finalizar cada periodo académico (`YYYY-1` / `YYYY-2`), el sistema genera un **reporte
+agregado de cierre** con todos los conteos y estadísticas disponibles del periodo, para
+uso institucional (dirección de la FIM, APFI). Accesible desde
+`/AltarAdmin/ReportePeriodo/{periodo}`, con exportación a PDF y/o Excel.
+
+### 12.1 Métricas a incluir
+
+**Participación general**
+- Total de equipos inscritos, y cuántos completaron la Ficha de Registro / cuántos quedaron incompletos.
+- Total de registrantes por tipo (Alumno / Maestro / Administrativo).
+- Total de evaluaciones en estado `Preliminar` vs. `Final` al momento del corte.
+- Promedio de integrantes por equipo.
+
+**Distribución académica**
+- Equipos por **carrera** (conteo y % del total).
+- Registrantes (alumnos) por **carrera**.
+- Equipos por **tipo de altar** (Tradicional / Niños).
+- Equipos por **número de niveles** (3 / 7).
+- Equipos que declararon **Catrina** vs. los que no.
+
+**Resultados de evaluación**
+- Promedio, máximo y mínimo de `NotaFinal` — general y desglosado por carrera.
+- Promedio de cada componente por separado: Objetivo Cultural, Esencia y Personalidad,
+  Valoración General, Distribución por Niveles, Narrador.
+- Promedio de `NotaCatrina` (entre los equipos que sí la evaluaron).
+- 1°, 2° y 3° lugar por carrera (altar) y por carrera (Catrina).
+- Elemento(s) del checklist con más incidencia de "No presente" y de "Muy satisfactorio"
+  (para detectar qué se está descuidando o qué se está haciendo consistentemente bien).
+
+**Participación de jueces y maestros**
+- Total de jueces activos que evaluaron en el periodo, y evaluaciones por juez.
+- Total de maestros encargados distintos participando.
+
+**Estadísticas demográficas (dato sensible — ver regla de umbral en 12.2)**
+- Distribución de **género** de los registrantes participantes.
+- Distribución de **autodescripción cultural** de los registrantes participantes.
+
+### 12.2 Regla de protección de datos sensibles (umbral de agrupación)
+
+`AutodescripcionCultural` (y, en menor medida, `Genero`) son **datos personales
+sensibles** bajo la legislación mexicana de protección de datos (equiparables a origen
+étnico/racial). Mostrar un conteo exacto y bajo en una categoría puede **des-anonimizar**
+a una persona específica dentro de un periodo/carrera reducido (ej. "1 persona
+autodescrita como X en la carrera Y" es identificable por cualquiera que conozca los
+equipos de esa carrera).
+
+**Regla obligatoria:** en cualquier reporte, tabla o gráfico donde se desglosen
+`Genero` o `AutodescripcionCultural`, **toda categoría con menos de `N = 5` personas en el
+universo mostrado se agrupa bajo la etiqueta "Otros / grupo reducido"** en vez de
+mostrarse individualmente con su conteo real. Esto aplica tanto al reporte general del
+periodo como a cualquier corte más fino (por carrera, por tipo de altar, etc.) — el
+umbral se evalúa sobre el universo específico que se está mostrando en cada tabla, no
+solo sobre el total del periodo.
+
+- El valor `N = 5` es el punto de partida propuesto; debe ser **configurable** desde
+  `ConfiguracionPeriodo` (o una configuración global de sistema) para que el comité pueda
+  ajustarlo sin requerir cambio de código.
+- Esta regla aplica **únicamente a las vistas/exportaciones de reportería agregada**. No
+  aplica a las vistas administrativas operativas donde un admin gestiona registrantes
+  individuales (ahí sí necesita ver el dato real de una persona puntual para su gestión).
+- `AutodescripcionCultural`, al ser texto libre (sección 4.1), debe normalizarse
+  (agrupar variantes de escritura equivalentes) antes de aplicar el conteo y el umbral —
+  definir con el comité si esa normalización es manual (catálogo de equivalencias
+  curado por el admin) o heurística; no debe inventarse una taxonomía cerrada que no
+  esté en `vision.md`.
+
+### 12.3 Consideraciones adicionales
+- El reporte debe poder generarse para periodos **cerrados** (históricos) y no solo para
+  el periodo activo, para permitir comparativas año contra año a futuro.
+- El reporte agregado en sí (sin desglose por individuo) no contiene datos que permitan
+  identificar a una persona específica más allá de lo ya expuesto en rankings públicos
+  (nombre de equipo/altar, lugar) — los rankings de equipo **no** están sujetos al umbral
+  de la sección 12.2 porque no son el dato sensible en cuestión.
 
 ---
 
@@ -368,10 +438,12 @@ firmas oficiales).
 6. **Autodescripción cultural**: campo de **texto libre** (no catálogo de opciones), tal como se redactó en `programa_altar.docx`.
 7. **Catálogo de género**: queda a criterio de diseño del equipo de desarrollo — ver propuesta en el Apéndice B, editable desde el admin.
 8. **Catálogo oficial de carreras de la FIM**: confirmado por Salch, 13 programas (Apéndice C), modelado como tabla editable desde el admin.
+9. **Reporte de cierre de periodo**: se implementa con el alcance completo de la sección 12.1, y con **umbral de agrupación `N = 5`** (propuesto y aceptado como punto de partida, configurable) para proteger `Genero` y `AutodescripcionCultural` de des-anonimización en cortes reducidos (sección 12.2).
 
 ### Pendiente de confirmación
-9. **Valores exactos de la escala de satisfacción** (0 / 0.5 / 0.75 / 1.0) y **pesos de elementos rituales vs. decorativos**: quedan como en la propuesta de la sección 7.2, editables desde `ConfiguracionPeriodo`. Confirmar si el comité quiere ajustar estos valores numéricos.
-10. **Regla de empates** en el ranking por carrera: no especificada; definir criterio de desempate (p. ej. mayor `Objetivo Cultural`, o evaluación conjunta de jueces).
+10. **Valores exactos de la escala de satisfacción** (0 / 0.5 / 0.75 / 1.0) y **pesos de elementos rituales vs. decorativos**: quedan como en la propuesta de la sección 7.2, editables desde `ConfiguracionPeriodo`. Confirmar si el comité quiere ajustar estos valores numéricos.
+11. **Regla de empates** en el ranking por carrera: no especificada; definir criterio de desempate (p. ej. mayor `Objetivo Cultural`, o evaluación conjunta de jueces).
+12. **Normalización de `AutodescripcionCultural`** para efectos de conteo en el reporte (sección 12.2): definir si es manual (catálogo de equivalencias curado por el admin) o heurística.
 
 ---
 

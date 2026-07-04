@@ -74,5 +74,6 @@ namespace AltarWeb.ViewModels.Altar
 
         public bool PuedeEditar { get; set; }
         public bool ExigirMinimoUnAnioFallecimiento { get; set; }
+        public bool FechaLimiteRequisitosPasada { get; set; }
     }
 }

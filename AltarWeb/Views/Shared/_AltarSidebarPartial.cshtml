@@ -44,6 +44,10 @@
                class="altar-sidebar-nav-item @(Model.ActiveItem == "Configuracion" ? "active" : "")">
                 <i class="fa-solid fa-gear"></i> Configuraci&oacute;n
             </a>
+            <a asp-controller="AltarAdmin" asp-action="ReportePeriodo"
+               class="altar-sidebar-nav-item @(Model.ActiveItem == "ReportePeriodo" ? "active" : "")">
+                <i class="fa-solid fa-chart-column"></i> Reporte de Periodo
+            </a>
         }
     </div>
 

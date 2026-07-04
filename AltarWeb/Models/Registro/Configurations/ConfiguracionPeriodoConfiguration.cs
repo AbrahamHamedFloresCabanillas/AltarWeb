@@ -45,7 +45,8 @@ namespace AltarWeb.Models.Registro.Configurations
                     PesoElementoRitual = 1.0m,
                     PesoElementoDecorativo = 0.5m,
                     BonusPorElementoTematizado = 0.25m,
-                    ExigirMinimoUnAnioFallecimiento = true
+                    ExigirMinimoUnAnioFallecimiento = true,
+                    UmbralAgrupacionDemografica = 5
                 }
             );
         }

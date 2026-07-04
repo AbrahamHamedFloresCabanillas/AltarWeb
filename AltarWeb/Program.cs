@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using AltarWeb.Models;
 using AltarWeb.Services;
@@ -33,6 +33,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ConstanciaService>();
 builder.Services.AddScoped<EvaluacionCalculoService>();
+builder.Services.AddScoped<ReportePeriodoService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

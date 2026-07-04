@@ -385,6 +385,12 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
+            if (await FechaLimiteInscripcionPasadaAsync(PeriodoHelper.ObtenerPeriodoActual()))
+            {
+                TempData["Error"] = "La fecha límite de inscripción de equipos para este periodo ya pasó.";
+                return RedirectToAction("Dashboard");
+            }
+
             return View(await ConstruirCrearEquipoViewModelAsync(new CrearEquipoViewModel()));
         }
 
@@ -401,6 +407,12 @@ namespace AltarWeb.Controllers
             }
 
             var periodo = PeriodoHelper.ObtenerPeriodoActual();
+
+            if (await FechaLimiteInscripcionPasadaAsync(periodo))
+            {
+                TempData["Error"] = "La fecha límite de inscripción de equipos para este periodo ya pasó.";
+                return RedirectToAction("Dashboard");
+            }
 
             var nombre = model.Nombre.Trim();
             if (await _context.EquiposConcurso.AnyAsync(e => e.Nombre == nombre && e.Periodo == periodo))
@@ -488,6 +500,12 @@ namespace AltarWeb.Controllers
             if (equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
             {
                 TempData["Error"] = "El equipo ya fue evaluado en definitiva; la ficha no puede editarse.";
+                return RedirectToAction("Dashboard");
+            }
+
+            if (await FechaLimiteRequisitosPasadaAsync(equipo.Periodo))
+            {
+                TempData["Error"] = "La fecha límite para completar los requisitos ya pasó; la ficha no puede editarse. Contacta a un administrador.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -706,7 +724,6 @@ namespace AltarWeb.Controllers
             vm.ResponsableTelefono = organizador.Telefono;
             vm.ResponsableCorreo = organizador.CorreoInstitucional;
             vm.CreadoEn = equipo.CreadoEn;
-            vm.PuedeEditar = equipo.Evaluacion?.Estado != EstadoEvaluacion.Final;
             vm.Integrantes = equipo.Integrantes.ToList();
             vm.MaestroEncargadoNombre = equipo.MaestroEncargado?.NombreCompleto;
             vm.MaestroEncargadoPendiente = equipo.MaestroEncargado == null && !string.IsNullOrEmpty(equipo.MaestroEncargadoIdentificadorPendiente);
@@ -715,8 +732,26 @@ namespace AltarWeb.Controllers
             var periodo = equipo.Periodo;
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
             vm.ExigirMinimoUnAnioFallecimiento = config?.ExigirMinimoUnAnioFallecimiento ?? true;
+            vm.FechaLimiteRequisitosPasada = FechaPasada(config?.FechaLimiteRequisitos);
+            vm.PuedeEditar = equipo.Evaluacion?.Estado != EstadoEvaluacion.Final && !vm.FechaLimiteRequisitosPasada;
 
             return vm;
+        }
+
+        // Los <input type="date"> guardan solo el dia; comparar por Date trata el dia limite
+        // como incluido completo (vence al empezar el dia siguiente), no desde la medianoche.
+        private static bool FechaPasada(DateTime? limite) => limite != null && DateTime.Now.Date > limite.Value.Date;
+
+        private async Task<bool> FechaLimiteInscripcionPasadaAsync(string periodo)
+        {
+            var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
+            return FechaPasada(config?.FechaLimiteInscripcion);
+        }
+
+        private async Task<bool> FechaLimiteRequisitosPasadaAsync(string periodo)
+        {
+            var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
+            return FechaPasada(config?.FechaLimiteRequisitos);
         }
 
         private static bool EsFichaCompleta(Equipo equipo)

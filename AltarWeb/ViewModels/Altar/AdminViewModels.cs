@@ -49,6 +49,9 @@ namespace AltarWeb.ViewModels.Altar
 
         public decimal SumaPesos => PesoObjetivoCulturalPct + PesoEsenciaPersonalidadPct + PesoValoracionGeneralPct + PesoDistribucionNivelesPct + PesoNarradorPct;
 
+        [Range(1, 1000, ErrorMessage = "El umbral debe ser un número positivo.")]
+        public int UmbralAgrupacionDemografica { get; set; } = 5;
+
         public int CarrerasCount { get; set; }
         public int GenerosCount { get; set; }
         public int ElementosCount { get; set; }
