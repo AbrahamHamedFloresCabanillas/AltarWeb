@@ -4,6 +4,7 @@ using AltarWeb.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AltarWeb.Migrations
 {
     [DbContext(typeof(AltarDbContext))]
-    partial class AltarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260702034118_AddRegistranteAutenticacionLocal")]
+    partial class AddRegistranteAutenticacionLocal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,14 +286,8 @@ namespace AltarWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CorreoInstitucional")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("FechaEliminado")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Identificador")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -303,18 +300,12 @@ namespace AltarWeb.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("Pendiente")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProveedorAuth")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Rol")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Usuario")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -512,12 +503,6 @@ namespace AltarWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("BonusPorElementoTematizado")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<bool>("ExigirMinimoUnAnioFallecimiento")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("FechaLimiteInscripcion")
                         .HasColumnType("datetime2");
 
@@ -575,8 +560,6 @@ namespace AltarWeb.Migrations
                         new
                         {
                             Id = 1,
-                            BonusPorElementoTematizado = 0.25m,
-                            ExigirMinimoUnAnioFallecimiento = true,
                             Periodo = "2026-1",
                             PesoDistribucionNiveles = 0.10m,
                             PesoElementoDecorativo = 0.5m,
@@ -939,16 +922,10 @@ namespace AltarWeb.Migrations
                     b.Property<int>("EvaluacionId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("NivelAsignado")
-                        .HasColumnType("int");
-
                     b.Property<string>("Satisfaccion")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("Tematizado")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -980,14 +957,8 @@ namespace AltarWeb.Migrations
                     b.Property<int?>("CreadoPorRegistranteId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HaceCatrina")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("MaestroEncargadoId")
+                    b.Property<int>("MaestroEncargadoId")
                         .HasColumnType("int");
-
-                    b.Property<string>("MaestroEncargadoIdentificadorPendiente")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -1039,9 +1010,6 @@ namespace AltarWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("EsenciaPersonalidad")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal?>("EsenciaPersonalidadFinal")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("Estado")
@@ -1378,7 +1346,8 @@ namespace AltarWeb.Migrations
                     b.HasOne("AltarWeb.Models.Registro.Registrante", "MaestroEncargado")
                         .WithMany()
                         .HasForeignKey("MaestroEncargadoId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Carrera");
 

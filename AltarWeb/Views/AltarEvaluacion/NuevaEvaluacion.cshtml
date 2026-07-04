@@ -1,0 +1,576 @@
+@using System.Globalization
+@model AltarWeb.ViewModels.Altar.NuevaEvaluacionViewModel
+@{
+    ViewData["Title"] = "Nueva evaluación";
+    string Inv(decimal d) => d.ToString(CultureInfo.InvariantCulture);
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-page-title">Nueva evaluaci&oacute;n</div>
+        <div class="altar-page-subtitle" style="margin-bottom:20px;">Registra y califica un altar concursante</div>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+        }
+
+        @if (Model.EsPreliminarExistente)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-amber); color:var(--altar-amber); display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Este equipo ya tiene una evaluaci&oacute;n en estado <strong>Preliminar</strong>. Sigue siendo editable; los cambios se guardan hasta que la cierres como Final.</span>
+            </div>
+        }
+
+        <div class="altar-tabs">
+            <button type="button" class="altar-tab active" data-tab="equipo" onclick="altarTab('equipo')"><i class="fa-solid fa-users"></i> Equipo</button>
+            <button type="button" class="altar-tab" data-tab="altar" onclick="altarTab('altar')" @(Model.EquipoId == null ? "disabled" : null)><i class="fa-solid fa-list-check"></i> Evaluaci&oacute;n del altar</button>
+            @if (Model.HaceCatrina)
+            {
+                <button type="button" class="altar-tab" data-tab="catrina" onclick="altarTab('catrina')" @(Model.EquipoId == null ? "disabled" : null)><i class="fa-solid fa-hat-wizard"></i> Catrina</button>
+            }
+            <button type="button" class="altar-tab" data-tab="resumen" onclick="altarTab('resumen')" @(Model.EquipoId == null ? "disabled" : null)><i class="fa-solid fa-clipboard-check"></i> Resumen</button>
+        </div>
+
+        <div id="tab-equipo">
+            <div class="altar-grid-2">
+                <div>
+                    <div class="altar-card">
+                        <div class="altar-card-title">Buscar equipo por carrera</div>
+                        <p class="altar-card-subtitle">B&uacute;squeda en tiempo real del periodo actual.</p>
+                        <form asp-controller="AltarEvaluacion" asp-action="NuevaEvaluacion" method="get" class="altar-flex altar-gap-sm">
+                            <input type="text" name="q" value="@Model.Busqueda" class="altar-input" placeholder="Nombre de equipo o carrera..." />
+                            <button type="submit" class="altar-btn altar-btn-outline"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </form>
+
+                        <div style="margin-top:16px;">
+                            @foreach (var r in Model.Resultados)
+                            {
+                                <a asp-controller="AltarEvaluacion" asp-action="NuevaEvaluacion" asp-route-equipoId="@r.Id"
+                                   style="display:block; padding:12px; border:1px solid var(--altar-border); border-radius:var(--altar-radius); margin-bottom:8px; @(Model.EquipoId == r.Id ? "border-color:var(--altar-primary);" : "")">
+                                    <div class="altar-flex" style="justify-content:space-between;">
+                                        <div>
+                                            <div style="font-weight:700;">@r.Nombre</div>
+                                            <div class="altar-text-muted" style="font-size:13px;">@r.Carrera &middot; @r.IntegrantesCount integrantes</div>
+                                        </div>
+                                        @if (r.YaEvaluado)
+                                        {
+                                            <span class="altar-badge altar-badge-danger">Ya evaluado</span>
+                                        }
+                                    </div>
+                                </a>
+                            }
+                            @if (!Model.Resultados.Any())
+                            {
+                                <p class="altar-text-muted">No hay equipos para este periodo.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.EquipoId != null)
+                {
+                    <div>
+                        <div class="altar-card" style="@(Model.EsPreliminarExistente ? "opacity:0.6;" : "")">
+                            <div class="altar-flex" style="justify-content:space-between;">
+                                <div class="altar-card-title">Equipo e integrantes</div>
+                                @if (Model.EsPreliminarExistente)
+                                {
+                                    <span class="altar-badge altar-badge-warning"><i class="fa-solid fa-pencil"></i> Evaluaci&oacute;n Preliminar</span>
+                                }
+                                else
+                                {
+                                    <span class="altar-badge altar-badge-muted"><i class="fa-solid fa-lock"></i> Solo lectura</span>
+                                }
+                            </div>
+                            <p class="altar-card-subtitle">Precargado desde la Ficha de Registro del Altar, capturada por los participantes en su portal.</p>
+
+                            <div class="altar-grid-2" style="margin-bottom:14px;">
+                                <div><span class="altar-label">Equipo / carrera</span>@Model.NombreEquipo / @Model.Carrera</div>
+                                <div><span class="altar-label">Nombre del altar</span>&quot;@Model.NombreAltar&quot;</div>
+                                <div><span class="altar-label">Ubicaci&oacute;n del altar</span>@Model.UbicacionAltar</div>
+                                <div><span class="altar-label">Difunto &middot; fecha de defunci&oacute;n</span>@Model.DifuntoNombre &middot; @Model.DifuntoFechaDefuncion.ToString("d MMM yyyy")</div>
+                            </div>
+                            <p>Responsable: @Model.ResponsableNombre &middot; @Model.ResponsableTelefono &middot; @Model.ResponsableCorreo</p>
+                            <p>Maestro encargado: @Model.MaestroEncargado</p>
+
+                            <div style="margin-top:12px;">
+                                @foreach (var i in Model.Integrantes)
+                                {
+                                    <div class="altar-flex altar-gap-sm" style="padding:8px 0; border-top:1px solid var(--altar-border);">
+                                        <div class="altar-avatar" style="width:26px; height:26px; font-size:11px;">@i.Registrante.NombreCompleto.Substring(0, 1)</div>
+                                        <div style="flex:1;">@i.Registrante.NombreCompleto</div>
+                                        @if (i.Rol == AltarWeb.Models.Registro.RolEquipo.Narrador)
+                                        {
+                                            <span class="altar-badge altar-badge-purple">Narrador</span>
+                                        }
+                                        <span class="altar-text-muted" style="font-size:12px;">@i.Registrante.Identificador</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.EquipoId != null)
+        {
+            <form asp-controller="AltarEvaluacion" asp-action="GuardarEvaluacion" method="post" id="form-evaluacion">
+                <input type="hidden" name="equipoId" value="@Model.EquipoId" />
+                <input type="hidden" name="accion" id="input-accion" value="preliminar" />
+
+                <div id="tab-altar" style="display:none;">
+                    <div class="altar-grid-2">
+                        <div>
+                            <div class="altar-card">
+                                <div class="altar-card-title">Datos del difunto y del altar</div>
+                                <div class="altar-hint">Precargado de la Ficha de Registro: <strong>@Model.DifuntoNombre</strong> &middot; falleci&oacute; el <strong>@Model.DifuntoFechaDefuncion.ToString("d MMM yyyy")</strong></div>
+
+                                <div class="altar-field">
+                                    <label class="altar-label">Tipo de altar</label>
+                                    <select name="tipoAltar" class="altar-select" @(Model.SoloLectura ? "disabled" : null)>
+                                        <option value="Tradicional" selected="@(Model.TipoAltar == AltarWeb.Models.Registro.TipoAltar.Tradicional ? "selected" : null)">Tradicional</option>
+                                        <option value="Ninos" selected="@(Model.TipoAltar == AltarWeb.Models.Registro.TipoAltar.Ninos ? "selected" : null)">Ni&ntilde;os</option>
+                                    </select>
+                                </div>
+
+                                <div class="altar-field">
+                                    <label class="altar-label">Semblanza &middot; hobbies / tem&aacute;tica</label>
+                                    <textarea name="semblanza" class="altar-textarea" rows="3" placeholder="Gustos, personalidad y temática del altar..." @(Model.SoloLectura ? "disabled" : null)>@Model.SemblanzaHobbiesTematica</textarea>
+                                </div>
+
+                                <div class="altar-field">
+                                    <label class="altar-label">N&uacute;mero de niveles del altar</label>
+                                    <div class="altar-flex altar-gap-sm">
+                                        <button type="button" id="btn-niveles-7" class="altar-btn @(Model.Niveles == 7 ? "altar-btn-primary" : "altar-btn-outline")" onclick="altarSetNiveles(7)" @(Model.SoloLectura ? "disabled" : null)>7 Niveles</button>
+                                        <button type="button" id="btn-niveles-3" class="altar-btn @(Model.Niveles == 3 ? "altar-btn-primary" : "altar-btn-outline")" onclick="altarSetNiveles(3)" @(Model.SoloLectura ? "disabled" : null)>3 Niveles</button>
+                                    </div>
+                                    <p class="altar-slider-hint">Define el rango de niveles disponible en el selector de cada elemento.</p>
+                                    <input type="hidden" name="niveles" id="input-niveles" value="@Model.Niveles" />
+                                </div>
+                            </div>
+
+                            <div class="altar-card">
+                                <div class="altar-flex" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                                    <div class="altar-card-title">Checklist de elementos</div>
+                                    <div class="altar-flex altar-gap-sm">
+                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('MuySatisfactorio')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-check-double"></i> Marcar todo</button>
+                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('NoPresente')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-xmark"></i> Desmarcar todo</button>
+                                    </div>
+                                </div>
+                                <p class="altar-card-subtitle">Elige el nivel donde qued&oacute; colocado cada elemento y calif&iacute;calo con la escala de satisfacci&oacute;n. Toca (i) para ver el mini-manual.</p>
+                                <div class="altar-flex altar-gap-sm" style="flex-wrap:wrap; margin-bottom:16px;">
+                                    <span class="altar-badge altar-badge-muted">No presente &middot; @Model.ValorSatisfaccionNoPresente.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-muted">Poco &middot; @Model.ValorSatisfaccionPoco.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-muted">Satisfactorio &middot; @Model.ValorSatisfaccionSatisfactorio.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-success">Muy satisfactorio &middot; @Model.ValorSatisfaccionMuySatisfactorio.ToString("0.##")</span>
+                                </div>
+
+                                @foreach (var el in Model.Elementos.OrderBy(e => e.Nombre))
+                                {
+                                    <div class="altar-flex altar-gap-sm" style="padding:10px 0; border-top:1px solid var(--altar-border); flex-wrap:wrap;" data-elemento-row data-peso="@(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? Inv(Model.PesoElementoRitual) : Inv(Model.PesoElementoDecorativo))">
+                                        <span class="altar-badge @(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? "altar-badge-success" : "altar-badge-muted")" style="font-size:10px;">
+                                            @(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? "Ritual" : "Decor.")
+                                        </span>
+                                        <span style="flex:1; min-width:120px;">@el.Nombre</span>
+
+                                        <select class="altar-select" style="width:auto; padding:6px 10px;" data-elemento-nivel="@el.ElementoId" @(Model.SoloLectura ? "disabled" : null)></select>
+                                        <input type="hidden" name="Nivel_@el.ElementoId" id="hidden-nivel-@el.ElementoId" value="@el.NivelAsignado" />
+
+                                        <div class="altar-seg" data-elemento-seg="@el.ElementoId">
+                                            @foreach (var (valor, etiqueta) in new[] { ("NoPresente", "No"), ("Poco", "Poco"), ("Satisfactorio", "Satisf."), ("MuySatisfactorio", "Muy") })
+                                            {
+                                                <button type="button" class="altar-seg-option @(el.Satisfaccion.ToString() == valor ? "selected" : "")" data-valor="@valor" onclick="altarSetSatisfaccion(@el.ElementoId, '@valor', this)" @(Model.SoloLectura ? "disabled" : null)>@etiqueta</button>
+                                            }
+                                        </div>
+                                        <input type="hidden" name="Satisfaccion_@el.ElementoId" id="hidden-sat-@el.ElementoId" value="@el.Satisfaccion" />
+
+                                        <label class="altar-flex altar-gap-sm" style="font-size:12px; cursor:pointer;" title="¿Tiene personalización?">
+                                            <input type="checkbox" data-elemento-tematizado="@el.ElementoId" @(el.Tematizado ? "checked" : null) @(el.Satisfaccion == AltarWeb.Models.Registro.Satisfaccion.NoPresente || Model.SoloLectura ? "disabled" : null) onchange="altarToggleTematizado(@el.ElementoId, this.checked)" />
+                                            <input type="hidden" name="Tematizado_@el.ElementoId" id="hidden-tem-@el.ElementoId" value="@(el.Tematizado ? "true" : "false")" />
+                                            &iquest;Personalizado?
+                                        </label>
+
+                                        <button type="button" class="altar-btn-sm altar-btn-outline" style="padding:2px 8px;"
+                                                onclick="altarMostrarElemento('@el.Nombre.Replace("'", "\\'")', '@el.Significado.Replace("'", "\\'")', '@el.Colocacion.Replace("'", "\\'")')">(i)</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="altar-card">
+                                <div class="altar-flex" style="justify-content:space-between;">
+                                    <span class="altar-label" style="margin:0;">Objetivo Cultural (autom&aacute;tico)</span>
+                                    <span id="out-puntaje-elementos" style="font-weight:800;">@Model.PuntajeElementos.ToString("0.0")</span>
+                                </div>
+                                <p class="altar-slider-hint">= Puntaje de Elementos, acumulado en vivo. Reemplaza la calificaci&oacute;n manual de Objetivo Cultural.</p>
+                            </div>
+
+                            <div class="altar-card">
+                                <div class="altar-card-title">Calificaci&oacute;n del juez</div>
+                                <p class="altar-card-subtitle">Categor&iacute;as culturales y componentes (0&ndash;10).</p>
+
+                                @{
+                                    var sliders = new (string Name, string Label, int Peso, decimal Valor, string Hint)[]
+                                    {
+                                        ("esenciaPersonalidad", "Esencia y Personalidad", 30, Model.EsenciaPersonalidad, "¿Plasmó la esencia de a quién va dirigido? Apóyate en la temática/hobbies. Suma el bonus por elementos personalizados."),
+                                        ("valoracionGeneral", "Valoración General", 20, Model.ValoracionGeneral, "En lo personal y lo cultural, valoración general."),
+                                        ("distribucionNiveles", "Distribución por Niveles", 10, Model.DistribucionNiveles, "¿Los elementos están colocados en los niveles correctos?"),
+                                        ("narrador", "Narrador", 10, Model.Narrador, "Explicación del equipo al presentar el altar.")
+                                    };
+                                }
+                                @foreach (var s in sliders)
+                                {
+                                    <div class="altar-slider-row">
+                                        <div class="altar-slider-row-head">
+                                            <span>@s.Label &middot; @s.Peso%</span>
+                                            <span id="out-@s.Name">@s.Valor.ToString("0.0")</span>
+                                        </div>
+                                        <input type="range" min="0" max="10" step="0.1" name="@s.Name" value="@Inv(s.Valor)" class="altar-slider" data-live="@s.Name" @(Model.SoloLectura ? "disabled" : null) />
+                                        <div class="altar-slider-hint">@s.Hint</div>
+                                    </div>
+                                }
+                                <div class="altar-slider-row">
+                                    <div class="altar-slider-row-head">
+                                        <span>Esencia y Personalidad + bonus</span>
+                                        <span id="out-esenciaPersonalidadFinal" style="color:var(--altar-primary);">@((Model.EsenciaPersonalidad).ToString("0.0"))</span>
+                                    </div>
+                                    <div class="altar-slider-hint">Bonus de @Model.BonusPorElementoTematizado.ToString("0.##") por cada elemento marcado &quot;&iquest;Personalizado?&quot;, tope 10 (equivalente al bono tem&aacute;tico del sistema anterior).</div>
+                                </div>
+                            </div>
+
+                            <div class="altar-card" style="background:var(--altar-primary-soft-bg); border-color:var(--altar-primary);">
+                                <div class="altar-card-title">C&aacute;lculo autom&aacute;tico en vivo</div>
+                                <div class="altar-flex" style="justify-content:space-between;">
+                                    <span>Nota Final del altar</span>
+                                    <span id="out-nota-final" style="font-size:24px; font-weight:800;">@Model.NotaFinalPreview.ToString("0.0")</span>
+                                </div>
+                                <p class="altar-slider-hint">La Catrina se eval&uacute;a y rankea aparte; no suma a esta nota.</p>
+                            </div>
+
+                            <div class="altar-card">
+                                <div class="altar-card-title">Estado de la evaluaci&oacute;n</div>
+                                <p class="altar-card-subtitle">Preliminar es editable; Final requiere confirmaci&oacute;n.</p>
+                                @if (!Model.SoloLectura)
+                                {
+                                    <div class="altar-flex altar-gap-sm">
+                                        <button type="submit" class="altar-btn altar-btn-outline" onclick="document.getElementById('input-accion').value='preliminar'">
+                                            <i class="fa-solid fa-floppy-disk"></i> Guardar preliminar
+                                        </button>
+                                        <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()">
+                                            <i class="fa-solid fa-lock"></i> Cerrar como Final
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="altar-hint"><i class="fa-solid fa-lock"></i> Esta evaluación ya está cerrada como Final.</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.HaceCatrina)
+                {
+                <div id="tab-catrina" style="display:none;">
+                    <div class="altar-card">
+                        <div class="altar-flex" style="justify-content:space-between;">
+                            <div>
+                                <div class="altar-card-title">Evaluaci&oacute;n de Catrina</div>
+                                <p class="altar-card-subtitle">Categor&iacute;a independiente, opcional. Tiene su propio ranking por carrera.</p>
+                            </div>
+                            <span class="altar-badge altar-badge-purple"><i class="fa-solid fa-hat-wizard"></i> El equipo declar&oacute; que S&Iacute; har&aacute; Catrina</span>
+                        </div>
+                    </div>
+
+                    <div class="altar-grid-2">
+                        <div class="altar-card">
+                            <div class="altar-card-title">Rubros de la Catrina (0&ndash;10)</div>
+                            @{
+                                var rubros = new (string Name, string Label, decimal Valor)[]
+                                {
+                                    ("sombreroTocado", "Sombrero y tocado", Model.SombreroTocado),
+                                    ("guantes", "Guantes", Model.Guantes),
+                                    ("vestimenta", "Vestimenta", Model.Vestimenta),
+                                    ("zapatos", "Zapatos", Model.Zapatos),
+                                    ("collar", "Collar", Model.Collar),
+                                    ("maquillaje", "Maquillaje", Model.Maquillaje)
+                                };
+                            }
+                            @foreach (var r in rubros)
+                            {
+                                <div class="altar-slider-row">
+                                    <div class="altar-slider-row-head">
+                                        <span>@r.Label</span>
+                                        <span id="out-@r.Name">@r.Valor.ToString("0.0")</span>
+                                    </div>
+                                    <input type="range" min="0" max="10" step="0.1" name="@r.Name" value="@Inv(r.Valor)" class="altar-slider altar-slider-purple" data-live-catrina="@r.Name" @(Model.SoloLectura ? "disabled" : null) />
+                                </div>
+                            }
+                        </div>
+                        <div class="altar-card" style="background:var(--altar-purple-soft-bg); border-color:var(--altar-purple);">
+                            <div class="altar-card-title">Nota de Catrina (promedio)</div>
+                            <div id="out-nota-catrina" style="font-size:28px; font-weight:800; color:var(--altar-purple);">@(((Model.SombreroTocado + Model.Guantes + Model.Vestimenta + Model.Zapatos + Model.Collar + Model.Maquillaje) / 6).ToString("0.0"))</div>
+                            <p class="altar-slider-hint">Se rankea por separado del altar &mdash; premio &quot;Mejor Catrina&quot; por carrera, sin sumar a la Nota Final del altar.</p>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <div id="tab-resumen" style="display:none;">
+                    <div class="altar-card" style="max-width:600px; margin:0 auto; text-align:center;">
+                        <i class="fa-solid fa-clipboard-check" style="font-size:28px; color:var(--altar-primary);"></i>
+                        <div class="altar-card-title">Revisa antes de cerrar</div>
+                        <p class="altar-card-subtitle">Equipo <strong>@Model.NombreEquipo</strong> &middot; @Model.Carrera &middot; @Model.Niveles niveles</p>
+
+                        <div class="altar-grid-3" style="grid-template-columns:repeat(5, 1fr); margin:20px 0;">
+                            <div><div class="altar-text-muted" style="font-size:11px;">OBJ. CULTURAL</div><div id="resumen-objetivoCultural" style="font-weight:800;">@Model.ObjetivoCultural.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">ESENCIA</div><div id="resumen-esenciaPersonalidad" style="font-weight:800;">@Model.EsenciaPersonalidad.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">VAL. GENERAL</div><div id="resumen-valoracionGeneral" style="font-weight:800;">@Model.ValoracionGeneral.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">NIVELES</div><div id="resumen-distribucionNiveles" style="font-weight:800;">@Model.DistribucionNiveles.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">NARRADOR</div><div id="resumen-narrador" style="font-weight:800;">@Model.Narrador.ToString("0.0")</div></div>
+                        </div>
+
+                        <div class="altar-flex" style="justify-content:center; gap:32px; margin-bottom:20px;">
+                            <div><div class="altar-text-muted">Nota Final del altar</div><div id="resumen-nota-final" style="font-size:24px; font-weight:800; color:var(--altar-primary);">@Model.NotaFinalPreview.ToString("0.0")</div></div>
+                            @if (Model.HaceCatrina)
+                            {
+                                <div><div class="altar-text-muted">Nota de Catrina</div><div id="resumen-nota-catrina" style="font-size:24px; font-weight:800; color:var(--altar-purple);">@(((Model.SombreroTocado + Model.Guantes + Model.Vestimenta + Model.Zapatos + Model.Collar + Model.Maquillaje) / 6).ToString("0.0"))</div></div>
+                            }
+                        </div>
+
+                        @if (!Model.SoloLectura)
+                        {
+                            <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()"><i class="fa-solid fa-lock"></i> Confirmar y cerrar como Final</button>
+                            <p class="altar-slider-hint">Al cerrar como Final se habilitan ranking, constancias y reportería.</p>
+                        }
+                    </div>
+                </div>
+            </form>
+        }
+    </main>
+</div>
+
+<div id="altar-elemento-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="altar-card" style="max-width:420px; margin:0;">
+        <div class="altar-flex" style="justify-content:space-between; margin-bottom:8px;">
+            <div class="altar-card-title" id="altar-elemento-nombre" style="margin-bottom:0;"></div>
+            <button type="button" onclick="document.getElementById('altar-elemento-modal').style.display='none'" style="background:none; border:none; color:var(--altar-text-muted); font-size:18px;">&times;</button>
+        </div>
+        <div class="altar-label">Significado</div>
+        <p id="altar-elemento-significado"></p>
+        <div class="altar-label">Colocaci&oacute;n</div>
+        <p id="altar-elemento-colocacion" style="margin-bottom:0;"></p>
+    </div>
+</div>
+
+<div id="altar-confirmar-final-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="altar-card" style="max-width:420px; margin:0;">
+        <i class="fa-solid fa-triangle-exclamation" style="color:var(--altar-amber); font-size:22px;"></i>
+        <div class="altar-card-title">&iquest;Est&aacute;s de acuerdo?</div>
+        <p>Vas a cerrar la evaluaci&oacute;n como <strong>Final</strong>. Solo las evaluaciones Final cuentan para ranking, constancias y reporter&iacute;a.</p>
+        <div class="altar-flex altar-gap-sm">
+            <button type="button" class="altar-btn altar-btn-outline" onclick="document.getElementById('altar-confirmar-final-modal').style.display='none'">Seguir editando</button>
+            <button type="button" class="altar-btn altar-btn-primary" onclick="altarSubmitFinal()">S&iacute;, cerrar como Final</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var altarConfig = {
+            pesoObjetivoCultural: @Inv(Model.PesoObjetivoCultural),
+            pesoEsenciaPersonalidad: @Inv(Model.PesoEsenciaPersonalidad),
+            pesoValoracionGeneral: @Inv(Model.PesoValoracionGeneral),
+            pesoDistribucionNiveles: @Inv(Model.PesoDistribucionNiveles),
+            pesoNarrador: @Inv(Model.PesoNarrador),
+            bonusPorTematizado: @Inv(Model.BonusPorElementoTematizado),
+            valorSatisfaccion: {
+                NoPresente: @Inv(Model.ValorSatisfaccionNoPresente),
+                Poco: @Inv(Model.ValorSatisfaccionPoco),
+                Satisfactorio: @Inv(Model.ValorSatisfaccionSatisfactorio),
+                MuySatisfactorio: @Inv(Model.ValorSatisfaccionMuySatisfactorio)
+            },
+            valorSatisfaccionMax: @Inv(Model.ValorSatisfaccionMuySatisfactorio)
+        };
+
+        function altarPopulateNivelSelects() {
+            var niveles = parseInt(document.getElementById('input-niveles').value, 10);
+            document.querySelectorAll('[data-elemento-nivel]').forEach(function (select) {
+                var elementoId = select.dataset.elementoNivel;
+                var hidden = document.getElementById('hidden-nivel-' + elementoId);
+                var actual = parseInt(hidden.value, 10);
+                if (!actual || actual > niveles) actual = niveles;
+
+                select.innerHTML = '';
+                for (var n = niveles; n >= 1; n--) {
+                    var opt = document.createElement('option');
+                    opt.value = n;
+                    opt.textContent = 'Nivel ' + n;
+                    if (n === actual) opt.selected = true;
+                    select.appendChild(opt);
+                }
+                hidden.value = actual;
+                select.onchange = function () {
+                    document.getElementById('hidden-nivel-' + this.dataset.elementoNivel).value = this.value;
+                };
+            });
+        }
+
+        function altarSetNiveles(n) {
+            document.getElementById('input-niveles').value = n;
+            document.getElementById('btn-niveles-7').classList.toggle('altar-btn-primary', n === 7);
+            document.getElementById('btn-niveles-7').classList.toggle('altar-btn-outline', n !== 7);
+            document.getElementById('btn-niveles-3').classList.toggle('altar-btn-primary', n === 3);
+            document.getElementById('btn-niveles-3').classList.toggle('altar-btn-outline', n !== 3);
+            altarPopulateNivelSelects();
+        }
+
+        function altarTab(tab) {
+            ['equipo', 'altar', 'catrina', 'resumen'].forEach(function (t) {
+                var el = document.getElementById('tab-' + t);
+                if (el) el.style.display = (t === tab) ? 'block' : 'none';
+            });
+            document.querySelectorAll('.altar-tab').forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+        }
+
+        function altarSetSatisfaccion(elementoId, valor, btn) {
+            document.getElementById('hidden-sat-' + elementoId).value = valor;
+            var seg = btn.closest('[data-elemento-seg]');
+            seg.querySelectorAll('.altar-seg-option').forEach(function (b) { b.classList.remove('selected'); });
+            btn.classList.add('selected');
+
+            var chkTematizado = document.querySelector('[data-elemento-tematizado="' + elementoId + '"]');
+            if (chkTematizado) {
+                if (valor === 'NoPresente') {
+                    chkTematizado.checked = false;
+                    chkTematizado.disabled = true;
+                    document.getElementById('hidden-tem-' + elementoId).value = 'false';
+                } else if (!@(Model.SoloLectura ? "true" : "false")) {
+                    chkTematizado.disabled = false;
+                }
+            }
+
+            altarRecalcularPuntajeElementos();
+            altarRecalcularNotaFinal();
+        }
+
+        function altarToggleTematizado(elementoId, checked) {
+            document.getElementById('hidden-tem-' + elementoId).value = checked ? 'true' : 'false';
+            altarRecalcularNotaFinal();
+        }
+
+        function altarMarcarTodo(valor) {
+            document.querySelectorAll('[data-elemento-seg]').forEach(function (seg) {
+                var btn = seg.querySelector('[data-valor="' + valor + '"]');
+                if (btn) altarSetSatisfaccion(seg.dataset.elementoSeg, valor, btn);
+            });
+        }
+
+        function altarRecalcularPuntajeElementos() {
+            var sumaPonderada = 0, sumaMaxima = 0;
+            document.querySelectorAll('[data-elemento-row]').forEach(function (row) {
+                var peso = parseFloat(row.dataset.peso);
+                var seg = row.querySelector('[data-elemento-seg]');
+                var elementoId = seg.dataset.elementoSeg;
+                var valor = document.getElementById('hidden-sat-' + elementoId).value;
+                sumaPonderada += (altarConfig.valorSatisfaccion[valor] || 0) * peso;
+                sumaMaxima += peso * altarConfig.valorSatisfaccionMax;
+            });
+            var puntaje = sumaMaxima > 0 ? (sumaPonderada / sumaMaxima) * 10 : 0;
+            document.getElementById('out-puntaje-elementos').textContent = puntaje.toFixed(1);
+            var resumenObj = document.getElementById('resumen-objetivoCultural');
+            if (resumenObj) resumenObj.textContent = puntaje.toFixed(1);
+            return puntaje;
+        }
+
+        function altarContarTematizados() {
+            var count = 0;
+            document.querySelectorAll('[data-elemento-tematizado]').forEach(function (chk) {
+                if (chk.checked) count++;
+            });
+            return count;
+        }
+
+        function altarRecalcularNotaFinal() {
+            var objetivoCultural = parseFloat(document.getElementById('out-puntaje-elementos').textContent) || 0;
+            var esenciaBase = parseFloat(document.querySelector('[data-live="esenciaPersonalidad"]').value);
+            var g = parseFloat(document.querySelector('[data-live="valoracionGeneral"]').value);
+            var n = parseFloat(document.querySelector('[data-live="distribucionNiveles"]').value);
+            var r = parseFloat(document.querySelector('[data-live="narrador"]').value);
+
+            var bonus = altarContarTematizados() * altarConfig.bonusPorTematizado;
+            var esenciaFinal = Math.min(10, esenciaBase + bonus);
+            document.getElementById('out-esenciaPersonalidadFinal').textContent = esenciaFinal.toFixed(1);
+            var resumenEsencia = document.getElementById('resumen-esenciaPersonalidad');
+            if (resumenEsencia) resumenEsencia.textContent = esenciaFinal.toFixed(1);
+
+            var nota = objetivoCultural * altarConfig.pesoObjetivoCultural + esenciaFinal * altarConfig.pesoEsenciaPersonalidad
+                + g * altarConfig.pesoValoracionGeneral + n * altarConfig.pesoDistribucionNiveles
+                + r * altarConfig.pesoNarrador;
+            document.getElementById('out-nota-final').textContent = nota.toFixed(1);
+            var resumenFinal = document.getElementById('resumen-nota-final');
+            if (resumenFinal) resumenFinal.textContent = nota.toFixed(1);
+            ['valoracionGeneral', 'distribucionNiveles', 'narrador'].forEach(function (name) {
+                var el = document.getElementById('resumen-' + name);
+                if (el) el.textContent = parseFloat(document.querySelector('[data-live="' + name + '"]').value).toFixed(1);
+            });
+        }
+
+        document.querySelectorAll('[data-live]').forEach(function (slider) {
+            slider.addEventListener('input', function () {
+                document.getElementById('out-' + slider.dataset.live).textContent = parseFloat(slider.value).toFixed(1);
+                altarRecalcularNotaFinal();
+            });
+        });
+
+        altarPopulateNivelSelects();
+
+        function altarRecalcularNotaCatrina() {
+            var names = ['sombreroTocado', 'guantes', 'vestimenta', 'zapatos', 'collar', 'maquillaje'];
+            var suma = 0;
+            names.forEach(function (name) {
+                suma += parseFloat(document.querySelector('[data-live-catrina="' + name + '"]').value);
+            });
+            var promedio = suma / names.length;
+            document.getElementById('out-nota-catrina').textContent = promedio.toFixed(1);
+            var resumenCatrina = document.getElementById('resumen-nota-catrina');
+            if (resumenCatrina) resumenCatrina.textContent = promedio.toFixed(1);
+        }
+
+        document.querySelectorAll('[data-live-catrina]').forEach(function (slider) {
+            slider.addEventListener('input', function () {
+                document.getElementById('out-' + slider.dataset.liveCatrina).textContent = parseFloat(slider.value).toFixed(1);
+                altarRecalcularNotaCatrina();
+            });
+        });
+
+        function altarMostrarElemento(nombre, significado, colocacion) {
+            document.getElementById('altar-elemento-nombre').textContent = nombre;
+            document.getElementById('altar-elemento-significado').textContent = significado;
+            document.getElementById('altar-elemento-colocacion').textContent = colocacion;
+            document.getElementById('altar-elemento-modal').style.display = 'flex';
+        }
+
+        function altarConfirmarFinal() {
+            document.getElementById('altar-confirmar-final-modal').style.display = 'flex';
+        }
+
+        function altarSubmitFinal() {
+            document.getElementById('input-accion').value = 'final';
+            document.getElementById('form-evaluacion').submit();
+        }
+    </script>
+}

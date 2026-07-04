@@ -1,0 +1,120 @@
+@model AltarWeb.ViewModels.Altar.EvaluacionDetalleViewModel
+@{
+    ViewData["Title"] = "Detalle de evaluación";
+    var componentes = new (string Label, decimal Valor, int Peso)[]
+    {
+        ("Objetivo Cultural", Model.ObjetivoCultural, 30),
+        ("Esencia y Personalidad", Model.EsenciaPersonalidad, 30),
+        ("Valoración General", Model.ValoracionGeneral, 20),
+        ("Distribución por Niveles", Model.DistribucionNiveles, 10),
+        ("Narrador", Model.Narrador, 10)
+    };
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <a asp-controller="AltarEvaluacion" asp-action="Historial" class="altar-text-muted" style="display:inline-block; margin-bottom:16px;">
+            <i class="fa-solid fa-arrow-left"></i> Volver al historial
+        </a>
+
+        <div class="altar-grid-2">
+            <div>
+                <div class="altar-card">
+                    <div class="altar-flex altar-gap-sm" style="margin-bottom:8px;">
+                        <div class="altar-card-title" style="margin-bottom:0;">@Model.NombreEquipo</div>
+                        @if (Model.Estado == AltarWeb.Models.Registro.EstadoEvaluacion.Final)
+                        {
+                            <span class="altar-badge altar-badge-success"><i class="fa-solid fa-lock"></i> Final</span>
+                        }
+                        else
+                        {
+                            <span class="altar-badge altar-badge-warning"><i class="fa-solid fa-pencil"></i> Preliminar</span>
+                        }
+                    </div>
+                    <div class="altar-flex altar-gap-sm" style="margin-bottom:16px;">
+                        <span class="altar-badge altar-badge-muted">@Model.TipoAltar</span>
+                        <span class="altar-badge altar-badge-success">@(Model.Lugar != null ? Model.Lugar + "° lugar" : "Sin posición")</span>
+                    </div>
+
+                    <div class="altar-grid-2" style="margin-bottom:20px;">
+                        <div><span class="altar-label">Carrera del altar</span>@Model.Carrera</div>
+                        <div><span class="altar-label">Difunto</span>@Model.Difunto</div>
+                        <div><span class="altar-label">Niveles</span>@Model.Niveles niveles</div>
+                        <div><span class="altar-label">Juez</span>@Model.Juez</div>
+                    </div>
+
+                    @foreach (var c in componentes)
+                    {
+                        <div class="altar-slider-row">
+                            <div class="altar-slider-row-head">
+                                <span>@c.Label (@c.Peso%)</span>
+                                <span>@c.Valor.ToString("0.0")</span>
+                            </div>
+                            <div style="background:var(--altar-surface-alt); border-radius:999px; height:6px;">
+                                <div style="background:var(--altar-primary); border-radius:999px; height:6px; width:@((c.Valor / 10) * 100)%;"></div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="altar-flex" style="justify-content:space-between; margin-top:16px;">
+                        <div class="altar-card-title">Nota Final del altar</div>
+                        <div style="font-size:28px; font-weight:800; color:var(--altar-primary);">@(Model.NotaFinal?.ToString("0.0") ?? "—")</div>
+                    </div>
+
+                    @if (Model.IncluyeCatrina && Model.NotaCatrina != null)
+                    {
+                        <span class="altar-badge altar-badge-purple">Nota de Catrina (aparte) — @Model.NotaCatrina?.ToString("0.0")</span>
+                    }
+                </div>
+
+                <div class="altar-card">
+                    <div class="altar-card-title">Constancias y env&iacute;o</div>
+                    <p class="altar-card-subtitle">Se generan para <strong>todos</strong> los participantes, el maestro encargado y el juez.</p>
+
+                    @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+                    }
+
+                    @if (Model.Estado == AltarWeb.Models.Registro.EstadoEvaluacion.Final)
+                    {
+                        <div class="altar-grid-2" style="margin-bottom:12px;">
+                            <a asp-controller="Constancia" asp-action="DescargarGrupal" asp-route-evaluacionId="@Model.EvaluacionId" class="altar-btn altar-btn-outline"><i class="fa-solid fa-file-pdf"></i> Constancia grupal (equipo)</a>
+                            <a asp-controller="Constancia" asp-action="DescargarIndividuales" asp-route-evaluacionId="@Model.EvaluacionId" class="altar-btn altar-btn-outline"><i class="fa-solid fa-file-zipper"></i> Constancias individuales (ZIP)</a>
+                            <a asp-controller="Constancia" asp-action="DescargarMaestro" asp-route-evaluacionId="@Model.EvaluacionId" class="altar-btn altar-btn-outline"><i class="fa-solid fa-file-pdf"></i> Constancia del maestro encargado</a>
+                            <a asp-controller="Constancia" asp-action="DescargarJuez" asp-route-evaluacionId="@Model.EvaluacionId" class="altar-btn altar-btn-outline"><i class="fa-solid fa-file-pdf"></i> Constancia del juez</a>
+                        </div>
+                        <form asp-controller="Constancia" asp-action="EnviarTodas" asp-route-evaluacionId="@Model.EvaluacionId" method="post">
+                            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">
+                                <i class="fa-solid fa-paper-plane"></i> Enviar todas por correo
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="altar-hint"><i class="fa-solid fa-hourglass-half"></i> Las constancias estar&aacute;n disponibles cuando esta evaluaci&oacute;n se cierre como Final.</div>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <div class="altar-card">
+                    <div class="altar-card-title">Vista previa de constancia</div>
+                    <p class="altar-card-subtitle">Carta horizontal &middot; PDF con logos UABC/FIM/APFI</p>
+                    <div style="border:1px dashed var(--altar-border); border-radius:var(--altar-radius); padding:40px 20px; text-align:center;" class="altar-text-muted">
+                        <i class="fa-solid fa-file-pdf" style="font-size:32px; margin-bottom:12px;"></i>
+                        <div>Constancia de participaci&oacute;n</div>
+                        <div style="font-weight:800; color:var(--altar-text); font-size:18px; margin:8px 0;">@Model.NombreEquipo</div>
+                        <div>@(Model.Lugar != null ? Model.Lugar + "° lugar" : "Participante") &middot; @Model.Carrera</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>

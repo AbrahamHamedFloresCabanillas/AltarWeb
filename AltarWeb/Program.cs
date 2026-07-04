@@ -1,4 +1,6 @@
-﻿using AltarWeb.Models;
+﻿using System.Security.Cryptography;
+using System.Text;
+using AltarWeb.Models;
 using AltarWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +26,13 @@ builder.Services.AddAuthentication(options =>
     {
         options.ClientId = builder.Configuration["GoogleAuth:ClientId"] ?? string.Empty;
         options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? string.Empty;
-        options.CallbackPath = "/Alumno/google-callback";
+        options.CallbackPath = "/Registro/google-callback";
         options.Scope.Add("email");
         options.Scope.Add("profile");
     });
 
 builder.Services.AddScoped<ConstanciaService>();
+builder.Services.AddScoped<EvaluacionCalculoService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -46,11 +49,33 @@ using (var scope = app.Services.CreateScope())
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "Ocurrio un error al insertar el Juez inicial.");
     }
+
+    // Fixup idempotente: las contrasenas de Jueces creadas antes de esta version se
+    // guardaban en texto plano. Las re-hashea en el arranque; no hace nada en las
+    // ejecuciones siguientes porque ya quedan en formato hash (Base64 de 44 caracteres).
+    try
+    {
+        var context = services.GetRequiredService<AltarDbContext>();
+        var sinHashear = context.Jueces.IgnoreQueryFilters()
+            .Where(j => j.Password.Length != 44)
+            .ToList();
+        foreach (var juez in sinHashear)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(juez.Password));
+            juez.Password = Convert.ToBase64String(bytes);
+        }
+        if (sinHashear.Count > 0) context.SaveChanges();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrio un error al migrar contrasenas de Jueces a formato hash.");
+    }
 }
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Registro/Login");
     app.UseHsts();
 }
 
@@ -64,6 +89,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Acceso}/{action=Login}/{id?}");
+    pattern: "{controller=Registro}/{action=Login}/{id?}");
 
 app.Run();

@@ -1,0 +1,64 @@
+@model AltarWeb.ViewModels.Altar.AltarNavContext
+
+<button type="button" class="altar-sidebar-toggle-btn" aria-label="Abrir men&uacute;" onclick="AltarSidebarNav.toggle()">
+    <i class="fa-solid fa-bars"></i>
+</button>
+<div class="altar-sidebar-overlay" id="altar-sidebar-overlay" onclick="AltarSidebarNav.close()"></div>
+
+<aside class="altar-sidebar" id="altar-sidebar">
+    <div>
+        <a asp-controller="AltarEvaluacion" asp-action="Historial" class="altar-flex altar-gap-sm" style="color:var(--altar-text); margin-bottom: 8px;">
+            <span class="altar-brand-badge" style="background:var(--altar-primary-soft-bg); width:32px; height:32px; font-size:14px;"><i class="fa-solid fa-skull"></i></span>
+            <span>
+                <div style="font-weight:800; font-size:15px;">AltarWeb</div>
+                <div class="altar-text-muted" style="font-size:11px;">FIM &middot; UABC</div>
+            </span>
+        </a>
+
+        <div class="altar-sidebar-menu-label">Men&uacute;</div>
+
+        <a asp-controller="AltarEvaluacion" asp-action="Historial"
+           class="altar-sidebar-nav-item @(Model.ActiveItem == "Historial" ? "active" : "")">
+            <i class="fa-solid fa-clock-rotate-left"></i> Historial
+        </a>
+        <a asp-controller="AltarEvaluacion" asp-action="NuevaEvaluacion"
+           class="altar-sidebar-nav-item @(Model.ActiveItem == "NuevaEvaluacion" ? "active" : "")">
+            <i class="fa-solid fa-square-plus"></i> Nueva Evaluaci&oacute;n
+        </a>
+        <a asp-controller="AltarEvaluacion" asp-action="RecorridoPdf"
+           class="altar-sidebar-nav-item @(Model.ActiveItem == "RecorridoPdf" ? "active" : "")">
+            <i class="fa-solid fa-map"></i> Recorrido PDF
+        </a>
+
+        @if (Model.EsAdmin)
+        {
+            <a asp-controller="AltarAdmin" asp-action="Jueces"
+               class="altar-sidebar-nav-item @(Model.ActiveItem == "Jueces" ? "active" : "")">
+                <i class="fa-solid fa-user-shield"></i> Jueces
+            </a>
+            <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos"
+               class="altar-sidebar-nav-item @(Model.ActiveItem == "RegistrantesYEquipos" ? "active" : "")">
+                <i class="fa-solid fa-users"></i> Registrantes y Equipos
+            </a>
+            <a asp-controller="AltarAdmin" asp-action="Configuracion"
+               class="altar-sidebar-nav-item @(Model.ActiveItem == "Configuracion" ? "active" : "")">
+                <i class="fa-solid fa-gear"></i> Configuraci&oacute;n
+            </a>
+        }
+    </div>
+
+    <div class="altar-flex" style="justify-content:center; margin-bottom:12px;">
+        <partial name="_AltarThemeTogglePartial" />
+    </div>
+
+    <div class="altar-sidebar-user">
+        <div class="altar-avatar">@Model.Iniciales</div>
+        <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@Model.NombreCompleto</div>
+            <div class="altar-text-muted" style="font-size:11px;">@Model.Rol</div>
+        </div>
+        <a asp-controller="Acceso" asp-action="Salir" title="Salir" style="color:var(--altar-text-muted);">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
+    </div>
+</aside>

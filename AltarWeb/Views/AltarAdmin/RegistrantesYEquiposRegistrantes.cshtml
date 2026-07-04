@@ -1,0 +1,70 @@
+@model List<AltarWeb.ViewModels.Altar.RegistranteAdminRowViewModel>
+@{
+    ViewData["Title"] = "Registrantes y equipos";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-page-title">Registrantes y equipos</div>
+        <div class="altar-page-subtitle" style="margin-bottom:16px;">Alumnos, maestros, administrativos y equipos</div>
+
+        <div class="altar-pill-tabs" style="margin-bottom:20px;">
+            <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="registrantes" class="altar-pill-tab active" style="text-decoration:none;">Registrantes</a>
+            <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="equipos" class="altar-pill-tab" style="text-decoration:none;">Equipos</a>
+        </div>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+        }
+
+        <div class="altar-card">
+            <table class="altar-table">
+                <thead>
+                    <tr><th>Registrante</th><th>Tipo</th><th>Identif.</th><th>Carrera</th><th>G&eacute;nero</th><th>Estado</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr style="@(r.Activo ? "" : "opacity:0.5;")">
+                            <td>
+                                <div class="altar-flex altar-gap-sm">
+                                    <div class="altar-avatar" style="width:28px; height:28px; font-size:11px;">@r.NombreCompleto.Substring(0, 1)</div>
+                                    <div>
+                                        <div>@r.NombreCompleto</div>
+                                        <div class="altar-text-muted" style="font-size:12px;">@r.CorreoInstitucional</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="altar-badge @(r.Tipo == AltarWeb.Models.Registro.TipoRegistrante.Alumno ? "altar-badge-success" : r.Tipo == AltarWeb.Models.Registro.TipoRegistrante.Maestro ? "altar-badge-warning" : "altar-badge-purple")">@r.Tipo</span>
+                            </td>
+                            <td>@r.Identificador</td>
+                            <td>@r.Carrera</td>
+                            <td>@r.Genero</td>
+                            <td>@(r.Activo ? "Activo" : "Inactivo")</td>
+                            <td>
+                                @if (r.Activo)
+                                {
+                                    <form asp-controller="AltarAdmin" asp-action="DesactivarRegistrante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-danger);"><i class="fa-solid fa-user-slash"></i></button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-controller="AltarAdmin" asp-action="ReactivarRegistrante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);"><i class="fa-solid fa-rotate-left"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>

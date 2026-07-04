@@ -13,6 +13,20 @@ namespace AltarWeb.Models
         public DbSet<Equipo> Equipos { get; set; }
         public DbSet<AlumnoEquipo> AlumnoEquipos { get; set; }
 
+        // --- Modelo nuevo (vision.md v2.4) ---
+        public DbSet<Registro.CatalogoGenero> CatalogoGeneros { get; set; }
+        public DbSet<Registro.CatalogoCarrera> CatalogoCarreras { get; set; }
+        public DbSet<Registro.Registrante> Registrantes { get; set; }
+        public DbSet<Registro.Equipo> EquiposConcurso { get; set; }
+        public DbSet<Registro.RegistranteEquipo> RegistranteEquipos { get; set; }
+        public DbSet<Registro.Difunto> Difuntos { get; set; }
+        public DbSet<Registro.Elemento> Elementos { get; set; }
+        public DbSet<Registro.Evaluacion> EvaluacionesConcurso { get; set; }
+        public DbSet<Registro.EvaluacionIntegrante> EvaluacionIntegrantes { get; set; }
+        public DbSet<Registro.ElementoEvaluado> ElementosEvaluados { get; set; }
+        public DbSet<Registro.EvaluacionCatrina> EvaluacionesCatrina { get; set; }
+        public DbSet<Registro.ConfiguracionPeriodo> ConfiguracionesPeriodo { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -74,6 +88,22 @@ namespace AltarWeb.Models
             modelBuilder.Entity<Evaluacion>().Property(e => e.NotaTradicionFinal).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<Evaluacion>().Property(e => e.NotaPersonalizacionFinal).HasColumnType("decimal(18,2)");
             modelBuilder.Entity<Evaluacion>().Property(e => e.NotaFinal).HasColumnType("decimal(18,2)");
+
+            // Modelo nuevo: cada entidad de AltarWeb.Models.Registro trae su propia
+            // IEntityTypeConfiguration<T> en Models/Registro/Configurations. Se aplican una por
+            // una (en vez de ApplyConfigurationsFromAssembly) para poder escalonar las migraciones.
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.CatalogoGeneroConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.CatalogoCarreraConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.RegistranteConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.EquipoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.RegistranteEquipoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.DifuntoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.ElementoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.EvaluacionConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.EvaluacionIntegranteConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.ElementoEvaluadoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.EvaluacionCatrinaConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.ConfiguracionPeriodoConfiguration());
         }
     }
 }

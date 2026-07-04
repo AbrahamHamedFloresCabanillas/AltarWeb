@@ -1,0 +1,215 @@
+@model AltarWeb.ViewModels.Altar.RegistranteDashboardViewModel
+@{
+    ViewData["Title"] = "Mi portal";
+    var primerNombre = Model.Registrante.NombreCompleto.Split(' ').FirstOrDefault() ?? Model.Registrante.NombreCompleto;
+}
+
+<div style="max-width:1100px; margin:0 auto; padding:28px 24px;">
+    <div class="altar-flex" style="justify-content:space-between; margin-bottom:28px;">
+        <div class="altar-flex altar-gap-sm">
+            <div class="altar-brand-badge" style="width:36px; height:36px; background:var(--altar-primary-soft-bg); font-size:16px;"><i class="fa-solid fa-skull"></i></div>
+            <div>
+                <div style="font-weight:800;">Portal de Registro</div>
+                <div class="altar-text-muted" style="font-size:12px;">AltarWeb &middot; FIM UABC</div>
+            </div>
+        </div>
+        <div class="altar-flex altar-gap-md">
+            <partial name="_AltarThemeTogglePartial" />
+            <div class="altar-flex altar-gap-sm">
+                <div class="altar-avatar">@Model.Registrante.NombreCompleto.Substring(0, 1)</div>
+                <div>
+                    <div style="font-weight:700; font-size:13px;">@Model.Registrante.NombreCompleto</div>
+                    <div class="altar-text-muted" style="font-size:12px;">@Model.Registrante.Tipo &middot; @Model.Registrante.Identificador</div>
+                </div>
+            </div>
+            <a asp-controller="Registro" asp-action="Logout" style="color:var(--altar-text-muted);"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+        </div>
+    </div>
+
+    <h2 style="font-weight:800;">&iexcl;Hola, @primerNombre!</h2>
+    <p class="altar-text-muted" style="margin-bottom:24px;">
+        Periodo acad&eacute;mico <strong>@PeriodoHelper.ObtenerPeriodoActual()</strong>
+        @if (Model.Registrante.CatalogoCarrera != null)
+        {
+            <text> &middot; @Model.Registrante.CatalogoCarrera.Nombre</text>
+        }
+    </p>
+
+    <div class="altar-grid-2">
+        <div>
+            @if (Model.Equipo == null)
+            {
+                <div class="altar-card">
+                    <div class="altar-card-title">A&uacute;n no tienes equipo</div>
+                    <p class="altar-card-subtitle">Crea tu equipo y llena la Ficha de Registro del Altar para participar en el concurso.</p>
+                    <a asp-controller="Registro" asp-action="CrearEquipo" class="altar-btn altar-btn-primary">
+                        <i class="fa-solid fa-plus"></i> Crear mi equipo
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="altar-card">
+                    <div class="altar-flex altar-gap-sm" style="margin-bottom:12px;">
+                        @if (Model.EsOrganizador)
+                        {
+                            <span class="altar-badge altar-badge-success"><i class="fa-solid fa-crown"></i> Organizador</span>
+                        }
+                        <span class="altar-badge @(Model.FichaCompleta ? "altar-badge-success" : "altar-badge-warning")">
+                            <i class="fa-solid @(Model.FichaCompleta ? "fa-file-circle-check" : "fa-triangle-exclamation")"></i>
+                            Ficha @(Model.FichaCompleta ? "completa" : "pendiente")
+                        </span>
+                    </div>
+
+                    <div class="altar-card-title" style="color:var(--altar-primary);">@Model.Equipo.Nombre</div>
+                    <div class="altar-card-subtitle" style="font-style:italic;">Altar &quot;@Model.Equipo.NombreAltar&quot;</div>
+
+                    <div class="altar-flex altar-gap-sm" style="flex-wrap:wrap; margin:14px 0;">
+                        <span class="altar-chip" style="background:var(--altar-surface-alt); color:var(--altar-text);"><i class="fa-solid fa-graduation-cap"></i> @Model.Equipo.Carrera?.Nombre</span>
+                        @if (Model.Equipo.MaestroEncargado != null)
+                        {
+                            <span class="altar-chip" style="background:var(--altar-surface-alt); color:var(--altar-text);"><i class="fa-solid fa-chalkboard-user"></i> @Model.Equipo.MaestroEncargado.NombreCompleto</span>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.Equipo.MaestroEncargadoIdentificadorPendiente))
+                        {
+                            <span class="altar-chip" style="background:var(--altar-surface-alt); color:var(--altar-amber); opacity:0.7;"><i class="fa-solid fa-hourglass-half"></i> Maestro pendiente de registro</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Equipo.UbicacionAltar))
+                        {
+                            <span class="altar-chip" style="background:var(--altar-surface-alt); color:var(--altar-text);"><i class="fa-solid fa-location-dot"></i> @Model.Equipo.UbicacionAltar</span>
+                        }
+                        @if (Model.Equipo.Difunto != null)
+                        {
+                            <span class="altar-chip" style="background:var(--altar-surface-alt); color:var(--altar-text);"><i class="fa-solid fa-cross"></i> @Model.Equipo.Difunto.Nombre &middot; @Model.Equipo.Difunto.FechaDefuncion.ToString("d MMM yyyy")</span>
+                        }
+                    </div>
+
+                    <div>
+                        @if (Model.Equipo.MaestroEncargado != null || !string.IsNullOrEmpty(Model.Equipo.MaestroEncargadoIdentificadorPendiente))
+                        {
+                            <div class="altar-flex altar-gap-sm" style="padding:8px 0; border-top:1px solid var(--altar-border); @(Model.Equipo.MaestroEncargado == null ? "opacity:0.5;" : "")">
+                                <div class="altar-avatar" style="width:28px; height:28px; font-size:11px; background:var(--altar-surface-alt); color:var(--altar-text-muted);"><i class="fa-solid fa-chalkboard-user"></i></div>
+                                <div style="flex:1;">@(Model.Equipo.MaestroEncargado?.NombreCompleto ?? "Maestro encargado (pendiente)")</div>
+                                <span class="altar-badge altar-badge-muted">Maestro encargado</span>
+                            </div>
+                        }
+                        @foreach (var integrante in Model.Equipo.Integrantes.OrderByDescending(i => i.Rol == AltarWeb.Models.Registro.RolEquipo.Narrador))
+                        {
+                            <div class="altar-flex altar-gap-sm" style="padding:8px 0; border-top:1px solid var(--altar-border);">
+                                <div class="altar-avatar" style="width:28px; height:28px; font-size:11px;">@integrante.Registrante.NombreCompleto.Substring(0,1)</div>
+                                <div style="flex:1;">@integrante.Registrante.NombreCompleto</div>
+                                @if (integrante.Rol == AltarWeb.Models.Registro.RolEquipo.Narrador)
+                                {
+                                    <span class="altar-badge altar-badge-purple">Narrador</span>
+                                }
+                                <span class="altar-text-muted" style="font-size:13px;">@integrante.Registrante.Identificador</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (Model.EsOrganizador && !Model.EquipoEvaluado)
+                    {
+                        <a asp-controller="Registro" asp-action="Ficha" class="altar-btn altar-btn-outline altar-btn-sm" style="margin-top:14px;">
+                            <i class="fa-solid fa-pen"></i> Editar Ficha de Registro
+                        </a>
+                    }
+
+                    @if (Model.EquipoEvaluado)
+                    {
+                        <div class="altar-hint" style="margin-top:14px;">
+                            <i class="fa-solid fa-lock"></i> El equipo ya fue evaluado: la lista de integrantes est&aacute; cerrada.
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="altar-card">
+                <div class="altar-card-title">Mi constancia</div>
+                <p class="altar-card-subtitle">Disponible para todos los participantes, sin importar la nota.</p>
+                @if (Model.EquipoEvaluado)
+                {
+                    <a asp-controller="Constancia" asp-action="DescargarMia" class="altar-btn altar-btn-outline">
+                        <i class="fa-solid fa-download"></i> Descargar mi constancia
+                    </a>
+                }
+                else
+                {
+                    <button class="altar-btn altar-btn-outline" disabled title="Disponible cuando tu equipo tenga una evaluación Final">
+                        <i class="fa-solid fa-download"></i> Descargar mi constancia
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div>
+            @{
+                var esFinal = Model.Equipo?.Evaluacion?.Estado == AltarWeb.Models.Registro.EstadoEvaluacion.Final;
+            }
+            @if (Model.Equipo?.Evaluacion != null && Model.Equipo.Evaluacion.NotaFinal != null)
+            {
+                <div class="altar-card" style="background:@(esFinal ? "var(--altar-primary-soft-bg)" : "var(--altar-amber-soft-bg)"); border-color:@(esFinal ? "var(--altar-primary)" : "var(--altar-amber)");">
+                    <div class="altar-card-subtitle" style="color:var(--altar-text);">@(esFinal ? "Resultado de evaluación" : "Resultado preliminar de evaluación")</div>
+                    <div style="font-size:36px; font-weight:800; color:@(esFinal ? "var(--altar-primary)" : "var(--altar-amber)");">@Model.Equipo.Evaluacion.NotaFinal?.ToString("0.0") / 10</div>
+                    @if (!esFinal)
+                    {
+                        <span class="altar-badge altar-badge-warning"><i class="fa-solid fa-pencil"></i> Sujeto a cambios hasta que el juez lo cierre como Final</span>
+                    }
+                    else if (Model.Equipo.Evaluacion.Lugar != null)
+                    {
+                        <span class="altar-badge altar-badge-success">@Model.Equipo.Evaluacion.Lugar&#176; lugar &middot; @Model.Equipo.Carrera?.Nombre</span>
+                    }
+                </div>
+            }
+
+            <div class="altar-card">
+                <div class="altar-card-title">Elementos requeridos del altar &middot; @Model.Elementos.Count elementos</div>
+                <p class="altar-card-subtitle">Esto es lo que tu altar debe incluir. Toca (i) para ver significado y colocaci&oacute;n.</p>
+
+                <div class="altar-grid-2">
+                    @foreach (var el in Model.Elementos)
+                    {
+                        <div class="altar-flex altar-gap-sm" style="padding:8px 0;">
+                            <span class="altar-badge @(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? "altar-badge-success" : "altar-badge-muted")" style="font-size:10px;">
+                                @(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? "Ritual" : "Decor.")
+                            </span>
+                            <span style="flex:1; font-size:13px;">@el.Nombre</span>
+                            <button type="button" class="altar-btn-sm altar-btn-outline" style="padding:2px 8px;"
+                                    onclick="altarMostrarElemento('@el.Nombre.Replace("'", "\\'")', '@(el.Categoria == AltarWeb.Models.Registro.CategoriaElemento.RitualObligatorio ? "Ritual / Obligatorio" : "Decorativo")', @el.NivelSugerido3, @el.NivelSugerido7, '@el.Significado.Replace("'", "\\'")', '@el.Colocacion.Replace("'", "\\'")')">
+                                (i)
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="altar-elemento-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div class="altar-card" style="max-width:420px; margin:0;">
+        <div class="altar-flex" style="justify-content:space-between; margin-bottom:8px;">
+            <div class="altar-card-title" id="altar-elemento-nombre" style="margin-bottom:0;"></div>
+            <button type="button" onclick="document.getElementById('altar-elemento-modal').style.display='none'" style="background:none; border:none; color:var(--altar-text-muted); font-size:18px;">&times;</button>
+        </div>
+        <span class="altar-badge altar-badge-success" id="altar-elemento-categoria"></span>
+        <p class="altar-text-muted" style="margin-top:8px;">Nivel sugerido (7 niveles): <span id="altar-elemento-nivel7"></span> &middot; (3 niveles): <span id="altar-elemento-nivel3"></span></p>
+        <div class="altar-label" style="margin-top:12px;">Significado</div>
+        <p id="altar-elemento-significado"></p>
+        <div class="altar-label">Colocaci&oacute;n</div>
+        <p id="altar-elemento-colocacion" style="margin-bottom:0;"></p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function altarMostrarElemento(nombre, categoria, nivel3, nivel7, significado, colocacion) {
+            document.getElementById('altar-elemento-nombre').textContent = nombre;
+            document.getElementById('altar-elemento-categoria').textContent = categoria;
+            document.getElementById('altar-elemento-nivel7').textContent = nivel7 ?? '—';
+            document.getElementById('altar-elemento-nivel3').textContent = nivel3 ?? '—';
+            document.getElementById('altar-elemento-significado').textContent = significado;
+            document.getElementById('altar-elemento-colocacion').textContent = colocacion;
+            document.getElementById('altar-elemento-modal').style.display = 'flex';
+        }
+    </script>
+}

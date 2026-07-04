@@ -1,0 +1,20 @@
+@model (string Title, string Subtitle, bool ShowNuevaEvaluacion)
+
+<div class="altar-topbar">
+    <div>
+        <div class="altar-page-title">@Model.Title</div>
+        <div class="altar-page-subtitle">@Model.Subtitle</div>
+    </div>
+    <div class="altar-flex altar-gap-md">
+        <div class="altar-input altar-flex altar-gap-sm" style="width:260px; padding-top:9px; padding-bottom:9px;">
+            <i class="fa-solid fa-magnifying-glass altar-text-muted"></i>
+            <input type="text" id="altar-topbar-search" placeholder="Buscar equipo, carrera o periodo..." autocomplete="off" style="background:transparent; border:none; color:var(--altar-text); width:100%;" />
+        </div>
+        @if (Model.ShowNuevaEvaluacion)
+        {
+            <a asp-controller="AltarEvaluacion" asp-action="NuevaEvaluacion" class="altar-btn altar-btn-primary">
+                <i class="fa-solid fa-plus"></i> Nueva evaluaci&oacute;n
+            </a>
+        }
+    </div>
+</div>

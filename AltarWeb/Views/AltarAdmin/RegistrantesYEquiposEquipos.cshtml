@@ -1,0 +1,54 @@
+@model List<AltarWeb.ViewModels.Altar.EquipoAdminCardViewModel>
+@{
+    ViewData["Title"] = "Registrantes y equipos";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-page-title">Registrantes y equipos</div>
+        <div class="altar-page-subtitle" style="margin-bottom:16px;">Alumnos, maestros, administrativos y equipos</div>
+
+        <div class="altar-pill-tabs" style="margin-bottom:20px;">
+            <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="registrantes" class="altar-pill-tab" style="text-decoration:none;">Registrantes</a>
+            <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="equipos" class="altar-pill-tab active" style="text-decoration:none;">Equipos</a>
+        </div>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+        }
+
+        <div class="altar-grid-2">
+            @foreach (var e in Model)
+            {
+                <div class="altar-card">
+                    <div class="altar-flex" style="justify-content:space-between;">
+                        <div class="altar-card-title" style="margin-bottom:0;">@e.Nombre</div>
+                        <span class="altar-badge @(e.Evaluado ? "altar-badge-success" : "altar-badge-warning")">@(e.Evaluado ? "Evaluado" : "Pendiente")</span>
+                    </div>
+                    <div class="altar-card-subtitle" style="font-style:italic;">Altar &quot;@e.NombreAltar&quot;</div>
+                    <div style="color:var(--altar-primary); font-size:14px; margin-bottom:8px;">@e.Carrera</div>
+                    <div class="altar-text-muted" style="font-size:13px; margin-bottom:8px;">@e.IntegrantesCount integrantes &middot; @e.Periodo</div>
+                    @if (!string.IsNullOrEmpty(e.MaestroEncargado))
+                    {
+                        <div style="font-size:13px;"><i class="fa-solid fa-chalkboard-user"></i> @e.MaestroEncargado</div>
+                    }
+                    @if (!string.IsNullOrEmpty(e.UbicacionAltar))
+                    {
+                        <div style="font-size:13px; margin-bottom:8px;"><i class="fa-solid fa-location-dot"></i> @e.UbicacionAltar</div>
+                    }
+                    @if (e.FichaCompleta)
+                    {
+                        <div style="font-size:13px; color:var(--altar-primary);"><i class="fa-solid fa-circle-check"></i> Ficha de registro completa</div>
+                    }
+                    else
+                    {
+                        <div style="font-size:13px; color:var(--altar-amber);"><i class="fa-solid fa-triangle-exclamation"></i> Ficha de registro pendiente</div>
+                    }
+                </div>
+            }
+        </div>
+    </main>
+</div>

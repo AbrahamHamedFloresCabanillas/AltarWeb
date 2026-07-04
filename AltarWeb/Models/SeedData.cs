@@ -9,8 +9,9 @@ namespace AltarWeb.Models
             using (var context = new AltarDbContext(
                 serviceProvider.GetRequiredService<DbContextOptions<AltarDbContext>>()))
             {
-                // Revisar si la base de datos existe, si no, la crea
-                context.Database.EnsureCreated();
+                // Aplica las migraciones pendientes (el esquema se gestiona via EF Core migrations,
+                // no via EnsureCreated, para no perder el historial de __EFMigrationsHistory).
+                context.Database.Migrate();
 
                 // Si ya hay jueces registrados, no hacemos nada
                 // Nota: IgnoreQueryFilters() para incluir soft-deleted en la verificación

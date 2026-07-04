@@ -1,0 +1,88 @@
+@model AltarWeb.ViewModels.Altar.CompletarGoogleViewModel
+@{
+    ViewData["Title"] = "Completa tu registro";
+}
+
+<div class="altar-landing">
+    <div class="altar-landing-brand">
+        <div>
+            <div class="altar-brand">
+                <div class="altar-brand-badge"><i class="fa-solid fa-skull"></i></div>
+                <div>
+                    <div style="font-weight:800; font-size:20px;">AltarWeb</div>
+                    <div style="opacity:0.85; font-size:13px;">FIM &middot; UABC</div>
+                </div>
+            </div>
+            <div class="altar-eyebrow" style="margin-top:40px;">Casi listo</div>
+            <div class="altar-landing-heading">Un &uacute;ltimo paso.</div>
+            <p style="opacity:0.9; max-width:420px;">
+                Google no comparte tu matr&iacute;cula ni tu carrera. Compl&eacute;talas para terminar tu registro.
+            </p>
+        </div>
+        <div style="opacity:0.85; font-size:13px;">Mexicali, Baja California &middot; Universidad Aut&oacute;noma de Baja California</div>
+    </div>
+
+    <div class="altar-landing-form">
+        <div class="altar-landing-form-inner">
+            <h3 class="altar-card-title">Completa tu registro</h3>
+            <p class="altar-card-subtitle">Bienvenido, <strong>@Model.NombreCompleto</strong> &middot; @Model.CorreoInstitucional</p>
+
+            <form asp-controller="Registro" asp-action="CompletarGoogle" method="post">
+                <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+                <input type="hidden" asp-for="NombreCompleto" />
+                <input type="hidden" asp-for="CorreoInstitucional" />
+
+                <div class="altar-hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Identificador: matr&iacute;cula de <strong>7 d&iacute;gitos</strong> si eres alumno, o de <strong>5 d&iacute;gitos</strong> si eres maestro o administrativo.
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Identificador</label>
+                    <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="7 dígitos (alumno) o 5 dígitos (maestro/administrativo)" />
+                    <span asp-validation-for="Identificador" class="altar-error"></span>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Tel&eacute;fono</label>
+                    <input asp-for="Telefono" class="altar-input" />
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">G&eacute;nero</label>
+                        <select asp-for="CatalogoGeneroId" class="altar-select">
+                            <option value="">Prefiero no decir</option>
+                            @foreach (var g in Model.Generos)
+                            {
+                                <option value="@g.Id">@g.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Carrera</label>
+                        <select asp-for="CatalogoCarreraId" class="altar-select">
+                            <option value="">Selecciona...</option>
+                            @foreach (var c in Model.Carreras)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Autodescripci&oacute;n cultural (opcional)</label>
+                    <textarea asp-for="AutodescripcionCultural" class="altar-textarea" rows="3"
+                              placeholder="Si te autoadscribes a pueblos originarios, afroamericanos, migrantes u otros grupos culturalmente diversos, cu&eacute;ntanos aqu&iacute;."></textarea>
+                </div>
+
+                <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Terminar registro</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

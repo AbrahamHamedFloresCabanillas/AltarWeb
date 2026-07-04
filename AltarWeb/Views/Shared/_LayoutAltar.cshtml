@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AltarWeb</title>
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('altarweb-theme') || 'system';
+                var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var resolved = saved === 'system' ? (sysDark ? 'dark' : 'light') : saved;
+                document.documentElement.dataset.theme = resolved;
+                document.documentElement.dataset.themePref = saved;
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="~/css/altar-design.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="altar-root">
+    @RenderBody()
+
+    <div id="altar-datepicker-modal" class="altar-datepicker-overlay" style="display:none;">
+        <div class="altar-datepicker">
+            <div class="altar-datepicker-header">
+                <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="altar-datepicker-titulo"></span>
+                <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="altar-datepicker-dow">
+                <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+            </div>
+            <div id="altar-datepicker-grid" class="altar-datepicker-grid"></div>
+            <div class="altar-flex altar-gap-sm" style="margin-top:10px; justify-content:space-between;">
+                <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="AltarDatePicker.hoy()">Hoy</button>
+                <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="AltarDatePicker.cerrar()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var AltarTheme = (function () {
+            var mq = null;
+
+            function resolved(pref) {
+                if (pref === 'system') {
+                    return (mq && mq.matches) ? 'dark' : 'light';
+                }
+                return pref;
+            }
+
+            function aplicar(pref) {
+                document.documentElement.dataset.theme = resolved(pref);
+                document.documentElement.dataset.themePref = pref;
+                document.querySelectorAll('[data-theme-option]').forEach(function (btn) {
+                    btn.classList.toggle('active', btn.dataset.themeOption === pref);
+                });
+            }
+
+            function setTheme(pref) {
+                try { localStorage.setItem('altarweb-theme', pref); } catch (e) {}
+                aplicar(pref);
+            }
+
+            function inicializar() {
+                try {
+                    mq = window.matchMedia('(prefers-color-scheme: dark)');
+                    mq.addEventListener('change', function () {
+                        if ((localStorage.getItem('altarweb-theme') || 'system') === 'system') aplicar('system');
+                    });
+                } catch (e) {}
+
+                var pref = 'system';
+                try { pref = localStorage.getItem('altarweb-theme') || 'system'; } catch (e) {}
+                aplicar(pref);
+            }
+
+            document.addEventListener('DOMContentLoaded', inicializar);
+
+            return { setTheme: setTheme };
+        })();
+
+        var AltarSidebarNav = (function () {
+            function toggle() {
+                var sidebar = document.getElementById('altar-sidebar');
+                var overlay = document.getElementById('altar-sidebar-overlay');
+                if (!sidebar) return;
+                sidebar.classList.contains('open') ? close() : open();
+            }
+            function open() {
+                var sidebar = document.getElementById('altar-sidebar');
+                var overlay = document.getElementById('altar-sidebar-overlay');
+                if (sidebar) sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('open');
+            }
+            function close() {
+                var sidebar = document.getElementById('altar-sidebar');
+                var overlay = document.getElementById('altar-sidebar-overlay');
+                if (sidebar) sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('open');
+            }
+            return { toggle: toggle, open: open, close: close };
+        })();
+
+        var AltarDatePicker = (function () {
+            var inputActivo = null;
+            var mesActual = new Date();
+            var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+            function abrir(input) {
+                if (input.disabled || input.hasAttribute('data-readonly-native')) return;
+                inputActivo = input;
+                var valor = input.value ? new Date(input.value + 'T00:00:00') : new Date();
+                if (isNaN(valor.getTime())) valor = new Date();
+                mesActual = new Date(valor.getFullYear(), valor.getMonth(), 1);
+                render(valor);
+                document.getElementById('altar-datepicker-modal').style.display = 'flex';
+            }
+
+            function cerrar() {
+                document.getElementById('altar-datepicker-modal').style.display = 'none';
+                inputActivo = null;
+            }
+
+            function cambiarMes(delta) {
+                mesActual = new Date(mesActual.getFullYear(), mesActual.getMonth() + delta, 1);
+                render(inputActivo && inputActivo.value ? new Date(inputActivo.value + 'T00:00:00') : null);
+            }
+
+            function hoy() {
+                seleccionar(new Date());
+            }
+
+            function seleccionar(fecha) {
+                if (!inputActivo) return;
+                var valor = fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
+                inputActivo.value = valor;
+                inputActivo.dispatchEvent(new Event('input', { bubbles: true }));
+                inputActivo.dispatchEvent(new Event('change', { bubbles: true }));
+                cerrar();
+            }
+
+            function render(seleccionada) {
+                document.getElementById('altar-datepicker-titulo').textContent = meses[mesActual.getMonth()] + ' ' + mesActual.getFullYear();
+                var grid = document.getElementById('altar-datepicker-grid');
+                grid.innerHTML = '';
+
+                var primerDia = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1).getDay();
+                var diasEnMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0).getDate();
+                var hoyFecha = new Date();
+
+                for (var i = 0; i < primerDia; i++) {
+                    grid.appendChild(document.createElement('span'));
+                }
+
+                for (var d = 1; d <= diasEnMes; d++) {
+                    var fecha = new Date(mesActual.getFullYear(), mesActual.getMonth(), d);
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = d;
+                    btn.className = 'altar-datepicker-day';
+                    if (seleccionada && fecha.toDateString() === seleccionada.toDateString()) btn.classList.add('selected');
+                    if (fecha.toDateString() === hoyFecha.toDateString()) btn.classList.add('today');
+                    btn.onclick = (function (f) { return function () { seleccionar(f); }; })(fecha);
+                    grid.appendChild(btn);
+                }
+            }
+
+            function inicializar() {
+                document.querySelectorAll('input[type="date"]').forEach(function (input) {
+                    if (input.dataset.altarDatepickerReady) return;
+                    input.dataset.altarDatepickerReady = 'true';
+                    input.setAttribute('readonly', 'readonly');
+                    input.style.cursor = input.disabled ? 'default' : 'pointer';
+                    input.addEventListener('click', function () { abrir(input); });
+                    input.addEventListener('focus', function () { input.blur(); abrir(input); });
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', inicializar);
+
+            return { abrir: abrir, cerrar: cerrar, cambiarMes: cambiarMes, hoy: hoy, inicializar: inicializar };
+        })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

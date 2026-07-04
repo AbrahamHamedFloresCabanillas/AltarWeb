@@ -1,0 +1,124 @@
+@model AltarWeb.ViewModels.Altar.RegistroSignupViewModel
+@{
+    ViewData["Title"] = "Regístrate";
+}
+
+<div class="altar-landing">
+    <div class="altar-landing-brand">
+        <div>
+            <div class="altar-brand">
+                <div class="altar-brand-badge"><i class="fa-solid fa-skull"></i></div>
+                <div>
+                    <div style="font-weight:800; font-size:20px;">AltarWeb</div>
+                    <div style="opacity:0.85; font-size:13px;">FIM &middot; UABC</div>
+                </div>
+            </div>
+            <div class="altar-eyebrow" style="margin-top:40px;">Portal de Registro</div>
+            <div class="altar-landing-heading">Reg&iacute;strate con tu identificador.</div>
+            <p style="opacity:0.9; max-width:420px;">
+                Alumnos, maestros y administrativos de la FIM pueden crear su cuenta con su correo institucional.
+            </p>
+        </div>
+        <div style="opacity:0.85; font-size:13px;">Mexicali, Baja California &middot; Universidad Aut&oacute;noma de Baja California</div>
+    </div>
+
+    <div class="altar-landing-form">
+        <div class="altar-landing-form-inner" style="max-width:480px;">
+            <h3 class="altar-card-title">Crear cuenta</h3>
+            <p class="altar-card-subtitle">Usa tu correo <strong>@@uabc.edu.mx</strong>.</p>
+
+            <a asp-controller="Registro" asp-action="GoogleLogin" asp-route-intent="registrante" class="altar-btn altar-btn-outline altar-btn-block" style="margin-bottom:16px;">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+            </a>
+            <div class="altar-flex altar-gap-sm" style="align-items:center; margin-bottom:16px;">
+                <div style="flex:1; height:1px; background:var(--altar-border);"></div>
+                <span class="altar-text-muted" style="font-size:12px;">o completa el formulario</span>
+                <div style="flex:1; height:1px; background:var(--altar-border);"></div>
+            </div>
+
+            <form asp-controller="Registro" asp-action="Signup" method="post">
+                <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Nombre completo</label>
+                    <input asp-for="NombreCompleto" class="altar-input" />
+                    <span asp-validation-for="NombreCompleto" class="altar-error"></span>
+                </div>
+
+                <div class="altar-hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Identificador: matr&iacute;cula de <strong>7 d&iacute;gitos</strong> si eres alumno, o de <strong>5 d&iacute;gitos</strong> si eres maestro o administrativo &mdash; el tipo se detecta autom&aacute;ticamente por la cantidad de d&iacute;gitos.
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Identificador</label>
+                    <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="7 dígitos (alumno) o 5 dígitos (maestro/administrativo)" />
+                    <span asp-validation-for="Identificador" class="altar-error"></span>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Correo institucional</label>
+                    <input asp-for="CorreoInstitucional" class="altar-input" placeholder="nombre.apellido@uabc.edu.mx" />
+                    <span asp-validation-for="CorreoInstitucional" class="altar-error"></span>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Tel&eacute;fono</label>
+                    <input asp-for="Telefono" class="altar-input" />
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">G&eacute;nero</label>
+                        <select asp-for="CatalogoGeneroId" class="altar-select">
+                            <option value="">Prefiero no decir</option>
+                            @foreach (var g in Model.Generos)
+                            {
+                                <option value="@g.Id">@g.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Carrera</label>
+                        <select asp-for="CatalogoCarreraId" class="altar-select">
+                            <option value="">Selecciona...</option>
+                            @foreach (var c in Model.Carreras)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Autodescripci&oacute;n cultural (opcional)</label>
+                    <textarea asp-for="AutodescripcionCultural" class="altar-textarea" rows="3"
+                              placeholder="Si te autoadscribes a pueblos originarios, afroamericanos, migrantes u otros grupos culturalmente diversos, cu&eacute;ntanos aqu&iacute;."></textarea>
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Contrase&ntilde;a</label>
+                        <input asp-for="Password" type="password" class="altar-input" />
+                        <span asp-validation-for="Password" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Confirmar contrase&ntilde;a</label>
+                        <input asp-for="ConfirmarPassword" type="password" class="altar-input" />
+                        <span asp-validation-for="ConfirmarPassword" class="altar-error"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Crear cuenta</button>
+            </form>
+
+            <p style="text-align:center; margin-top:16px; font-size:14px;" class="altar-text-muted">
+                &iquest;Ya tienes cuenta? <a asp-controller="Registro" asp-action="Login"><strong>Inicia sesi&oacute;n</strong></a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

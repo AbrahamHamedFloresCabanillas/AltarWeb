@@ -4,6 +4,7 @@ using AltarWeb.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AltarWeb.Migrations
 {
     [DbContext(typeof(AltarDbContext))]
-    partial class AltarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260701191142_AddEvaluacionCatrina")]
+    partial class AddEvaluacionCatrina
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,14 +286,8 @@ namespace AltarWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CorreoInstitucional")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("FechaEliminado")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Identificador")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -303,18 +300,12 @@ namespace AltarWeb.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("Pendiente")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProveedorAuth")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Rol")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Usuario")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -504,94 +495,6 @@ namespace AltarWeb.Migrations
                         });
                 });
 
-            modelBuilder.Entity("AltarWeb.Models.Registro.ConfiguracionPeriodo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("BonusPorElementoTematizado")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<bool>("ExigirMinimoUnAnioFallecimiento")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("FechaLimiteInscripcion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaLimiteRequisitos")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Periodo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<decimal>("PesoDistribucionNiveles")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoElementoDecorativo")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoElementoRitual")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoEsenciaPersonalidad")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoNarrador")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoObjetivoCultural")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("PesoValoracionGeneral")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<string>("RecorridoPdf")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("ValorSatisfaccionMuySatisfactorio")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("ValorSatisfaccionNoPresente")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("ValorSatisfaccionPoco")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("ValorSatisfaccionSatisfactorio")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Periodo")
-                        .IsUnique();
-
-                    b.ToTable("ConfiguracionesPeriodo", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BonusPorElementoTematizado = 0.25m,
-                            ExigirMinimoUnAnioFallecimiento = true,
-                            Periodo = "2026-1",
-                            PesoDistribucionNiveles = 0.10m,
-                            PesoElementoDecorativo = 0.5m,
-                            PesoElementoRitual = 1.0m,
-                            PesoEsenciaPersonalidad = 0.30m,
-                            PesoNarrador = 0.10m,
-                            PesoObjetivoCultural = 0.30m,
-                            PesoValoracionGeneral = 0.20m,
-                            ValorSatisfaccionMuySatisfactorio = 1.0m,
-                            ValorSatisfaccionNoPresente = 0.0m,
-                            ValorSatisfaccionPoco = 0.5m,
-                            ValorSatisfaccionSatisfactorio = 0.75m
-                        });
-                });
-
             modelBuilder.Entity("AltarWeb.Models.Registro.Difunto", b =>
                 {
                     b.Property<int>("Id")
@@ -646,10 +549,7 @@ namespace AltarWeb.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("NivelSugerido3")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("NivelSugerido7")
+                    b.Property<int?>("NivelSugerido")
                         .HasColumnType("int");
 
                     b.Property<string>("Nombre")
@@ -677,8 +577,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En un vaso de cristal.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 2,
                             Nombre = "El Agua",
                             Orden = 1,
                             Significado = "Fuente de la vida; mitiga la sed de las almas tras su viaje y simboliza la pureza del alma."
@@ -689,8 +587,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Jarra o jofaina acompañada de jabón pequeño y toalla/pañuelo limpio, para que el difunto se refresque al llegar.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 2,
                             Nombre = "El Aguamanil y kit de aseo",
                             Orden = 2,
                             Significado = "Símbolo de purificación y hospitalidad."
@@ -701,8 +597,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En un plato pequeño, a veces formando una cruz hacia los cuatro puntos cardinales; suele acompañar al vaso de agua.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 2,
                             Nombre = "La Sal",
                             Orden = 3,
                             Significado = "Principal elemento de purificación; limpia y protege el alma para que no se corrompa en su viaje; equilibrio espiritual."
@@ -713,8 +607,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Formando una cruz (cuatro puntos cardinales) y alrededor del camino y del altar; veladoras de vaso o cirios según la región.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 4,
                             Nombre = "Velas y Veladoras",
                             Orden = 4,
                             Significado = "Fuego, luz, fe y esperanza; guían a las almas hacia el altar y de regreso."
@@ -725,8 +617,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Tradicionalmente en el penúltimo nivel o cerca de las imágenes.",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 6,
                             Nombre = "Incienso y Copal",
                             Orden = 5,
                             Significado = "El humo limpia las malas energías, purifica el ambiente y guía olfativamente a las almas. El copal es prehispánico (purificación y conexión espiritual); el incienso se asocia a la oración."
@@ -737,8 +627,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Senderos de pétalos hacia el altar, en jarrones/coronas y en arcos de bienvenida.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 3,
                             Nombre = "Flor de Cempasúchil",
                             Orden = 6,
                             Significado = "Elemento principal; su color naranja representa el sol y su aroma guía a las almas a casa."
@@ -749,8 +637,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En la parte superior del altar para que el difunto reconozca su hogar.",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 7,
                             Nombre = "El Retrato del Difunto",
                             Orden = 7,
                             Significado = "Corazón de la ofrenda; sugiere el ánima que visitará a la familia."
@@ -761,8 +647,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Decorativas sobre el altar, coloridas con glaseado real.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 3,
                             Nombre = "Calaveras de Azúcar",
                             Orden = 8,
                             Significado = "Representan la muerte, la vida efímera y el alma del difunto; evolución del tzompantli. Suelen llevar el nombre del ser querido en la frente."
@@ -773,8 +657,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Tequila, mezcal, cerveza o bebidas artesanales que disfrutaba en vida.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 2,
                             Nombre = "El Licor (\"el trago\")",
                             Orden = 9,
                             Significado = "Para que el difunto recuerde los momentos de alegría que vivió."
@@ -785,8 +667,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Cruz grande de ceniza en el altar.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 2,
                             Nombre = "Cruz de Ceniza",
                             Orden = 10,
                             Significado = "Expiación y purificación; ayuda al alma a expiar culpas y salir del purgatorio para visitar a los suyos."
@@ -797,8 +677,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Colgado sobre el altar y el espacio.",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 6,
                             Nombre = "Papel Picado",
                             Orden = 11,
                             Significado = "Elemento aire y fragilidad de la vida; al moverse con la brisa indica que las almas han llegado. Cada color tiene significado (naranja=sol/vida; morado=luto; blanco=pureza/niños; negro=inframundo; rosa=celebración; rojo=vida/sacrificio; azul=fallecidos por agua)."
@@ -809,8 +687,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Puede ser cualquier árbol/rama.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 3,
                             Nombre = "La Vara (árbol)",
                             Orden = 12,
                             Significado = "Herramienta espiritual para que el difunto se defienda de malos espíritus y supere obstáculos en su viaje; considerado elemento de vida."
@@ -821,8 +697,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Como base/mantel; puede adornarse con flores.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 1,
                             Nombre = "El Petate",
                             Orden = 13,
                             Significado = "Cama tejida de palma para que las ánimas descansen tras su travesía; también funciona como mantel/base de la ofrenda y une el mundo terrenal con el espiritual."
@@ -833,8 +707,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Prendas, objetos de uso cotidiano, artículos de pasatiempos y, para niños, juguetes.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 3,
                             Nombre = "Objetos Personales",
                             Orden = 14,
                             Significado = "Conectan el alma con su identidad y lo que apreciaba en vida."
@@ -845,8 +717,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Sobre la ofrenda.",
-                            NivelSugerido3 = 2,
-                            NivelSugerido7 = 4,
                             Nombre = "Pan de Muerto",
                             Orden = 15,
                             Significado = "El más emblemático; ciclo de vida y muerte, fraternidad y ofrecimiento de alimento. La forma circular=eternidad; la esfera superior=cráneo/alma; las canillas=huesos y lágrimas (puntos cardinales); azúcar/ajonjolí=dulzura de la vida."
@@ -857,8 +727,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Sobre el petate/mantel.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 1,
                             Nombre = "Comida y Bebida",
                             Orden = 16,
                             Significado = "Platillos, bebidas y dulces favoritos del difunto para deleitarlo en su visita."
@@ -869,8 +737,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En los niveles superiores junto a las imágenes.",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 7,
                             Nombre = "Objetos Religiosos o Místicos",
                             Orden = 17,
                             Significado = "Si el difunto era devoto, se incluyen rosarios, crucifijos, figuras de santos o amuletos."
@@ -881,8 +747,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En el nivel superior, mirando al frente, junto a las fotografías; de madera, resina o metal.",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 7,
                             Nombre = "Crucifijo",
                             Orden = 18,
                             Significado = "Simboliza la fe y sirve para que el ánima expíe sus culpas pendientes."
@@ -893,8 +757,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "En la cúspide/último nivel o al frente del altar; tradicionalmente de carrizo, palma o madera flexible, con cruz de palma al centro, adornado con cempasúchil (frutas opcionales).",
-                            NivelSugerido3 = 3,
-                            NivelSugerido7 = 7,
                             Nombre = "El Arco",
                             Orden = 19,
                             Significado = "Puerta/umbral que une el mundo de los vivos con el más allá y da la bienvenida a las almas."
@@ -905,8 +767,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "RitualObligatorio",
                             Colocacion = "Camino de pétalos de cempasúchil (opcional sobre base de aserrín) desde el último escalón hasta el arco de bienvenida, acompañado de veladoras encendidas a los lados.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 1,
                             Nombre = "El Camino",
                             Orden = 20,
                             Significado = "Sendero que guía a las almas desde el más allá hasta el altar y de regreso."
@@ -917,8 +777,6 @@ namespace AltarWeb.Migrations
                             Activo = true,
                             Categoria = "Decorativo",
                             Colocacion = "Al final, como parte de la decoración general.",
-                            NivelSugerido3 = 1,
-                            NivelSugerido7 = 1,
                             Nombre = "Vasijas de Metal y de Barro",
                             Orden = 21,
                             Significado = "Elementos de decoración del altar."
@@ -939,16 +797,10 @@ namespace AltarWeb.Migrations
                     b.Property<int>("EvaluacionId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("NivelAsignado")
-                        .HasColumnType("int");
-
                     b.Property<string>("Satisfaccion")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("Tematizado")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -980,14 +832,8 @@ namespace AltarWeb.Migrations
                     b.Property<int?>("CreadoPorRegistranteId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HaceCatrina")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("MaestroEncargadoId")
+                    b.Property<int>("MaestroEncargadoId")
                         .HasColumnType("int");
-
-                    b.Property<string>("MaestroEncargadoIdentificadorPendiente")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -1039,9 +885,6 @@ namespace AltarWeb.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("EsenciaPersonalidad")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal?>("EsenciaPersonalidadFinal")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("Estado")
@@ -1222,13 +1065,6 @@ namespace AltarWeb.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProveedorAuth")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
@@ -1378,7 +1214,8 @@ namespace AltarWeb.Migrations
                     b.HasOne("AltarWeb.Models.Registro.Registrante", "MaestroEncargado")
                         .WithMany()
                         .HasForeignKey("MaestroEncargadoId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Carrera");
 

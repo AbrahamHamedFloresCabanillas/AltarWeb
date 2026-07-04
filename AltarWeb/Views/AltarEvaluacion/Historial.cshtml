@@ -1,0 +1,120 @@
+@model AltarWeb.ViewModels.Altar.HistorialViewModel
+@{
+    ViewData["Title"] = "Historial";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <partial name="_AltarTopbarPartial" model="@(("Historial de evaluaciones", "Evaluaciones agrupadas por periodo académico", true))" />
+
+        <div class="altar-grid-3" style="grid-template-columns:repeat(4, 1fr); margin-bottom:24px;">
+            <div class="altar-stat-card">
+                <div class="altar-stat-value">@Model.TotalEvaluaciones</div>
+                <div class="altar-stat-label">Evaluaciones &middot; en todos los periodos</div>
+            </div>
+            <div class="altar-stat-card">
+                <div class="altar-stat-value">@(Model.PromedioFinales?.ToString("0.0") ?? "—")</div>
+                <div class="altar-stat-label">Promedio (finales)</div>
+            </div>
+            <div class="altar-stat-card">
+                <div class="altar-stat-value">@Model.CerradasFinal</div>
+                <div class="altar-stat-label">Cerradas como Final</div>
+            </div>
+            <div class="altar-stat-card">
+                <div class="altar-stat-value">@Model.EquiposPendientes</div>
+                <div class="altar-stat-label">Equipos pendientes &middot; sin evaluar</div>
+            </div>
+        </div>
+
+        <div id="altar-historial-sin-resultados" class="altar-hint" style="display:none;">No hay evaluaciones que coincidan con tu b&uacute;squeda.</div>
+
+        @foreach (var periodo in Model.Periodos)
+        {
+            <div class="altar-historial-grupo" data-periodo-grupo="@periodo.Key">
+                <div class="altar-card-subtitle" style="margin-top:20px;">Periodo @periodo.Key &middot; @periodo.Value.Count evaluaciones</div>
+                <table class="altar-table" style="margin-bottom:20px;">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Carrera</th>
+                            <th>Difunto</th>
+                            <th>Nota</th>
+                            <th>Lugar</th>
+                            <th>Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in periodo.Value)
+                        {
+                            <tr data-buscar="@($"{row.NombreEquipo} {row.Carrera} {periodo.Key} periodo {periodo.Key}".ToLowerInvariant())">
+                                <td>
+                                    <div style="font-weight:700;">@row.NombreEquipo</div>
+                                    <div class="altar-text-muted" style="font-size:12px;">@row.TipoAltar &middot; @row.Niveles niveles</div>
+                                </td>
+                                <td>@row.Carrera</td>
+                                <td>@row.Difunto</td>
+                                <td>@(row.NotaFinal?.ToString("0.0") ?? "—")</td>
+                                <td>@(row.Lugar != null ? row.Lugar + "°" : "—")</td>
+                                <td>
+                                    @if (row.Estado == AltarWeb.Models.Registro.EstadoEvaluacion.Final)
+                                    {
+                                        <span class="altar-badge altar-badge-success"><i class="fa-solid fa-lock"></i> Final</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="altar-badge altar-badge-warning"><i class="fa-solid fa-pencil"></i> Preliminar</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-controller="AltarEvaluacion" asp-action="Detalle" asp-route-id="@row.EvaluacionId" class="altar-text-muted">
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var input = document.getElementById('altar-topbar-search');
+            if (!input) return;
+
+            function normalizar(texto) {
+                return texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            }
+
+            function filtrar() {
+                var query = normalizar(input.value.trim());
+                var grupos = document.querySelectorAll('.altar-historial-grupo');
+                var algunaFilaVisible = false;
+
+                grupos.forEach(function (grupo) {
+                    var filas = grupo.querySelectorAll('tbody tr');
+                    var filasVisiblesEnGrupo = 0;
+
+                    filas.forEach(function (fila) {
+                        var texto = normalizar(fila.getAttribute('data-buscar') || '');
+                        var visible = query === '' || texto.indexOf(query) !== -1;
+                        fila.style.display = visible ? '' : 'none';
+                        if (visible) { filasVisiblesEnGrupo++; algunaFilaVisible = true; }
+                    });
+
+                    grupo.style.display = filasVisiblesEnGrupo > 0 ? '' : 'none';
+                });
+
+                document.getElementById('altar-historial-sin-resultados').style.display = algunaFilaVisible ? 'none' : '';
+            }
+
+            input.addEventListener('input', filtrar);
+        })();
+    </script>
+}

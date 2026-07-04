@@ -1,0 +1,90 @@
+@model AltarWeb.ViewModels.Altar.CrearEquipoViewModel
+@{
+    ViewData["Title"] = "Crear equipo";
+}
+
+<div style="max-width:700px; margin:0 auto; padding:28px 24px;">
+    <div class="altar-flex" style="justify-content:space-between; margin-bottom:16px;">
+        <a asp-controller="Registro" asp-action="Dashboard" class="altar-text-muted">
+            <i class="fa-solid fa-arrow-left"></i> Volver a mi portal
+        </a>
+        <partial name="_AltarThemeTogglePartial" />
+    </div>
+
+    <h2 style="font-weight:800;">Crear mi equipo</h2>
+    <p class="altar-card-subtitle">Registra tu grupo y la informaci&oacute;n b&aacute;sica del altar. Podr&aacute;s completar el resto en la Ficha de Registro.</p>
+
+    <div class="altar-card">
+        <form asp-controller="Registro" asp-action="CrearEquipo" method="post">
+            <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+
+            <div class="altar-grid-2">
+                <div class="altar-field">
+                    <label class="altar-label">Nombre del grupo</label>
+                    <input asp-for="Nombre" class="altar-input" />
+                    <span asp-validation-for="Nombre" class="altar-error"></span>
+                </div>
+                <div class="altar-field">
+                    <label class="altar-label">Nombre del altar</label>
+                    <input asp-for="NombreAltar" class="altar-input" />
+                    <span asp-validation-for="NombreAltar" class="altar-error"></span>
+                </div>
+            </div>
+
+            <div class="altar-grid-2">
+                <div class="altar-field">
+                    <label class="altar-label">Programa educativo del altar</label>
+                    <select asp-for="CarreraId" class="altar-select">
+                        @foreach (var c in Model.Carreras)
+                        {
+                            <option value="@c.Id">@c.Nombre</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CarreraId" class="altar-error"></span>
+                </div>
+                <div class="altar-field">
+                    <label class="altar-label">Matr&iacute;cula del maestro encargado</label>
+                    <input asp-for="MaestroEncargadoIdentificador" class="altar-input" inputmode="numeric" maxlength="5" placeholder="5 dígitos" />
+                    <span asp-validation-for="MaestroEncargadoIdentificador" class="altar-error"></span>
+                    <p class="altar-slider-hint">Si el maestro a&uacute;n no est&aacute; registrado, queda pendiente hasta que &eacute;l mismo se registre con esta matr&iacute;cula.</p>
+                </div>
+            </div>
+
+            <div class="altar-field">
+                <label class="altar-label">Lugar de exposici&oacute;n (opcional)</label>
+                <input asp-for="UbicacionAltar" class="altar-input" />
+            </div>
+
+            <div class="altar-label">Difunto homenajeado</div>
+            <div class="altar-grid-2">
+                <div class="altar-field">
+                    <label class="altar-label">Nombre</label>
+                    <input asp-for="DifuntoNombre" class="altar-input" />
+                    <span asp-validation-for="DifuntoNombre" class="altar-error"></span>
+                </div>
+                <div class="altar-field">
+                    <label class="altar-label">Fecha de defunci&oacute;n</label>
+                    <input asp-for="DifuntoFechaDefuncion" type="date" class="altar-input" />
+                    <span asp-validation-for="DifuntoFechaDefuncion" class="altar-error"></span>
+                </div>
+            </div>
+
+            <div class="altar-flex" style="justify-content:space-between; margin-bottom:18px;">
+                <div>
+                    <div class="altar-label" style="margin-bottom:2px;">&iquest;El equipo har&aacute; Catrina?</div>
+                    <p class="altar-slider-hint" style="margin:0;">Categor&iacute;a de evaluaci&oacute;n independiente y opcional.</p>
+                </div>
+                <label class="altar-toggle">
+                    <input type="checkbox" asp-for="HaceCatrina" value="true" />
+                    <span class="altar-toggle-slider"></span>
+                </label>
+            </div>
+
+            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block"><i class="fa-solid fa-plus"></i> Crear equipo</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

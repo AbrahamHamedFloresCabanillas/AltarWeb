@@ -1,0 +1,545 @@
+/* AltarWeb v2 — design tokens extraidos del prototipo de Claude Design
+   (AltarWeb v2 (offline).html) via inspeccion de estilos computados. */
+
+/* Reset: sin esto, el margin por defecto del <body> deja un borde visible
+   alrededor de toda la pagina y un scroll fantasma de unos pocos pixeles. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+:root {
+    --altar-radius: 11px;
+    --altar-radius-pill: 999px;
+    --altar-font: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Paleta clara/oscura extraida tal cual del mockup "AltarWeb v2 (offline).html"
+   (bloque :root,[data-theme="light"] / [data-theme="dark"]). Default a oscuro
+   hasta que el script anti-flash en _LayoutAltar aplique data-theme. */
+html, [data-theme="dark"] {
+    --altar-bg: rgb(12, 19, 16);
+    --altar-surface: rgb(20, 29, 24);
+    --altar-surface-alt: rgb(34, 48, 42);
+    --altar-border: rgb(41, 58, 49);
+    --altar-text: rgb(233, 239, 233);
+    --altar-text-muted: rgb(151, 169, 156);
+
+    --altar-primary: rgb(54, 171, 107);
+    --altar-primary-dark: rgb(44, 145, 89);
+    --altar-primary-contrast: rgb(6, 21, 13);
+    --altar-primary-soft-bg: rgb(22, 41, 30);
+
+    --altar-amber: rgb(240, 198, 75);
+    --altar-amber-soft-bg: rgb(42, 37, 17);
+
+    --altar-purple: rgb(207, 155, 217);
+    --altar-purple-soft-bg: rgb(35, 24, 41);
+
+    --altar-danger: rgb(224, 108, 117);
+    --altar-danger-soft-bg: rgb(43, 22, 24);
+}
+
+[data-theme="light"] {
+    --altar-bg: #eaf0ea;
+    --altar-surface: #ffffff;
+    --altar-surface-alt: #f3f7f3;
+    --altar-border: #dde5de;
+    --altar-text: #152019;
+    --altar-text-muted: #5d6f63;
+
+    --altar-primary: #00723f;
+    --altar-primary-dark: #005d32;
+    --altar-primary-contrast: #ffffff;
+    --altar-primary-soft-bg: #e2f0e7;
+
+    --altar-amber: #a87a12;
+    --altar-amber-soft-bg: #fbf1d4;
+
+    --altar-purple: #7a3b86;
+    --altar-purple-soft-bg: #f3e7f5;
+
+    --altar-danger: #b4362f;
+    --altar-danger-soft-bg: #fbe7e5;
+}
+
+.altar-root {
+    font-family: var(--altar-font);
+    color: var(--altar-text);
+    background: var(--altar-bg);
+    min-height: 100vh;
+}
+
+/* :where() keeps this at the lowest possible specificity so any component class
+   (.altar-btn-primary, .altar-sidebar-nav-item.active, etc.) always wins. */
+:where(.altar-root) a { color: var(--altar-primary); text-decoration: none; }
+:where(.altar-root) a:hover { color: var(--altar-primary-dark); }
+
+/* ---------- Landing (split screen) ---------- */
+.altar-landing {
+    display: flex;
+    min-height: 100vh;
+}
+
+.altar-landing-brand {
+    flex: 1 1 45%;
+    background: linear-gradient(160deg, rgb(44, 145, 89), rgb(54, 171, 107));
+    background-image:
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 14px),
+        linear-gradient(160deg, rgb(44, 145, 89), rgb(54, 171, 107));
+    color: #fff;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.altar-landing-form {
+    flex: 1 1 55%;
+    background: var(--altar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+}
+
+.altar-landing-form-inner { width: 100%; max-width: 420px; }
+
+.altar-brand { display: flex; align-items: center; gap: 12px; }
+
+.altar-brand-badge {
+    width: 44px; height: 44px; border-radius: var(--altar-radius);
+    background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+}
+
+.altar-eyebrow {
+    color: rgb(240, 198, 75);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.altar-landing-heading {
+    font-family: var(--altar-font);
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 12px 0;
+}
+
+.altar-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.14);
+    border-radius: var(--altar-radius-pill);
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ---------- Tabs (pill toggle, used on landing + evaluation) ---------- */
+.altar-pill-tabs {
+    display: inline-flex;
+    background: var(--altar-surface);
+    border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius);
+    padding: 4px;
+    gap: 4px;
+}
+
+.altar-pill-tab {
+    border: none;
+    background: transparent;
+    color: var(--altar-text-muted);
+    font-family: var(--altar-font);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.altar-pill-tab.active {
+    background: var(--altar-primary);
+    color: var(--altar-primary-contrast);
+}
+
+/* ---------- Forms ---------- */
+.altar-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--altar-text-muted);
+    margin-bottom: 6px;
+}
+
+.altar-input, .altar-select, .altar-textarea {
+    width: 100%;
+    background: var(--altar-surface);
+    border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius);
+    color: var(--altar-text);
+    padding: 13px 14px;
+    font-family: var(--altar-font);
+    font-size: 15px;
+}
+
+.altar-input:focus, .altar-select:focus, .altar-textarea:focus {
+    outline: none;
+    border-color: var(--altar-primary);
+    box-shadow: 0 0 0 3px rgba(54, 171, 107, 0.2);
+}
+
+.altar-field { margin-bottom: 18px; }
+
+.altar-hint {
+    font-size: 13px;
+    color: var(--altar-text-muted);
+    background: var(--altar-surface);
+    border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+
+.altar-error {
+    color: var(--altar-danger);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+/* ---------- Buttons ---------- */
+.altar-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--altar-font);
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: var(--altar-radius);
+    padding: 13px 20px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.altar-btn-primary { background: var(--altar-primary); color: var(--altar-primary-contrast); }
+.altar-btn-primary:hover { background: var(--altar-primary-dark); color: var(--altar-primary-contrast); }
+
+.altar-btn-outline { background: var(--altar-surface); color: var(--altar-text); border-color: var(--altar-border); }
+.altar-btn-outline:hover { border-color: var(--altar-primary); color: var(--altar-primary); }
+
+.altar-btn-block { width: 100%; }
+.altar-btn-sm { padding: 8px 14px; font-size: 13px; }
+.altar-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Cards ---------- */
+.altar-card {
+    background: var(--altar-surface);
+    border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.altar-card-title { font-weight: 800; font-size: 18px; margin-bottom: 4px; }
+.altar-card-subtitle { color: var(--altar-text-muted); font-size: 14px; margin-bottom: 16px; }
+
+/* ---------- Badges ---------- */
+.altar-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: var(--altar-radius-pill);
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.altar-badge-success { background: var(--altar-primary-soft-bg); color: var(--altar-primary); }
+.altar-badge-warning { background: var(--altar-amber-soft-bg); color: var(--altar-amber); }
+.altar-badge-purple { background: var(--altar-purple-soft-bg); color: var(--altar-purple); }
+.altar-badge-danger { background: var(--altar-danger-soft-bg); color: var(--altar-danger); }
+.altar-badge-muted { background: var(--altar-surface-alt); color: var(--altar-text-muted); }
+
+/* ---------- App shell (sidebar + topbar, for logged-in screens) ---------- */
+.altar-app { display: flex; min-height: 100vh; }
+
+.altar-sidebar {
+    width: 240px;
+    background: var(--altar-surface);
+    border-right: 1px solid var(--altar-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 16px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.altar-sidebar-toggle-btn {
+    display: none;
+}
+
+.altar-sidebar-overlay {
+    display: none;
+}
+
+.altar-sidebar-menu-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--altar-text-muted);
+    margin: 20px 8px 10px;
+}
+
+.altar-sidebar-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--altar-radius);
+    color: var(--altar-text-muted);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.altar-sidebar-nav-item:hover { color: var(--altar-text); }
+
+.altar-sidebar-nav-item.active {
+    background: var(--altar-primary);
+    color: var(--altar-primary-contrast);
+    font-weight: 700;
+}
+
+.altar-sidebar-user {
+    display: flex; align-items: center; gap: 10px;
+    border-top: 1px solid var(--altar-border);
+    padding-top: 16px;
+}
+
+/* ---------- Selector de tema (claro/oscuro/sistema), estilo identico al mockup ---------- */
+.altar-theme-seg {
+    display: inline-flex;
+    background: var(--altar-surface-alt);
+    border-radius: 9px;
+    padding: 2px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.altar-theme-seg-btn {
+    width: 32px; height: 30px;
+    border: none; border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    display: grid; place-items: center;
+    background: transparent;
+    color: var(--altar-text-muted);
+}
+
+.altar-theme-seg-btn.active {
+    background: var(--altar-surface);
+    color: var(--altar-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.altar-main { flex: 1; padding: 28px 32px; min-width: 0; }
+
+.altar-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.altar-page-title { font-weight: 800; font-size: 24px; }
+.altar-page-subtitle { color: var(--altar-text-muted); font-size: 14px; }
+
+.altar-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--altar-primary);
+    color: var(--altar-primary-contrast);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+}
+
+/* ---------- Tabs (section tabs, e.g. Nueva Evaluacion) ---------- */
+.altar-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--altar-border); margin-bottom: 24px; }
+
+.altar-tab {
+    padding: 12px 2px;
+    color: var(--altar-text-muted);
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+}
+
+.altar-tab.active { color: var(--altar-primary); border-bottom-color: var(--altar-primary); }
+
+/* ---------- Tables ---------- */
+.altar-table { width: 100%; border-collapse: collapse; }
+.altar-table th {
+    text-align: left; font-size: 13px; color: var(--altar-text-muted);
+    font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--altar-border);
+}
+.altar-table td { padding: 14px 12px; border-bottom: 1px solid var(--altar-border); font-size: 14px; }
+.altar-table tr:last-child td { border-bottom: none; }
+
+/* ---------- Stat cards ---------- */
+.altar-stat-card {
+    background: var(--altar-surface);
+    border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius);
+    padding: 18px;
+}
+.altar-stat-value { font-size: 28px; font-weight: 800; }
+.altar-stat-label { font-size: 13px; color: var(--altar-text-muted); }
+
+/* ---------- Sliders ---------- */
+.altar-slider-row { margin-bottom: 20px; }
+.altar-slider-row-head { display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 700; font-size: 14px; }
+.altar-slider-hint { font-size: 12px; color: var(--altar-text-muted); margin-top: 4px; }
+
+.altar-slider { width: 100%; accent-color: var(--altar-primary); }
+.altar-slider.altar-slider-purple { accent-color: var(--altar-purple); }
+
+/* ---------- Satisfaction segmented control ---------- */
+.altar-seg { display: inline-flex; border: 1px solid var(--altar-border); border-radius: var(--altar-radius); overflow: hidden; }
+.altar-seg-option {
+    padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--altar-text-muted);
+    background: var(--altar-surface); border: none; border-right: 1px solid var(--altar-border);
+    cursor: pointer;
+}
+.altar-seg-option:last-child { border-right: none; }
+.altar-seg-option.selected { background: var(--altar-primary); color: var(--altar-primary-contrast); }
+
+/* ---------- Toggle switch ---------- */
+.altar-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+.altar-toggle input { opacity: 0; width: 0; height: 0; }
+.altar-toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: var(--altar-surface-alt); border-radius: var(--altar-radius-pill); transition: 0.15s;
+}
+.altar-toggle-slider::before {
+    content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: 0.15s;
+}
+.altar-toggle input:checked + .altar-toggle-slider { background: var(--altar-purple); }
+.altar-toggle input:checked + .altar-toggle-slider::before { transform: translateX(20px); }
+
+/* ---------- Date picker (reemplaza el picker nativo del navegador) ---------- */
+.altar-datepicker-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 1200; align-items: center; justify-content: center; padding: 16px;
+}
+.altar-datepicker {
+    background: var(--altar-surface); border: 1px solid var(--altar-border);
+    border-radius: var(--altar-radius); padding: 16px; width: 300px; max-width: 100%;
+}
+.altar-datepicker-header {
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: 700; margin-bottom: 10px;
+}
+.altar-datepicker-nav {
+    background: var(--altar-surface-alt); border: none; color: var(--altar-text);
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+}
+.altar-datepicker-dow {
+    display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
+    font-size: 11px; color: var(--altar-text-muted); margin-bottom: 4px;
+}
+.altar-datepicker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.altar-datepicker-day {
+    background: transparent; border: none; color: var(--altar-text);
+    padding: 8px 0; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.altar-datepicker-day:hover { background: var(--altar-surface-alt); }
+.altar-datepicker-day.today { color: var(--altar-primary); font-weight: 700; }
+.altar-datepicker-day.selected { background: var(--altar-primary); color: var(--altar-primary-contrast); }
+
+/* ---------- Utility ---------- */
+.altar-flex { display: flex; align-items: center; }
+.altar-gap-sm { gap: 8px; }
+.altar-gap-md { gap: 16px; }
+.altar-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.altar-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.altar-mt-0 { margin-top: 0; }
+.altar-text-muted { color: var(--altar-text-muted); }
+.altar-w-100 { width: 100%; }
+
+/* ---------- Responsivo ---------- */
+
+/* Tablas: en vez de romper el layout, se desplazan horizontalmente dentro de su tarjeta. */
+.altar-card:has(.altar-table) { overflow-x: auto; }
+
+/* Modales: nunca tocar los bordes de la pantalla. */
+#altar-elemento-modal, #altar-confirmar-final-modal, .altar-datepicker-overlay { padding: 16px; box-sizing: border-box; }
+#altar-elemento-modal > .altar-card, #altar-confirmar-final-modal > .altar-card { max-width: 100%; width: 420px; box-sizing: border-box; }
+
+@media (max-width: 1024px) {
+    .altar-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .altar-landing { flex-direction: column; min-height: auto; }
+    .altar-landing-brand, .altar-landing-form { padding: 32px 20px; }
+    .altar-landing-heading { font-size: 30px; }
+
+    .altar-app { flex-direction: column; }
+
+    .altar-sidebar-toggle-btn {
+        display: flex; align-items: center; justify-content: center;
+        position: fixed; top: 14px; left: 14px; z-index: 80;
+        width: 42px; height: 42px; border-radius: var(--altar-radius);
+        background: var(--altar-surface); border: 1px solid var(--altar-border);
+        color: var(--altar-text); font-size: 16px; cursor: pointer;
+    }
+
+    .altar-sidebar-overlay {
+        display: block;
+        position: fixed; inset: 0; z-index: 70;
+        background: rgba(0, 0, 0, 0.55);
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+    .altar-sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .altar-sidebar {
+        position: fixed; top: 0; left: 0; z-index: 75;
+        width: 260px; max-width: 82vw; height: 100vh;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+    }
+    .altar-sidebar.open { transform: translateX(0); }
+    .altar-sidebar-menu-label { display: block; }
+    .altar-sidebar-nav-item { margin-bottom: 4px; }
+    .altar-sidebar-user { border-top: 1px solid var(--altar-border); border-left: none; padding-top: 16px; padding-left: 0; }
+
+    .altar-main { padding: 20px 16px; padding-top: 72px; }
+
+    .altar-grid-2, .altar-grid-3 { grid-template-columns: 1fr; }
+
+    .altar-topbar { flex-direction: column; align-items: stretch; }
+    .altar-topbar .altar-flex.altar-gap-md { flex-direction: column; align-items: stretch; }
+    .altar-topbar input, .altar-topbar .altar-btn { width: 100%; box-sizing: border-box; }
+
+    .altar-tabs { overflow-x: auto; white-space: nowrap; }
+
+    /* Filas del checklist: se acomodan en dos renglones en vez de comprimirse. */
+    [data-elemento-row] { align-items: flex-start; }
+    [data-elemento-row] > span:first-child { order: 1; }
+    [data-elemento-row] > span:nth-child(2) { order: 2; flex-basis: 100%; }
+    [data-elemento-row] select, [data-elemento-row] .altar-seg, [data-elemento-row] label { order: 3; }
+}
+
+@media (max-width: 480px) {
+    .altar-landing-heading { font-size: 24px; }
+    .altar-eyebrow { font-size: 11px; }
+    .altar-card { padding: 16px; }
+    .altar-page-title { font-size: 20px; }
+    .altar-stat-value { font-size: 22px; }
+    .altar-seg-option { padding: 8px 8px; font-size: 11px; }
+    .altar-btn { padding: 11px 14px; font-size: 14px; }
+}

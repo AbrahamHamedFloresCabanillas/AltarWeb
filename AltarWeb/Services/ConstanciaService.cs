@@ -1,10 +1,10 @@
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
-using AltarWeb.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
 
 namespace AltarWeb.Services
 {
@@ -20,29 +20,44 @@ namespace AltarWeb.Services
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
-        public byte[] GenerarGrupal(Evaluacion evaluacion, string nombreEquipo)
+        public byte[] GenerarGrupal(Evaluacion evaluacion)
         {
-            return GenerarPdf(evaluacion, $"A EL EQUIPO: \"{nombreEquipo.ToUpperInvariant()}\"", null);
+            return GenerarPdf(evaluacion, $"A EL EQUIPO: \"{evaluacion.SnapshotNombreEquipo.ToUpperInvariant()}\"", null);
         }
 
-        public byte[] GenerarIndividual(Evaluacion evaluacion, string nombreIntegrante, string nombreEquipo)
+        public byte[] GenerarIndividual(Evaluacion evaluacion, string nombreIntegrante)
         {
             return GenerarPdf(
                 evaluacion,
                 $"A: \"{nombreIntegrante.ToUpperInvariant()}\"",
-                $"Participante del equipo: {nombreEquipo}");
+                $"Participante del equipo: {evaluacion.SnapshotNombreEquipo}");
         }
 
-        public byte[] GenerarZipIndividuales(Evaluacion evaluacion, IEnumerable<AlumnoEquipo> integrantes)
+        public byte[] GenerarMaestroEncargado(Evaluacion evaluacion, string nombreMaestro)
+        {
+            return GenerarPdf(
+                evaluacion,
+                $"AL MAESTRO ENCARGADO: \"{nombreMaestro.ToUpperInvariant()}\"",
+                $"Maestro encargado del equipo: {evaluacion.SnapshotNombreEquipo}");
+        }
+
+        public byte[] GenerarJuez(Evaluacion evaluacion, string nombreJuez)
+        {
+            return GenerarPdf(
+                evaluacion,
+                $"AL JUEZ: \"{nombreJuez.ToUpperInvariant()}\"",
+                $"Por su participación evaluando al equipo: {evaluacion.SnapshotNombreEquipo}");
+        }
+
+        public byte[] GenerarZipIndividuales(Evaluacion evaluacion)
         {
             using var memoria = new MemoryStream();
             using (var zip = new ZipArchive(memoria, ZipArchiveMode.Create, true))
             {
-                foreach (var integrante in integrantes.Where(i => i.Alumno != null))
+                foreach (var integrante in evaluacion.Integrantes)
                 {
-                    var nombreEquipo = evaluacion.ObtenerNombreEquipo();
-                    var pdf = GenerarIndividual(evaluacion, integrante.Alumno.NombreCompleto, nombreEquipo);
-                    var nombreArchivo = LimpiarNombreArchivo($"Constancia_{integrante.Alumno.NombreCompleto}.pdf");
+                    var pdf = GenerarIndividual(evaluacion, integrante.NombreCompleto);
+                    var nombreArchivo = LimpiarNombreArchivo($"Constancia_{integrante.NombreCompleto}.pdf");
                     var entry = zip.CreateEntry(nombreArchivo, CompressionLevel.Fastest);
                     using var stream = entry.Open();
                     stream.Write(pdf, 0, pdf.Length);
@@ -52,32 +67,55 @@ namespace AltarWeb.Services
             return memoria.ToArray();
         }
 
-        public async Task EnviarConstancias(Evaluacion evaluacion, List<AlumnoEquipo> integrantes)
+        public async Task EnviarConstancias(
+            Evaluacion evaluacion,
+            string? correoCreador,
+            string nombreMaestro,
+            string? correoMaestro,
+            string nombreJuez,
+            string? correoJuez)
         {
-            var nombreEquipo = evaluacion.ObtenerNombreEquipo();
-            var creador = integrantes.FirstOrDefault(i => i.EsCreador)?.Alumno
-                ?? integrantes.FirstOrDefault(i => i.AlumnoId == evaluacion.Equipo?.CreadoPorAlumnoId)?.Alumno;
-
-            if (creador != null && !string.IsNullOrWhiteSpace(creador.CorreoElectronico))
+            if (!string.IsNullOrWhiteSpace(correoCreador))
             {
                 await EnviarCorreoAsync(
-                    creador.CorreoElectronico,
-                    $"Constancia grupal: {nombreEquipo}",
-                    $"Hola {creador.NombreCompleto},\n\nAdjuntamos la constancia grupal del equipo {nombreEquipo}.",
-                    GenerarGrupal(evaluacion, nombreEquipo),
-                    LimpiarNombreArchivo($"Constancia_Grupal_{nombreEquipo}.pdf"));
+                    correoCreador,
+                    $"Constancia grupal: {evaluacion.SnapshotNombreEquipo}",
+                    $"Hola,\n\nAdjuntamos la constancia grupal del equipo {evaluacion.SnapshotNombreEquipo}.",
+                    GenerarGrupal(evaluacion),
+                    LimpiarNombreArchivo($"Constancia_Grupal_{evaluacion.SnapshotNombreEquipo}.pdf"));
             }
 
-            foreach (var integrante in integrantes.Select(i => i.Alumno).Where(a => a != null))
+            foreach (var integrante in evaluacion.Integrantes)
             {
-                if (string.IsNullOrWhiteSpace(integrante.CorreoElectronico)) continue;
+                var correo = integrante.Registrante?.CorreoInstitucional;
+                if (string.IsNullOrWhiteSpace(correo)) continue;
 
                 await EnviarCorreoAsync(
-                    integrante.CorreoElectronico,
-                    $"Constancia individual: {nombreEquipo}",
-                    $"Hola {integrante.NombreCompleto},\n\nAdjuntamos tu constancia individual de participacion.",
-                    GenerarIndividual(evaluacion, integrante.NombreCompleto, nombreEquipo),
+                    correo,
+                    $"Constancia individual: {evaluacion.SnapshotNombreEquipo}",
+                    $"Hola {integrante.NombreCompleto},\n\nAdjuntamos tu constancia individual de participación.",
+                    GenerarIndividual(evaluacion, integrante.NombreCompleto),
                     LimpiarNombreArchivo($"Constancia_{integrante.NombreCompleto}.pdf"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(correoMaestro))
+            {
+                await EnviarCorreoAsync(
+                    correoMaestro,
+                    $"Constancia de maestro encargado: {evaluacion.SnapshotNombreEquipo}",
+                    $"Hola {nombreMaestro},\n\nAdjuntamos tu constancia como maestro encargado del equipo {evaluacion.SnapshotNombreEquipo}.",
+                    GenerarMaestroEncargado(evaluacion, nombreMaestro),
+                    LimpiarNombreArchivo($"Constancia_Maestro_{nombreMaestro}.pdf"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(correoJuez))
+            {
+                await EnviarCorreoAsync(
+                    correoJuez,
+                    $"Constancia de juez: {evaluacion.SnapshotNombreEquipo}",
+                    $"Hola {nombreJuez},\n\nAdjuntamos tu constancia por tu participación como juez.",
+                    GenerarJuez(evaluacion, nombreJuez),
+                    LimpiarNombreArchivo($"Constancia_Juez_{nombreJuez}.pdf"));
             }
         }
 
@@ -87,9 +125,10 @@ namespace AltarWeb.Services
             var user = _configuration["Smtp:User"];
             var password = _configuration["Smtp:Password"];
 
-            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password)
+                || host == "pendiente-configurar" || user == "pendiente-configurar")
             {
-                throw new InvalidOperationException("La configuracion SMTP esta incompleta.");
+                throw new InvalidOperationException("La configuración SMTP no está completa. Configura la sección \"Smtp\" en appsettings.json.");
             }
 
             using var smtp = new SmtpClient(host, _configuration.GetValue("Smtp:Port", 587))
@@ -115,6 +154,15 @@ namespace AltarWeb.Services
             string rutaUabc = Path.Combine(_host.WebRootPath, "images", "logo_uabc.png");
             string rutaFim = Path.Combine(_host.WebRootPath, "images", "logo_fim.png");
             string rutaApfi = Path.Combine(_host.WebRootPath, "images", "logo_apfi.png");
+
+            var difuntoNombre = evaluacion.SnapshotDifuntoNombre;
+            var lugarTexto = evaluacion.Lugar switch
+            {
+                1 => "1.er lugar",
+                2 => "2.o lugar",
+                3 => "3.er lugar",
+                _ => null
+            };
 
             var documento = Document.Create(container =>
             {
@@ -162,6 +210,10 @@ namespace AltarWeb.Services
                             {
                                 texto.Item().AlignCenter().Text(subtexto).FontSize(11).FontColor(Colors.Grey.Darken2);
                             }
+                            if (lugarTexto != null)
+                            {
+                                texto.Item().AlignCenter().PaddingTop(4).Text($"{lugarTexto} — {evaluacion.Equipo?.Carrera?.Nombre}").Bold().FontSize(12).FontColor("#00703c");
+                            }
                             texto.Item().Height(0.5f, Unit.Centimetre);
                             texto.Item().Text(text =>
                             {
@@ -169,7 +221,7 @@ namespace AltarWeb.Services
                                 text.ParagraphSpacing(5);
                                 text.DefaultTextStyle(x => x.FontSize(12));
                                 text.Span("Por su valiosa participacion y creatividad en la elaboracion del Altar de Muertos dedicado a ");
-                                text.Span(evaluacion.NombreDifunto).Bold();
+                                text.Span(difuntoNombre).Bold();
                                 text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingenieria de la Universidad Autonoma de Baja California.");
                                 text.EmptyLine();
                                 text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservacion de nuestras tradiciones mexicanas.");

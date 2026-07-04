@@ -1,0 +1,109 @@
+@model AltarWeb.ViewModels.Altar.ConfiguracionPeriodoAdminViewModel
+@{
+    ViewData["Title"] = "Configuración";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-page-title">Configuraci&oacute;n del periodo</div>
+        <div class="altar-page-subtitle" style="margin-bottom:20px;">Fechas l&iacute;mite, recorrido y pesos de calificaci&oacute;n</div>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+        }
+
+        <form asp-controller="AltarAdmin" asp-action="Configuracion" method="post">
+            <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+            <input type="hidden" asp-for="Periodo" />
+            <input type="hidden" asp-for="RecorridoPdf" />
+            <input type="hidden" asp-for="CarrerasCount" />
+            <input type="hidden" asp-for="GenerosCount" />
+            <input type="hidden" asp-for="ElementosCount" />
+
+            <div class="altar-card">
+                <div class="altar-card-title">Fechas l&iacute;mite del periodo @Model.Periodo</div>
+                <p class="altar-card-subtitle">Configurables por el administrador.</p>
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Inscripci&oacute;n de equipos</label>
+                        <input asp-for="FechaLimiteInscripcion" type="date" class="altar-input" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Requisitos completos</label>
+                        <input asp-for="FechaLimiteRequisitos" type="date" class="altar-input" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="altar-card">
+                <div class="altar-card-title">Recorrido en PDF</div>
+                <p class="altar-card-subtitle">Lo consultan los jueces durante la evaluaci&oacute;n. La subida de archivo real queda pendiente de una fase posterior; por ahora se guarda solo la ruta.</p>
+                <div class="altar-hint">@(string.IsNullOrEmpty(Model.RecorridoPdf) ? "Sin recorrido subido para este periodo." : Model.RecorridoPdf)</div>
+            </div>
+
+            <div class="altar-card">
+                <div class="altar-card-title">Pesos de la nota final</div>
+                <p class="altar-card-subtitle">Editables sin tocar el c&oacute;digo. Deben sumar 100%.</p>
+                <div class="altar-grid-3">
+                    <div class="altar-field">
+                        <label class="altar-label">Objetivo Cultural (%)</label>
+                        <input asp-for="PesoObjetivoCulturalPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Esencia y Personalidad (%)</label>
+                        <input asp-for="PesoEsenciaPersonalidadPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Valoraci&oacute;n General (%)</label>
+                        <input asp-for="PesoValoracionGeneralPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Distribuci&oacute;n por Niveles (%)</label>
+                        <input asp-for="PesoDistribucionNivelesPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Narrador (%)</label>
+                        <input asp-for="PesoNarradorPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
+                    </div>
+                </div>
+                <div class="altar-flex" style="justify-content:space-between;">
+                    <span>Suma total</span>
+                    <span id="altar-suma-pesos" style="font-weight:800; color:@(Model.SumaPesos == 100 ? "var(--altar-primary)" : "var(--altar-danger)");">@Model.SumaPesos%</span>
+                </div>
+            </div>
+
+            <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar configuraci&oacute;n</button>
+        </form>
+
+        <div class="altar-card" style="margin-top:20px;">
+            <div class="altar-card-title">Cat&aacute;logos editables</div>
+            <p class="altar-card-subtitle">Tablas administrables. El editor CRUD de estos catálogos queda pendiente de una fase posterior; por ahora son de solo lectura aquí.</p>
+            <div class="altar-grid-3">
+                <div class="altar-stat-card"><div class="altar-stat-value">@Model.CarrerasCount</div><div class="altar-stat-label">Carreras FIM</div></div>
+                <div class="altar-stat-card"><div class="altar-stat-value">@Model.GenerosCount</div><div class="altar-stat-label">Cat&aacute;logo de g&eacute;nero</div></div>
+                <div class="altar-stat-card"><div class="altar-stat-value">@Model.ElementosCount</div><div class="altar-stat-label">Elementos del altar</div></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        var AltarPesos = (function () {
+            function recalcular() {
+                var inputs = document.querySelectorAll('.altar-peso-input');
+                var suma = 0;
+                inputs.forEach(function (input) {
+                    suma += Number(input.value) || 0;
+                });
+                var el = document.getElementById('altar-suma-pesos');
+                el.textContent = suma + '%';
+                el.style.color = suma === 100 ? 'var(--altar-primary)' : 'var(--altar-danger)';
+            }
+            return { recalcular: recalcular };
+        })();
+    </script>
+}

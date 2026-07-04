@@ -1,171 +1,150 @@
-﻿using AltarWeb.Models;
+using AltarWeb.Models;
+using AltarWeb.Services;
 using Microsoft.AspNetCore.Mvc;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
 
 namespace AltarWeb.Controllers
 {
     public class ConstanciaController : Controller
     {
         private readonly AltarDbContext _context;
-        private readonly IWebHostEnvironment _host;
+        private readonly ConstanciaService _constancias;
 
-        public ConstanciaController(AltarDbContext context, IWebHostEnvironment host)
+        public ConstanciaController(AltarDbContext context, ConstanciaService constancias)
         {
             _context = context;
-            _host = host;
-            QuestPDF.Settings.License = LicenseType.Community;
+            _constancias = constancias;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> DescargarGrupal(int evaluacionId)
         {
-            if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
-            var lista = _context.Evaluaciones.OrderByDescending(e => e.Fecha).ToList();
-            return View(lista);
-        }
-
-        public IActionResult Descargar(int id)
-        {
-            var eval = _context.Evaluaciones.FirstOrDefault(e => e.Id == id);
+            if (!EstaAutenticado()) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionAsync(evaluacionId);
             if (eval == null) return NotFound();
+            if (eval.Estado != Models.Registro.EstadoEvaluacion.Final) return Forbid();
 
-            // Rutas de imágenes
-            string rutaCatrina = Path.Combine(_host.WebRootPath, "images", "catrina.png");
-            string rutaUABC = Path.Combine(_host.WebRootPath, "images", "logo_uabc.png");
-            string rutaFIM = Path.Combine(_host.WebRootPath, "images", "logo_fim.png");
-            string rutaAPFI = Path.Combine(_host.WebRootPath, "images", "logo_apfi.png");
-
-            var documento = Document.Create(container =>
-            {
-                container.Page(page =>
-                {
-                    page.Size(PageSizes.Letter.Landscape());
-                    page.Margin(1.0f, Unit.Centimetre);
-                    page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(11));
-
-                    // --- 1. FONDO (CATRINA) ---
-                    if (System.IO.File.Exists(rutaCatrina))
-                    {
-                        page.Foreground()
-                            .AlignLeft()
-                            .AlignBottom()
-                            .Height(12.5f, Unit.Centimetre)
-                            .TranslateX(-1.5f, Unit.Centimetre)
-                            .Image(rutaCatrina)
-                            .FitArea();
-                    }
-
-                    // --- 2. CONTENIDO PRINCIPAL ---
-                    page.Content().Column(col =>
-                    {
-                        // A. ENCABEZADO
-                        float anchoLogos = 5.5f;
-
-                        col.Item().Row(row =>
-                        {
-                            // 1. COLUMNA IZQUIERDA (UABC)
-                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(izq =>
-                            {
-                                if (System.IO.File.Exists(rutaUABC))
-                                    izq.RelativeItem()
-                                       .AlignCenter()
-                                       .Width(2.3f, Unit.Centimetre)
-                                       .Image(rutaUABC).FitArea();
-                            });
-
-                            // 2. TEXTO CENTRAL
-                            row.RelativeItem().PaddingHorizontal(0.5f, Unit.Centimetre).AlignMiddle().Column(header =>
-                            {
-                                header.Item().AlignCenter().Text("UNIVERSIDAD AUTÓNOMA DE BAJA CALIFORNIA").Bold().FontSize(16).FontColor("#00703c");
-                                header.Item().AlignCenter().Text("FACULTAD DE INGENIERÍA").Bold().FontSize(14);
-                                header.Item().AlignCenter().Text("ASOCIACIÓN DE PROFESORES DE LA FACULTAD DE INGENIERÍA (APFI)").FontSize(10);
-                            });
-
-                            // 3. COLUMNA DERECHA (FIM y APFI)
-                            row.ConstantItem(anchoLogos, Unit.Centimetre).AlignMiddle().Row(logosDer =>
-                            {
-                                // FIM: Se agregó PaddingTop(5) para bajarlo un poco
-                                if (System.IO.File.Exists(rutaFIM))
-                                    logosDer.RelativeItem(1.0f)
-                                            .PaddingTop(5) // <--- AJUSTE AQUÍ
-                                            .PaddingRight(5)
-                                            .Image(rutaFIM).FitArea();
-
-                                // APFI
-                                if (System.IO.File.Exists(rutaAPFI))
-                                    logosDer.RelativeItem(1.5f).Image(rutaAPFI).FitArea();
-                            });
-                        });
-
-                        col.Item().Height(0.5f, Unit.Centimetre);
-
-                        // --- CONTENEDOR CENTRAL PARA EL TEXTO ---
-                        col.Item().PaddingHorizontal(4.0f, Unit.Centimetre).Column(textoCentral =>
-                        {
-                            // B. TÍTULOS
-                            textoCentral.Item().AlignCenter().Text("OTORGA LA PRESENTE").FontSize(12).LetterSpacing(0.2f);
-                            textoCentral.Item().AlignCenter().Text("CONSTANCIA DE AGRADECIMIENTO").Bold().FontSize(24).FontColor(Colors.Black);
-
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-
-                            // C. EQUIPO
-                            textoCentral.Item().AlignCenter().Text($"A EL EQUIPO: \"{eval.NombreEquipo.ToUpper()}\"").Bold().FontSize(22).FontColor("#b08d55");
-
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-
-                            // D. CUERPO
-                            textoCentral.Item()
-                               .Text(text =>
-                               {
-                                   text.Justify();
-                                   text.ParagraphSpacing(5);
-                                   text.DefaultTextStyle(x => x.FontSize(12));
-
-                                   text.Span("Por su valiosa participación y creatividad en la elaboración del Altar de Muertos dedicado a ");
-                                   text.Span($"{eval.NombreDifunto}").Bold();
-                                   text.Span(", realizado en el marco de las celebraciones culturales de la Facultad de Ingeniería de la Universidad Autónoma de Baja California.");
-                                   text.EmptyLine();
-                                   text.Span("Su compromiso y entusiasmo contribuyen al fortalecimiento de la identidad universitaria y a la preservación de nuestras tradiciones mexicanas.");
-                               });
-
-                            textoCentral.Item().Height(0.5f, Unit.Centimetre);
-
-                            // E. FECHA
-                            textoCentral.Item().AlignCenter().Text($"Mexicali, Baja California a {DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))}").Italic();
-                            textoCentral.Item().AlignCenter().Text("\"Por la realización plena del ser\"").Italic().FontSize(9).FontColor(Colors.Grey.Darken2);
-
-                            // F. FIRMAS
-                            textoCentral.Item().PaddingTop(0.5f, Unit.Centimetre).Row(row =>
-                            {
-                                // --- Firma 1 ---
-                                row.RelativeItem().Column(firm =>
-                                {
-                                    firm.Item().Height(2.5f, Unit.Centimetre);
-                                    firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black);
-                                    firm.Item().PaddingTop(5).AlignCenter().Text("Dra. Araceli Celina Justo López").Bold().FontSize(9);
-                                    firm.Item().AlignCenter().Text("Directora de la Facultad de Ingeniería").FontSize(8);
-                                });
-
-                                row.ConstantItem(2.0f, Unit.Centimetre);
-
-                                // --- Firma 2 ---
-                                row.RelativeItem().Column(firm =>
-                                {
-                                    firm.Item().Height(2.5f, Unit.Centimetre);
-                                    firm.Item().AlignCenter().Width(7, Unit.Centimetre).LineHorizontal(1).LineColor(Colors.Black);
-                                    firm.Item().PaddingTop(5).AlignCenter().Text("Ing. María Carmiña Reyes Revelez").Bold().FontSize(9);
-                                    firm.Item().AlignCenter().Text("Presidenta de la APFI").FontSize(8);
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-
-            byte[] pdfBytes = documento.GeneratePdf();
-            return File(pdfBytes, "application/pdf", $"Constancia_{eval.NombreEquipo}.pdf");
+            var pdf = _constancias.GenerarGrupal(eval);
+            return File(pdf, "application/pdf", $"Constancia_Grupal_{eval.SnapshotNombreEquipo}.pdf");
         }
+
+        public async Task<IActionResult> DescargarIndividuales(int evaluacionId)
+        {
+            if (!EstaAutenticado()) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionAsync(evaluacionId);
+            if (eval == null) return NotFound();
+            if (eval.Estado != Models.Registro.EstadoEvaluacion.Final) return Forbid();
+
+            var zip = _constancias.GenerarZipIndividuales(eval);
+            return File(zip, "application/zip", $"Constancias_Individuales_{eval.SnapshotNombreEquipo}.zip");
+        }
+
+        public async Task<IActionResult> DescargarMaestro(int evaluacionId)
+        {
+            if (!EstaAutenticado()) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionAsync(evaluacionId);
+            if (eval == null) return NotFound();
+            if (eval.Estado != Models.Registro.EstadoEvaluacion.Final) return Forbid();
+
+            var nombreMaestro = eval.Equipo.MaestroEncargado?.NombreCompleto;
+            if (string.IsNullOrWhiteSpace(nombreMaestro))
+            {
+                TempData["Error"] = "Este equipo no tiene un maestro encargado registrado.";
+                return RedirectToAction("Detalle", "AltarEvaluacion", new { id = evaluacionId });
+            }
+
+            var pdf = _constancias.GenerarMaestroEncargado(eval, nombreMaestro);
+            return File(pdf, "application/pdf", $"Constancia_Maestro_{nombreMaestro}.pdf");
+        }
+
+        public async Task<IActionResult> DescargarJuez(int evaluacionId)
+        {
+            if (!EstaAutenticado()) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionAsync(evaluacionId);
+            if (eval == null) return NotFound();
+            if (eval.Estado != Models.Registro.EstadoEvaluacion.Final) return Forbid();
+
+            var nombreJuez = eval.Juez?.NombreCompleto ?? eval.Juez?.Usuario;
+            if (string.IsNullOrWhiteSpace(nombreJuez))
+            {
+                TempData["Error"] = "Esta evaluación no tiene un juez asignado.";
+                return RedirectToAction("Detalle", "AltarEvaluacion", new { id = evaluacionId });
+            }
+
+            var pdf = _constancias.GenerarJuez(eval, nombreJuez);
+            return File(pdf, "application/pdf", $"Constancia_Juez_{nombreJuez}.pdf");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EnviarTodas(int evaluacionId)
+        {
+            if (!EstaAutenticado()) return RedirectToAction("Login", "Acceso");
+            var eval = await ObtenerEvaluacionAsync(evaluacionId);
+            if (eval == null) return NotFound();
+            if (eval.Estado != Models.Registro.EstadoEvaluacion.Final) return Forbid();
+
+            var nombreMaestro = eval.Equipo.MaestroEncargado?.NombreCompleto ?? string.Empty;
+            var correoMaestro = eval.Equipo.MaestroEncargado?.CorreoInstitucional;
+            var nombreJuez = eval.Juez?.NombreCompleto ?? eval.Juez?.Usuario ?? string.Empty;
+
+            try
+            {
+                await _constancias.EnviarConstancias(
+                    eval,
+                    correoCreador: eval.Equipo.CreadoPorRegistrante?.CorreoInstitucional,
+                    nombreMaestro: nombreMaestro,
+                    correoMaestro: correoMaestro,
+                    nombreJuez: nombreJuez,
+                    correoJuez: null);
+
+                TempData["Mensaje"] = "Constancias enviadas por correo.";
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction("Detalle", "AltarEvaluacion", new { id = evaluacionId });
+        }
+
+        public async Task<IActionResult> DescargarMia()
+        {
+            var registranteId = HttpContext.Session.GetInt32("RegistranteId");
+            if (registranteId == null) return RedirectToAction("Login", "Registro");
+
+            var periodo = PeriodoHelper.ObtenerPeriodoActual();
+            var eval = await _context.EvaluacionesConcurso
+                .Include(e => e.Equipo)
+                .Include(e => e.Integrantes)
+                .Where(e => e.Periodo == periodo && e.Estado == Models.Registro.EstadoEvaluacion.Final)
+                .Where(e => e.Equipo.Integrantes.Any(ri => ri.RegistranteId == registranteId.Value))
+                .FirstOrDefaultAsync();
+
+            if (eval == null)
+            {
+                TempData["Error"] = "Tu constancia estará disponible cuando tu equipo tenga una evaluación Final.";
+                return RedirectToAction("Dashboard", "Registro");
+            }
+
+            var integrante = eval.Integrantes.FirstOrDefault(i => i.RegistranteId == registranteId.Value);
+            var registrante = await _context.Registrantes.FindAsync(registranteId.Value);
+            var nombre = integrante?.NombreCompleto ?? registrante?.NombreCompleto ?? "Participante";
+
+            var pdf = _constancias.GenerarIndividual(eval, nombre);
+            return File(pdf, "application/pdf", $"Constancia_{nombre}.pdf");
+        }
+
+        private async Task<Evaluacion?> ObtenerEvaluacionAsync(int evaluacionId)
+        {
+            return await _context.EvaluacionesConcurso
+                .Include(e => e.Equipo).ThenInclude(eq => eq.Carrera)
+                .Include(e => e.Equipo).ThenInclude(eq => eq.MaestroEncargado)
+                .Include(e => e.Equipo).ThenInclude(eq => eq.CreadoPorRegistrante)
+                .Include(e => e.Juez)
+                .Include(e => e.Integrantes).ThenInclude(i => i.Registrante)
+                .FirstOrDefaultAsync(e => e.Id == evaluacionId);
+        }
+
+        private bool EstaAutenticado() => HttpContext.Session.GetInt32("JuezId") != null;
     }
 }
