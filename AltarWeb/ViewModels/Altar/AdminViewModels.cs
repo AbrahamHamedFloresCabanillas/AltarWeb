@@ -49,7 +49,9 @@ namespace AltarWeb.ViewModels.Altar
 
         public decimal SumaPesos => PesoObjetivoCulturalPct + PesoEsenciaPersonalidadPct + PesoValoracionGeneralPct + PesoDistribucionNivelesPct + PesoNarradorPct;
 
-        [Range(1, 1000, ErrorMessage = "El umbral debe ser un número positivo.")]
+        // PRIV-01: piso minimo de 3 (vision.md 12.2 recomienda 5 por defecto) para que el umbral no
+        // pueda anularse a 0/negativo y exponer categorias demograficas de 1-2 personas identificables.
+        [Range(3, 100, ErrorMessage = "El umbral debe estar entre 3 y 100 para proteger datos demográficos sensibles.")]
         public int UmbralAgrupacionDemografica { get; set; } = 5;
 
         public int CarrerasCount { get; set; }

@@ -1,6 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using AltarWeb.Models;
+using AltarWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +22,9 @@ namespace AltarWeb.Controllers
             var juez = await _context.Jueces
                 .FirstOrDefaultAsync(j => j.Usuario == entrada || j.CorreoInstitucional == entrada.ToLower());
 
-            if (juez == null || !VerificarHash(password, juez.Password))
+            password ??= string.Empty;
+            var (esValido, requiereRehash) = PasswordHashService.Verificar(password, juez?.Password);
+            if (juez == null || !esValido)
             {
                 return RedirectToAction("Login", "Registro", new { error = "Usuario o contraseña incorrectos", tab = "acceso" });
             }
@@ -33,21 +34,60 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Login", "Registro", new { error = "Tu solicitud aún está pendiente de aprobación por un administrador.", tab = "acceso" });
             }
 
+            if (requiereRehash)
+            {
+                juez.Password = PasswordHashService.HashPassword(password);
+                await _context.SaveChangesAsync();
+            }
+
             HttpContext.Session.SetInt32("JuezId", juez.Id); // Guardar sesión
             HttpContext.Session.SetString("JuezNombre", juez.NombreCompleto ?? juez.Usuario ?? juez.CorreoInstitucional ?? "Juez");
             HttpContext.Session.SetString("JuezRol", juez.Rol); // RBAC: guardar rol en sesión
+
+            if (juez.DebeCambiarPassword)
+            {
+                return RedirectToAction("CambiarPasswordObligatorio");
+            }
+
             return RedirectToAction("Historial", "AltarEvaluacion");
         }
 
-        internal static string HashPassword(string password)
+        internal static string HashPassword(string password) => PasswordHashService.HashPassword(password);
+
+        // SEC-03: fuerza el cambio de contraseña (cuenta admin semilla u otras marcadas) antes de
+        // permitir cualquier otra acción. El filtro global ForzarCambioPasswordFilter redirige aquí.
+        public IActionResult CambiarPasswordObligatorio()
         {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
+            if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Registro");
+            return View();
         }
 
-        internal static bool VerificarHash(string password, string? hash)
+        [HttpPost]
+        public async Task<IActionResult> CambiarPasswordObligatorio(string nuevaPassword, string confirmarPassword)
         {
-            return !string.IsNullOrEmpty(hash) && HashPassword(password) == hash;
+            var juezId = HttpContext.Session.GetInt32("JuezId");
+            if (juezId == null) return RedirectToAction("Login", "Registro");
+
+            if (string.IsNullOrWhiteSpace(nuevaPassword) || nuevaPassword.Length < 8)
+            {
+                ModelState.AddModelError(string.Empty, "La nueva contraseña debe tener al menos 8 caracteres.");
+            }
+            else if (nuevaPassword != confirmarPassword)
+            {
+                ModelState.AddModelError(string.Empty, "Las contraseñas no coinciden.");
+            }
+
+            if (!ModelState.IsValid) return View();
+
+            var juez = await _context.Jueces.FirstOrDefaultAsync(j => j.Id == juezId);
+            if (juez == null) return RedirectToAction("Login", "Registro");
+
+            juez.Password = PasswordHashService.HashPassword(nuevaPassword);
+            juez.DebeCambiarPassword = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Mensaje"] = "Contraseña actualizada.";
+            return RedirectToAction("Historial", "AltarEvaluacion");
         }
 
         // Registro público deshabilitado — solo Admins pueden crear Jueces desde /AltarAdmin/Jueces

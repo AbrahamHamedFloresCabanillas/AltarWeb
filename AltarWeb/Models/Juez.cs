@@ -27,6 +27,10 @@ namespace AltarWeb.Models
         public bool Pendiente { get; set; }
         public string ProveedorAuth { get; set; } = "Local";
 
+        // SEC-03: fuerza el cambio de contraseña antes de permitir cualquier otra accion
+        // (cuenta admin semilla u otras marcadas explicitamente).
+        public bool DebeCambiarPassword { get; set; } = false;
+
         // --- Soft Delete ---
         public bool IsDeleted { get; set; } = false;
         public DateTime? FechaEliminado { get; set; }

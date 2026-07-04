@@ -243,6 +243,14 @@ namespace AltarWeb.Controllers
                 ModelState.AddModelError(string.Empty, "Los pesos deben sumar 100%.");
             }
 
+            // PRIV-01: validacion server-side explicita ademas del [Range] del ViewModel, para que el
+            // piso minimo no dependa exclusivamente de la validacion de binding.
+            if (model.UmbralAgrupacionDemografica < PrivacidadReporteHelper.UmbralMinimo)
+            {
+                ModelState.AddModelError(nameof(model.UmbralAgrupacionDemografica),
+                    $"El umbral de agrupación demográfica no puede ser menor a {PrivacidadReporteHelper.UmbralMinimo}.");
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Nav = ObtenerNavContext("Configuracion");

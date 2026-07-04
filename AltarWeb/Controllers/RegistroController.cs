@@ -1,8 +1,7 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using AltarWeb.Models;
 using AltarWeb.Models.Registro;
+using AltarWeb.Services;
 using AltarWeb.ViewModels.Altar;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +35,8 @@ namespace AltarWeb.Controllers
             var registrante = await _context.Registrantes
                 .FirstOrDefaultAsync(r => r.CorreoInstitucional.ToLower() == correo);
 
-            if (registrante == null || !VerificarHash(model.Password, registrante.PasswordHash))
+            var (esValido, requiereRehash) = PasswordHashService.Verificar(model.Password, registrante?.PasswordHash);
+            if (registrante == null || !esValido)
             {
                 ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
                 return View(model);
@@ -46,6 +46,12 @@ namespace AltarWeb.Controllers
             {
                 ModelState.AddModelError(string.Empty, "Tu cuenta fue desactivada. Contacta a un administrador.");
                 return View(model);
+            }
+
+            if (requiereRehash)
+            {
+                registrante.PasswordHash = PasswordHashService.HashPassword(model.Password);
+                await _context.SaveChangesAsync();
             }
 
             CrearSesionRegistrante(registrante);
@@ -105,7 +111,7 @@ namespace AltarWeb.Controllers
                 return View(await ConstruirSignupViewModelAsync(model));
             }
 
-            registrante.PasswordHash = HashPassword(model.Password);
+            registrante.PasswordHash = PasswordHashService.HashPassword(model.Password);
             registrante.ProveedorAuth = "Local";
 
             _context.Registrantes.Add(registrante);
@@ -225,6 +231,7 @@ namespace AltarWeb.Controllers
                     return RedirectToAction("Historial", "AltarEvaluacion");
                 }
 
+                GuardarIdentidadGoogleVerificada("juez", email, nombre);
                 return View("CompletarGoogleJuez", new CompletarGoogleJuezViewModel { NombreCompleto = nombre, CorreoInstitucional = email });
             }
             else
@@ -241,6 +248,7 @@ namespace AltarWeb.Controllers
                     return RedirectToAction("Dashboard");
                 }
 
+                GuardarIdentidadGoogleVerificada("registrante", email, nombre);
                 var vm = new CompletarGoogleViewModel { NombreCompleto = nombre, CorreoInstitucional = email };
                 vm.Generos = await _context.CatalogoGeneros.Where(g => g.Activo).OrderBy(g => g.Orden).ToListAsync();
                 vm.Carreras = await _context.CatalogoCarreras.Where(c => c.Activo).OrderBy(c => c.Orden).ToListAsync();
@@ -248,18 +256,63 @@ namespace AltarWeb.Controllers
             }
         }
 
+        // SEC-01: el email/nombre de estas vistas viajan como campo oculto del formulario, asi que no
+        // son confiables en el POST (un atacante puede postear cualquier valor sin haber pasado por
+        // Google). Los guardamos aqui, server-side, justo despues de validar el ticket de Google, y los
+        // POST de CompletarGoogle*/leen exclusivamente de esta fuente (ver ObtenerIdentidadGoogleVerificada).
+        private void GuardarIdentidadGoogleVerificada(string intent, string email, string nombre)
+        {
+            HttpContext.Session.SetString("GooglePendienteIntent", intent);
+            HttpContext.Session.SetString("GooglePendienteEmail", email);
+            HttpContext.Session.SetString("GooglePendienteNombre", nombre);
+            HttpContext.Session.SetString("GooglePendienteExpira", DateTime.UtcNow.Add(TimeSpan.FromMinutes(10)).ToString("O"));
+        }
+
+        // Token de un solo uso de vida corta: exige que el intent coincida con el formulario que se esta
+        // procesando y que no hayan pasado mas de 10 minutos desde el callback de Google.
+        private (bool Valido, string Email, string Nombre) ObtenerIdentidadGoogleVerificada(string intentEsperado)
+        {
+            var intent = HttpContext.Session.GetString("GooglePendienteIntent");
+            var email = HttpContext.Session.GetString("GooglePendienteEmail");
+            var nombre = HttpContext.Session.GetString("GooglePendienteNombre");
+            var expiraRaw = HttpContext.Session.GetString("GooglePendienteExpira");
+
+            if (intent != intentEsperado || string.IsNullOrEmpty(email)
+                || !DateTime.TryParse(expiraRaw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var expira)
+                || DateTime.UtcNow > expira)
+            {
+                return (false, string.Empty, string.Empty);
+            }
+
+            return (true, email, nombre ?? email);
+        }
+
+        private void LimpiarIdentidadGoogleVerificada()
+        {
+            HttpContext.Session.Remove("GooglePendienteIntent");
+            HttpContext.Session.Remove("GooglePendienteEmail");
+            HttpContext.Session.Remove("GooglePendienteNombre");
+            HttpContext.Session.Remove("GooglePendienteExpira");
+        }
+
         [HttpPost]
         public async Task<IActionResult> CompletarGoogle(CompletarGoogleViewModel model)
         {
+            var (googleValido, emailVerificado, nombreVerificado) = ObtenerIdentidadGoogleVerificada("registrante");
+            if (!googleValido)
+            {
+                return RedirectToAction("Login", new { tab = "registro", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
+            }
+
             var identificador = model.Identificador.Trim();
             var tipoInferido = identificador.Length == 7 ? TipoRegistrante.Alumno : TipoRegistrante.Administrativo;
 
             var registrante = new Registrante
             {
                 Tipo = tipoInferido,
-                NombreCompleto = model.NombreCompleto.Trim(),
+                NombreCompleto = nombreVerificado.Trim(),
                 Identificador = identificador,
-                CorreoInstitucional = model.CorreoInstitucional.Trim().ToLowerInvariant(),
+                CorreoInstitucional = emailVerificado,
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 CatalogoGeneroId = model.CatalogoGeneroId,
                 CatalogoCarreraId = model.CatalogoCarreraId,
@@ -282,6 +335,8 @@ namespace AltarWeb.Controllers
 
             if (!ModelState.IsValid)
             {
+                model.NombreCompleto = nombreVerificado;
+                model.CorreoInstitucional = emailVerificado;
                 model.Generos = await _context.CatalogoGeneros.Where(g => g.Activo).OrderBy(g => g.Orden).ToListAsync();
                 model.Carreras = await _context.CatalogoCarreras.Where(c => c.Activo).OrderBy(c => c.Orden).ToListAsync();
                 return View(model);
@@ -308,6 +363,7 @@ namespace AltarWeb.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            LimpiarIdentidadGoogleVerificada();
             CrearSesionRegistrante(registrante);
             return RedirectToAction("Dashboard");
         }
@@ -315,19 +371,30 @@ namespace AltarWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> CompletarGoogleJuez(CompletarGoogleJuezViewModel model)
         {
+            var (googleValido, emailVerificado, nombreVerificado) = ObtenerIdentidadGoogleVerificada("juez");
+            if (!googleValido)
+            {
+                return RedirectToAction("Login", new { tab = "acceso", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
+            }
+
             var identificador = model.Identificador.Trim();
-            var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
+            var correo = emailVerificado;
 
             if (await _context.Jueces.IgnoreQueryFilters().AnyAsync(j => j.Identificador == identificador))
             {
                 ModelState.AddModelError(nameof(model.Identificador), "Ya existe una solicitud o cuenta con esa matrícula.");
             }
 
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                model.NombreCompleto = nombreVerificado;
+                model.CorreoInstitucional = correo;
+                return View(model);
+            }
 
             var juez = new Juez
             {
-                NombreCompleto = model.NombreCompleto.Trim(),
+                NombreCompleto = nombreVerificado.Trim(),
                 CorreoInstitucional = correo,
                 Identificador = identificador,
                 Password = AccesoController.HashPassword(Guid.NewGuid().ToString()),
@@ -339,6 +406,7 @@ namespace AltarWeb.Controllers
             _context.Jueces.Add(juez);
             await _context.SaveChangesAsync();
 
+            LimpiarIdentidadGoogleVerificada();
             return RedirectToAction("Login", new { tab = "acceso", error = "Tu solicitud fue enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión." });
         }
 
@@ -784,15 +852,5 @@ namespace AltarWeb.Controllers
                 .FirstOrDefaultAsync(r => r.Id == id.Value);
         }
 
-        private static string HashPassword(string password)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
-        }
-
-        private static bool VerificarHash(string password, string? hash)
-        {
-            return !string.IsNullOrEmpty(hash) && HashPassword(password) == hash;
-        }
     }
 }
