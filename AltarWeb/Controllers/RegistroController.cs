@@ -5,6 +5,7 @@ using AltarWeb.Services;
 using AltarWeb.ViewModels.Altar;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Equipo = AltarWeb.Models.Registro.Equipo;
 
@@ -13,10 +14,12 @@ namespace AltarWeb.Controllers
     public class RegistroController : Controller
     {
         private readonly AltarDbContext _context;
+        private readonly ILogger<RegistroController> _logger;
 
-        public RegistroController(AltarDbContext context)
+        public RegistroController(AltarDbContext context, ILogger<RegistroController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public IActionResult Login(string? error = null, string? tab = null)
@@ -27,6 +30,7 @@ namespace AltarWeb.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login(RegistroLoginViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
@@ -38,6 +42,9 @@ namespace AltarWeb.Controllers
             var (esValido, requiereRehash) = PasswordHashService.Verificar(model.Password, registrante?.PasswordHash);
             if (registrante == null || !esValido)
             {
+                // LOG-01: registra el intento fallido (correo intentado + IP), nunca la contraseña.
+                _logger.LogWarning("Login fallido de Registrante. Correo intentado: '{Correo}', IP: {IP}",
+                    correo, HttpContext.Connection.RemoteIpAddress);
                 ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
                 return View(model);
             }
@@ -197,6 +204,7 @@ namespace AltarWeb.Controllers
         }
 
         [HttpGet("Registro/google-callback")]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> GoogleCallback()
         {
             var result = await HttpContext.AuthenticateAsync("Google");
@@ -514,6 +522,12 @@ namespace AltarWeb.Controllers
                 HaceCatrina = model.HaceCatrina
             };
 
+            // SEC-11: transaccion explicita para las 3 escrituras (Equipo, Difunto, RegistranteEquipo).
+            // Sin ella, una race que viole el indice unico (RegistranteId, Periodo) en el ultimo insert
+            // dejaba el Equipo (y su Difunto) huerfanos y persistidos aunque el organizador nunca quedara
+            // vinculado — confirmado con una prueba real de dos requests concurrentes en la misma sesion.
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             _context.EquiposConcurso.Add(equipo);
             await _context.SaveChangesAsync();
 
@@ -529,10 +543,25 @@ namespace AltarWeb.Controllers
             {
                 RegistranteId = registrante.Id,
                 EquipoId = equipo.Id,
-                Rol = RolEquipo.Integrante
+                Rol = RolEquipo.Integrante,
+                Periodo = periodo
             });
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Race rara (dos requests simultaneos del mismo registrante, o el candidato se unio a
+                // otro equipo justo entre el check y el insert); la BD lo bloqueo via el indice unico
+                // (RegistranteId, Periodo). Rollback completo: no debe quedar un Equipo/Difunto huerfano.
+                await transaction.RollbackAsync();
+                TempData["Error"] = "Ya perteneces a un equipo este periodo.";
+                return RedirectToAction("Dashboard");
+            }
+
             TempData["Mensaje"] = "Equipo creado. Ya puedes agregar integrantes y designar un narrador.";
             return RedirectToAction("Ficha");
         }
@@ -645,9 +674,20 @@ namespace AltarWeb.Controllers
             {
                 RegistranteId = candidato.Id,
                 EquipoId = equipo.Id,
-                Rol = RolEquipo.Integrante
+                Rol = RolEquipo.Integrante,
+                Periodo = equipo.Periodo
             });
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // SEC-11: race rara (el candidato se unio a otro equipo justo entre el check y el insert).
+                TempData["Error"] = $"{candidato.NombreCompleto} ya pertenece a un equipo este periodo.";
+                return RedirectToAction("Ficha");
+            }
 
             TempData["Mensaje"] = $"{candidato.NombreCompleto} fue agregado al equipo.";
             return RedirectToAction("Ficha");

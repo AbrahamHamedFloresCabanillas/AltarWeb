@@ -1,9 +1,11 @@
+using System.Threading.RateLimiting;
 using AltarWeb.Filters;
 using AltarWeb.Models;
 using AltarWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +43,28 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<ConstanciaService>();
 builder.Services.AddScoped<EvaluacionCalculoService>();
 builder.Services.AddScoped<ReportePeriodoService>();
+
+// SEC-04: throttling por IP de las rutas de login (Acceso/Login, Registro/Login, GoogleCallback).
+// No sustituye PBKDF2/rehash-on-login (SEC-02); es una capa adicional contra fuerza bruta online.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) =>
+    {
+        context.HttpContext.Response.Redirect("/Registro/Login?error=" +
+            Uri.EscapeDataString("Demasiados intentos. Espera un minuto e intenta de nuevo."));
+        return ValueTask.CompletedTask;
+    };
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocido",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
 builder.Services.AddControllersWithViews(options =>
 {
     // SEC-10: valida el antiforgery token en todos los POST/PUT/DELETE. Todas las vistas del proyecto
@@ -131,6 +155,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseRateLimiter();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();

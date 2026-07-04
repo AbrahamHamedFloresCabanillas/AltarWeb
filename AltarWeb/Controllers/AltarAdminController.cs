@@ -13,11 +13,13 @@ namespace AltarWeb.Controllers
     {
         private readonly AltarDbContext _context;
         private readonly ReportePeriodoService _reportePeriodo;
+        private readonly ILogger<AltarAdminController> _logger;
 
-        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo)
+        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger)
         {
             _context = context;
             _reportePeriodo = reportePeriodo;
+            _logger = logger;
         }
 
         // --- Jueces (nuevo controlador/vistas sobre el modelo legado Juez; no toca JuecesController) ---
@@ -298,7 +300,8 @@ namespace AltarWeb.Controllers
             if (!EsAdmin()) return RedirigirSinPermisos();
 
             var vm = await ConstruirReportePeriodoAsync(periodo ?? PeriodoHelper.ObtenerPeriodoActual());
-            var pdf = _reportePeriodo.GenerarPdf(vm);
+            var generadoPor = HttpContext.Session.GetString("JuezNombre") ?? "Administrador";
+            var pdf = _reportePeriodo.GenerarPdf(vm, generadoPor);
             return File(pdf, "application/pdf", $"ReporteCierre_{vm.Periodo}.pdf");
         }
 
@@ -328,6 +331,12 @@ namespace AltarWeb.Controllers
         private IActionResult RedirigirSinPermisos()
         {
             if (HttpContext.Session.GetInt32("JuezId") == null) return RedirectToAction("Login", "Acceso");
+
+            // LOG-01: sesion valida pero sin rol Admin intentando una accion de backoffice.
+            _logger.LogWarning("Acceso denegado (rol insuficiente). JuezId: {JuezId}, Rol: {Rol}, Ruta: {Ruta}, IP: {IP}",
+                HttpContext.Session.GetInt32("JuezId"), HttpContext.Session.GetString("JuezRol"),
+                HttpContext.Request.Path, HttpContext.Connection.RemoteIpAddress);
+
             TempData["Error"] = "No tienes permisos para acceder a esta sección.";
             return RedirectToAction("Historial", "AltarEvaluacion");
         }

@@ -290,7 +290,10 @@ namespace AltarWeb.Services
                 .ToList();
         }
 
-        public byte[] GenerarPdf(ReportePeriodoViewModel r)
+        // PRIV-02: generadoPor identifica al admin/juez cuya sesion disparo la descarga (no se loguea
+        // en ningun otro lado; solo aparece impreso en el propio PDF como parte de la marca de
+        // confidencialidad, igual que la fecha de generacion).
+        public byte[] GenerarPdf(ReportePeriodoViewModel r, string generadoPor)
         {
             var documento = Document.Create(container =>
             {
@@ -301,10 +304,24 @@ namespace AltarWeb.Services
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(9));
 
+                    // PRIV-02: marca de agua diagonal en cada pagina — el contenido agrega datos
+                    // institucionales sensibles (demografia, promedios por juez) y no debe circular
+                    // como si fuera un documento publico.
+                    page.Foreground()
+                        .AlignCenter()
+                        .AlignMiddle()
+                        .Rotate(-35)
+                        .Text("CONFIDENCIAL")
+                        .FontSize(72)
+                        .Bold()
+                        .FontColor(Colors.Grey.Lighten3);
+
                     page.Header().Column(col =>
                     {
                         col.Item().Text($"Reporte de Cierre de Periodo · {r.Periodo}").Bold().FontSize(18).FontColor("#00703c");
-                        col.Item().Text($"Concurso de Altares de Muertos · FIM UABC · generado {r.GeneradoEn:dd/MM/yyyy HH:mm}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                        col.Item().Text($"Concurso de Altares de Muertos · FIM UABC · generado {r.GeneradoEn:dd/MM/yyyy HH:mm} por {generadoPor}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                        col.Item().Text("CONFIDENCIAL — uso interno FIM/APFI. No distribuir fuera del comité organizador.")
+                            .FontSize(8).Italic().Bold().FontColor(Colors.Red.Darken2);
                         col.Item().PaddingTop(6).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
                     });
 
@@ -452,12 +469,16 @@ namespace AltarWeb.Services
                         });
                     });
 
-                    page.Footer().AlignCenter().Text(x =>
+                    page.Footer().Column(col =>
                     {
-                        x.Span("Página ");
-                        x.CurrentPageNumber();
-                        x.Span(" de ");
-                        x.TotalPages();
+                        col.Item().AlignCenter().Text("CONFIDENCIAL — uso interno FIM/APFI").FontSize(7).Italic().FontColor(Colors.Grey.Darken1);
+                        col.Item().AlignCenter().Text(x =>
+                        {
+                            x.Span("Página ");
+                            x.CurrentPageNumber();
+                            x.Span(" de ");
+                            x.TotalPages();
+                        });
                     });
                 });
             });

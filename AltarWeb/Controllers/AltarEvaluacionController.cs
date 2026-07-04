@@ -277,7 +277,25 @@ namespace AltarWeb.Controllers
                 equipo.Difunto.SemblanzaHobbiesTematica = semblanza;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            // SEC-15: dos jueces evaluando el mismo equipo a la vez; ambos pasaron el check
+            // "equipo.Evaluacion == null" y el segundo Add colisiona con el indice unico de
+            // Evaluacion.EquipoId. Confirmado con una prueba real de dos requests concurrentes: el
+            // "perdedor" no siempre lanza DbUpdateException (violacion SQL) — a veces EF Core lanza antes
+            // InvalidOperationException ("la asociacion Equipo/Evaluacion fue cortada") al reconciliar el
+            // grafo de cambios para la relacion requerida Equipo-Evaluacion. Se capturan ambos casos.
+            catch (Exception ex) when (esNueva && (ex is DbUpdateException || ex is InvalidOperationException))
+            {
+                // En vez de un 500 crudo, mandamos al juez al detalle de la evaluacion que ya quedo guardada.
+                var existente = await _context.EvaluacionesConcurso.AsNoTracking().FirstOrDefaultAsync(e => e.EquipoId == equipoId);
+                TempData["Error"] = "Otro juez ya registró una evaluación para este equipo mientras guardabas la tuya.";
+                return existente != null
+                    ? RedirectToAction("Detalle", new { id = existente.Id })
+                    : RedirectToAction("Historial");
+            }
 
             // Checklist de elementos: los campos llegan como Satisfaccion_{id}, Nivel_{id},
             // Tematizado_{id} (uno por cada uno de los 21 elementos).
