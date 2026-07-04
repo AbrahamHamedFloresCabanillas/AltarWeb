@@ -13,8 +13,18 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.22" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.22" />
     <PackageReference Include="QuestPDF" Version="2025.7.4" />
+  </ItemGroup>
+
+  <!--
+    DEP-01: herramienta de scaffolding de tiempo de diseño (dotnet-aspnet-codegenerator). Arrastra
+    transitivamente NuGet.Packaging/NuGet.Protocol 6.11.0 (advisory GHSA-g4vj-cjjj-v7hg, severidad Baja).
+    No se necesita en runtime, así que se condiciona a builds Debug para no incluirla (ni su
+    dependencia vulnerable) en el artefacto de producción (`dotnet publish -c Release`), sin perder la
+    herramienta de scaffolding en desarrollo local (`dotnet run` / IDE, que compilan en Debug).
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.22" />
   </ItemGroup>
 
 </Project>

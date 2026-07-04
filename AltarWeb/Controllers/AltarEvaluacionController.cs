@@ -249,6 +249,25 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Detalle", new { id = equipo.Evaluacion.Id });
             }
 
+            // SEC-13: vision.md §4.2 exige un Narrador por equipo; una evaluacion Final tambien implica
+            // que la ficha (incluido maestro encargado) esta completa. La designacion de narrador ya se
+            // fuerza auto-exclusiva en RegistroController.DesignarNarrador, pero nada impedia cerrar
+            // Final sin haber pasado por ahi.
+            if (accion == "final")
+            {
+                if (!EquipoValidacionHelper.TieneNarradorDesignado(equipo))
+                {
+                    TempData["Error"] = "No se puede cerrar como Final: el equipo no tiene un Narrador designado.";
+                    return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
+                }
+
+                if (!EquipoValidacionHelper.EsFichaCompleta(equipo))
+                {
+                    TempData["Error"] = "No se puede cerrar como Final: la Ficha de Registro del equipo está incompleta.";
+                    return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
+                }
+            }
+
             var periodo = PeriodoHelper.ObtenerPeriodoActual();
             var config = await ObtenerConfiguracionAsync(periodo);
 

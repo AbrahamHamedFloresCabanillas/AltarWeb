@@ -67,7 +67,8 @@ namespace AltarWeb.Controllers
 
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove("RegistranteId");
+            // SEC-14: Session.Clear() en vez de solo remover una clave — simetrico con AccesoController.Salir.
+            HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
 
@@ -444,7 +445,7 @@ namespace AltarWeb.Controllers
                 Registrante = registrante,
                 Equipo = equipo,
                 EsOrganizador = equipo != null && equipo.CreadoPorRegistranteId == registrante.Id,
-                FichaCompleta = equipo != null && EsFichaCompleta(equipo),
+                FichaCompleta = equipo != null && EquipoValidacionHelper.EsFichaCompleta(equipo),
                 EquipoEvaluado = equipo?.Evaluacion?.Estado == EstadoEvaluacion.Final,
                 Elementos = elementos
             });
@@ -860,15 +861,6 @@ namespace AltarWeb.Controllers
         {
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
             return FechaPasada(config?.FechaLimiteRequisitos);
-        }
-
-        private static bool EsFichaCompleta(Equipo equipo)
-        {
-            return !string.IsNullOrWhiteSpace(equipo.NombreAltar)
-                && !string.IsNullOrWhiteSpace(equipo.UbicacionAltar)
-                && equipo.Difunto != null
-                && !string.IsNullOrWhiteSpace(equipo.Difunto.Nombre)
-                && equipo.MaestroEncargadoId != null;
         }
 
         private async Task<RegistroSignupViewModel> ConstruirSignupViewModelAsync(RegistroSignupViewModel model)

@@ -29,6 +29,23 @@ namespace AltarWeb.ViewModels.Altar
         public bool FichaCompleta { get; set; }
     }
 
+    // SEC-12: CrearJuez bindeaba la entidad Juez completa (over-posting: Id, IsDeleted, FechaEliminado,
+    // Pendiente, CorreoInstitucional, ProveedorAuth quedaban expuestos al binder). Solo estos 4 campos
+    // son capturables desde el formulario; el resto se fija explicitamente en el controlador.
+    public class CrearJuezViewModel
+    {
+        [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        public string NombreCompleto { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa un usuario.")]
+        public string Usuario { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa una contraseña.")]
+        public string Password { get; set; } = string.Empty;
+
+        public string Rol { get; set; } = "Juez";
+    }
+
     public class ConfiguracionPeriodoAdminViewModel
     {
         public string Periodo { get; set; } = string.Empty;

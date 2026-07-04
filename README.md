@@ -15,7 +15,7 @@ La especificación funcional completa vive en [`vision.md`](vision.md).
 - **Generación de documentos:** [QuestPDF](https://www.questpdf.com/) (licencia comunitaria)
 - **Interfaz:** HTML5, CSS3 y FontAwesome 6, con un sistema de diseño propio ("Noche de Altar") que incluye **tema claro, oscuro y automático (según el sistema operativo)**
 - **Correo:** SMTP (Gmail) para el envío de constancias
-- **Autenticación:** sesión local con contraseña (hash SHA-256) o Google OAuth restringido a `@uabc.edu.mx`, tanto para participantes como para jueces
+- **Autenticación:** sesión local con contraseña (PBKDF2 vía `Microsoft.AspNetCore.Identity.PasswordHasher`) o Google OAuth restringido a `@uabc.edu.mx`, tanto para participantes como para jueces
 
 ---
 
@@ -161,9 +161,76 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
    ```bash
    dotnet run --project AltarWeb/AltarWeb --urls "http://localhost:5185"
    ```
-   Al iniciar por primera vez se crea un administrador semilla (`abram` / `1234` — cámbialo cuanto antes desde `/AltarAdmin/Jueces` o directamente en la base de datos).
+   Al iniciar por primera vez se crea un administrador semilla. La contraseña **no** es fija: se toma de
+   la variable de entorno `SEED_ADMIN_PASSWORD` si está definida, o se genera aleatoria y se imprime
+   **una sola vez** en el log de arranque. En ambos casos, la cuenta queda marcada con
+   `DebeCambiarPassword=true`: el primer login fuerza el cambio antes de permitir cualquier otra acción
+   (`/Acceso/CambiarPasswordObligatorio`). El usuario semilla es `abram` salvo que se defina
+   `SEED_ADMIN_USUARIO`.
 
-### Notas de seguridad para producción
-- Cambia la contraseña del administrador semilla.
-- Sustituye `GoogleAuth` y `Smtp` con credenciales reales antes de habilitar esos flujos (con placeholders, el registro/login local sigue funcionando normalmente).
-- El hash de contraseñas usa SHA-256 sin salt; se recomienda migrar a BCrypt/PBKDF2/Argon2 antes de un despliegue productivo.
+### Seguridad — estado real del sistema (actualizado tras auditoría de seguridad, 2026-07-04)
+
+`AUDITORIA_SEGURIDAD.md` documenta la auditoría completa (19 hallazgos) y el detalle de cada corrección.
+Resumen del estado actual:
+
+- **Contraseñas:** PBKDF2 (`Microsoft.AspNetCore.Identity.PasswordHasher`) para `Registrante` y `Juez`,
+  con migración automática *rehash-on-login* de cualquier hash SHA-256 legado — no rompe cuentas
+  existentes.
+- **Google OAuth:** el email/nombre verificados por Google se guardan server-side (en `Session`, token
+  de un solo uso con vida de 10 minutos) al llegar al callback; los formularios de completar registro
+  **ignoran** cualquier correo que venga posteado desde el cliente.
+- **CSRF:** filtro global `AutoValidateAntiforgeryTokenAttribute` en todos los POST/PUT/DELETE.
+- **Cookies de sesión:** `Secure` + `HttpOnly` + `SameSite=Lax` explícitos.
+- **Cabeceras de seguridad:** `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`
+  básica, `ForwardedHeaders` configurado para Azure App Service (o cualquier proxy que termine TLS).
+  **Deuda técnica conocida:** la CSP usa `script-src 'self' 'unsafe-inline'` porque el layout tiene
+  `<script>` inline (tema, sidebar, datepicker) — esto reduce el valor de la CSP contra XSS. Cerrarlo
+  requeriría mover esos scripts a archivos estáticos o usar nonces por request; queda pendiente.
+- **Rate limiting:** 10 intentos/minuto por IP en las rutas de login (`/Acceso/Login`, `/Registro/Login`,
+  callback de Google). **Nota operativa:** el límite es por IP; en una red institucional con NAT (varios
+  alumnos compartiendo la misma IP pública, como suele pasar en la red de la FIM), esto puede afectar a
+  usuarios legítimos si hay fricción simultánea. Vigilar en producción y ajustar el umbral si se detectan
+  falsos positivos.
+- **Logging:** intentos de login fallidos y accesos denegados por rol se registran (`ILogger`, nivel
+  Warning) con usuario/correo intentado e IP — nunca contraseñas ni tokens.
+- **Concurrencia:** índice único a nivel de BD para "un registrante por equipo activo por periodo" y para
+  "una evaluación por equipo", con manejo de errores para mostrar un mensaje amable en vez de un 500 ante
+  una carrera real (verificado con requests concurrentes reales, no solo lectura de código).
+- **PDF del Reporte de Cierre:** marca de agua "CONFIDENCIAL" y leyenda con fecha/usuario generador en
+  header y footer de cada página.
+- **`CrearJuez`:** usa un ViewModel dedicado (no bindea la entidad EF completa).
+- **Cierre de evaluación `Final`:** requiere un Narrador designado y la Ficha de Registro completa
+  (incluye maestro encargado vinculado); se rechaza con mensaje si falta alguno.
+- **Dependencias:** la herramienta de scaffolding (`Microsoft.VisualStudio.Web.CodeGeneration.Design`,
+  que arrastraba `NuGet.Packaging`/`NuGet.Protocol` vulnerables) solo se incluye en builds `Debug`; un
+  `dotnet publish -c Release` no la empaqueta.
+
+### Checklist de despliegue a producción (Azure App Service u otro proxy)
+
+- [ ] Fijar `ASPNETCORE_ENVIRONMENT=Production` explícitamente en la configuración del App Service (en
+  `Development` se muestra la Developer Exception Page con stack trace; no asumir el default).
+- [ ] Definir `SEED_ADMIN_PASSWORD` (o dejar que se genere aleatoria y capturarla del log de arranque
+  antes de que rote el log).
+- [ ] Confirmar que el proxy/App Service termina TLS y que `ForwardedHeaders` refleja `https` en
+  `Request.Scheme` (sin esto, las cookies `Secure` y el callback de Google no funcionan tras el proxy).
+- [ ] Sustituir `GoogleAuth` y `Smtp` en `appsettings.json` con credenciales reales.
+- [ ] Publicar con `dotnet publish -c Release` (no `Debug`) para excluir la herramienta de scaffolding.
+
+### Decisiones de producto pendientes (no técnicas)
+
+- **Verificación de correo en registro local** (`PRIV-05` en `AUDITORIA_SEGURIDAD.md`): el registro local
+  (`/Registro/Signup`, `/Registro/SignupJuez`) no confirma que quien se registra controla el correo
+  institucional. **Decisión explícita del propietario del proyecto (2026-07-04): aceptar el riesgo por
+  ahora, sin cambios de código** — no se implementó verificación de correo ni restricción a Google-only
+  en esta ronda. Pendiente de revisión futura.
+- **Normalización de `AutodescripcionCultural`** (`PRIV-04`): se usa `Trim().ToLowerInvariant()` como
+  solución temporal para agrupar variantes de escritura antes de contar (vision.md §13). El comité aún
+  debe decidir entre una normalización manual (catálogo de equivalencias) o heurística. No se tocó en
+  esta ronda.
+- **Autenticación por `[Authorize]`/`ClaimsPrincipal`** (`SEC-08`): hoy cada acción protegida hace un
+  chequeo manual de sesión (`EstaAutenticado()`/`EsAdmin()`); la cobertura actual es completa (auditoría
+  confirmó que no hay ningún endpoint alcanzable sin sesión), pero depende de que cada acción nueva
+  recuerde añadir el chequeo. Migrar a un filtro/atributo de autorización central es una mejora de
+  robustez de esfuerzo alto, diferida post-lanzamiento — no es un hueco de seguridad activo.
+- **`ReportePeriodoPdf` sin rate-limit propio** (`PRIV-03`): cerrado como *aceptable por paridad* — el
+  gate (solo Admin autenticado) es idéntico al del resto del backoffice; no amerita un control distinto.

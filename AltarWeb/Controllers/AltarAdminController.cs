@@ -37,29 +37,38 @@ namespace AltarWeb.Controllers
         {
             if (!EsAdmin()) return RedirigirSinPermisos();
             ViewBag.Nav = ObtenerNavContext("Jueces");
-            return View(new Juez());
+            return View(new CrearJuezViewModel());
         }
 
         [HttpPost]
-        public IActionResult CrearJuez(Juez juez)
+        public IActionResult CrearJuez(CrearJuezViewModel model)
         {
             if (!EsAdmin()) return RedirigirSinPermisos();
 
-            if (!string.IsNullOrWhiteSpace(juez.Usuario) && _context.Jueces.IgnoreQueryFilters().Any(j => j.Usuario == juez.Usuario))
+            if (!string.IsNullOrWhiteSpace(model.Usuario) && _context.Jueces.IgnoreQueryFilters().Any(j => j.Usuario == model.Usuario))
             {
-                ModelState.AddModelError(nameof(juez.Usuario), "Ese usuario ya existe.");
+                ModelState.AddModelError(nameof(model.Usuario), "Ese usuario ya existe.");
             }
-            if (juez.Rol != "Admin" && juez.Rol != "Juez") juez.Rol = "Juez";
+            if (model.Rol != "Admin" && model.Rol != "Juez") model.Rol = "Juez";
 
             if (!ModelState.IsValid)
             {
                 ViewBag.Nav = ObtenerNavContext("Jueces");
-                return View(juez);
+                return View(model);
             }
 
-            juez.Password = AccesoController.HashPassword(juez.Password);
-            juez.ProveedorAuth = "Local";
-            juez.Pendiente = false;
+            // SEC-12: mapeo manual campo por campo (en vez de bindear la entidad EF directo) — Id,
+            // IsDeleted, FechaEliminado, CorreoInstitucional y ProveedorAuth quedan fuera del alcance del
+            // formulario y se fijan aqui explicitamente, como el resto del proyecto ya hace con ViewModels.
+            var juez = new Juez
+            {
+                NombreCompleto = model.NombreCompleto.Trim(),
+                Usuario = model.Usuario.Trim(),
+                Password = AccesoController.HashPassword(model.Password),
+                Rol = model.Rol,
+                ProveedorAuth = "Local",
+                Pendiente = false
+            };
 
             _context.Jueces.Add(juez);
             _context.SaveChanges();
