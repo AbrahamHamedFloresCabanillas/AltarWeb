@@ -9,7 +9,7 @@
     <main class="altar-main">
         <partial name="_AltarTopbarPartial" model="@(("Historial de evaluaciones", "Evaluaciones agrupadas por periodo académico", true))" />
 
-        <div class="altar-grid-3" style="grid-template-columns:repeat(4, 1fr); margin-bottom:24px;">
+        <div class="altar-grid-4" style="margin-bottom:24px;">
             <div class="altar-stat-card">
                 <div class="altar-stat-value">@Model.TotalEvaluaciones</div>
                 <div class="altar-stat-label">Evaluaciones &middot; en todos los periodos</div>
@@ -34,7 +34,8 @@
         {
             <div class="altar-historial-grupo" data-periodo-grupo="@periodo.Key">
                 <div class="altar-card-subtitle" style="margin-top:20px;">Periodo @periodo.Key &middot; @periodo.Value.Count evaluaciones</div>
-                <table class="altar-table" style="margin-bottom:20px;">
+                <div class="altar-table-wrap" style="margin-bottom:20px;">
+                <table class="altar-table">
                     <thead>
                         <tr>
                             <th>Equipo</th>
@@ -77,6 +78,7 @@
                         }
                     </tbody>
                 </table>
+                </div>
             </div>
         }
     </main>

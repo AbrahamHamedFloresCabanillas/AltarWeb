@@ -14,12 +14,17 @@ namespace AltarWeb.Controllers
         private readonly AltarDbContext _context;
         private readonly ReportePeriodoService _reportePeriodo;
         private readonly ILogger<AltarAdminController> _logger;
+        private readonly IWebHostEnvironment _entorno;
 
-        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger)
+        // Tope de 25 MB para el recorrido en PDF; suficiente para un mapa por carrera sin permitir abusos.
+        private const long RecorridoMaxBytes = 25 * 1024 * 1024;
+
+        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger, IWebHostEnvironment entorno)
         {
             _context = context;
             _reportePeriodo = reportePeriodo;
             _logger = logger;
+            _entorno = entorno;
         }
 
         // --- Jueces (nuevo controlador/vistas sobre el modelo legado Juez; no toca JuecesController) ---
@@ -262,6 +267,21 @@ namespace AltarWeb.Controllers
                     $"El umbral de agrupación demográfica no puede ser menor a {PrivacidadReporteHelper.UmbralMinimo}.");
             }
 
+            // Validacion del PDF del recorrido (solo si el admin adjunto uno): extension, tipo y tamaño.
+            var archivo = model.ArchivoRecorrido;
+            if (archivo != null && archivo.Length > 0)
+            {
+                var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+                if (extension != ".pdf" || !EsContenidoPdf(archivo))
+                {
+                    ModelState.AddModelError(nameof(model.ArchivoRecorrido), "El recorrido debe ser un archivo PDF.");
+                }
+                else if (archivo.Length > RecorridoMaxBytes)
+                {
+                    ModelState.AddModelError(nameof(model.ArchivoRecorrido), "El PDF no puede pesar más de 25 MB.");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 ViewBag.Nav = ObtenerNavContext("Configuracion");
@@ -277,6 +297,11 @@ namespace AltarWeb.Controllers
             {
                 config = new ConfiguracionPeriodo { Periodo = periodo };
                 _context.ConfiguracionesPeriodo.Add(config);
+            }
+
+            if (archivo != null && archivo.Length > 0)
+            {
+                config.RecorridoPdf = await GuardarRecorridoAsync(archivo, periodo);
             }
 
             config.FechaLimiteInscripcion = model.FechaLimiteInscripcion;
@@ -328,6 +353,73 @@ namespace AltarWeb.Controllers
                 ReportePeriodoService.CalcularAlumnosPorCarrera(registrantesEnPeriodo.DistinctBy(r => r.Id).ToList());
 
             return vm;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> QuitarRecorrido()
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+
+            var periodo = PeriodoHelper.ObtenerPeriodoActual();
+            var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
+            if (config != null && !string.IsNullOrEmpty(config.RecorridoPdf))
+            {
+                EliminarArchivoFisico(config.RecorridoPdf);
+                config.RecorridoPdf = null;
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Recorrido en PDF eliminado.";
+            }
+            return RedirectToAction("Configuracion");
+        }
+
+        // Guarda el PDF en wwwroot/uploads/recorridos con un nombre estable por periodo (se sobrescribe
+        // al re-subir) y devuelve la ruta web servible que se persiste en ConfiguracionPeriodo.RecorridoPdf.
+        private async Task<string> GuardarRecorridoAsync(IFormFile archivo, string periodo)
+        {
+            var webRoot = _entorno.WebRootPath ?? Path.Combine(_entorno.ContentRootPath, "wwwroot");
+            var carpeta = Path.Combine(webRoot, "uploads", "recorridos");
+            Directory.CreateDirectory(carpeta);
+
+            var nombreArchivo = $"recorrido-{periodo}.pdf";
+            var rutaFisica = Path.Combine(carpeta, nombreArchivo);
+
+            using (var stream = new FileStream(rutaFisica, FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }
+
+            return $"/uploads/recorridos/{nombreArchivo}";
+        }
+
+        private void EliminarArchivoFisico(string rutaWeb)
+        {
+            try
+            {
+                var webRoot = _entorno.WebRootPath ?? Path.Combine(_entorno.ContentRootPath, "wwwroot");
+                var rutaFisica = Path.Combine(webRoot, rutaWeb.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(rutaFisica)) System.IO.File.Delete(rutaFisica);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogWarning(ex, "No se pudo eliminar el archivo de recorrido {Ruta}.", rutaWeb);
+            }
+        }
+
+        // Verifica la firma %PDF al inicio del archivo (mas confiable que el Content-Type del cliente).
+        private static bool EsContenidoPdf(IFormFile archivo)
+        {
+            try
+            {
+                using var stream = archivo.OpenReadStream();
+                Span<byte> encabezado = stackalloc byte[4];
+                var leidos = stream.Read(encabezado);
+                return leidos == 4 && encabezado[0] == 0x25 && encabezado[1] == 0x50
+                    && encabezado[2] == 0x44 && encabezado[3] == 0x46; // "%PDF"
+            }
+            catch (IOException)
+            {
+                return false;
+            }
         }
 
         // decimal(5,4) en BD conserva la escala (30.0000); esto la normaliza para mostrarla limpia (30).

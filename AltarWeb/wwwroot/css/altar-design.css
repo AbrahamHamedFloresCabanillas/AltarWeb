@@ -465,6 +465,11 @@ html, [data-theme="dark"] {
 .altar-gap-md { gap: 16px; }
 .altar-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .altar-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.altar-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+/* Envoltura de tablas fuera de una .altar-card: se desplazan horizontalmente en pantallas
+   angostas en vez de desbordar el layout (mismo comportamiento que .altar-card:has(.altar-table)). */
+.altar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .altar-mt-0 { margin-top: 0; }
 .altar-text-muted { color: var(--altar-text-muted); }
 .altar-w-100 { width: 100%; }
@@ -480,6 +485,7 @@ html, [data-theme="dark"] {
 
 @media (max-width: 1024px) {
     .altar-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .altar-grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 900px) {
@@ -540,6 +546,10 @@ html, [data-theme="dark"] {
     .altar-card { padding: 16px; }
     .altar-page-title { font-size: 20px; }
     .altar-stat-value { font-size: 22px; }
+    .altar-stat-card { padding: 14px; }
     .altar-seg-option { padding: 8px 8px; font-size: 11px; }
     .altar-btn { padding: 11px 14px; font-size: 14px; }
+
+    /* Tablas: celdas mas compactas para reducir el desplazamiento horizontal en telefonos. */
+    .altar-table th, .altar-table td { padding: 10px 8px; font-size: 13px; }
 }

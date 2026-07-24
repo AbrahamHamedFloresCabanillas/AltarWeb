@@ -55,7 +55,10 @@ namespace AltarWeb.ViewModels.Altar
         public Equipo? Equipo { get; set; }
         public bool EsOrganizador { get; set; }
         public bool FichaCompleta { get; set; }
+        // Final: habilita la descarga de constancia (una preliminar puede cambiar todavia).
         public bool EquipoEvaluado { get; set; }
+        // Cualquier evaluacion (preliminar o final): cierra la edicion de la ficha/integrantes.
+        public bool EdicionBloqueada { get; set; }
         public List<Elemento> Elementos { get; set; } = new();
     }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AltarWeb.Models.Registro;
+using Microsoft.AspNetCore.Http;
 
 namespace AltarWeb.ViewModels.Altar
 {
@@ -56,7 +57,11 @@ namespace AltarWeb.ViewModels.Altar
         [DataType(DataType.Date)]
         public DateTime? FechaLimiteRequisitos { get; set; }
 
+        // Ruta web del PDF ya guardado (p. ej. /uploads/recorridos/recorrido-2026-2.pdf).
         public string? RecorridoPdf { get; set; }
+
+        // Archivo nuevo subido desde el formulario; si viene null se conserva el actual.
+        public IFormFile? ArchivoRecorrido { get; set; }
 
         [Range(0, 100)] public decimal PesoObjetivoCulturalPct { get; set; }
         [Range(0, 100)] public decimal PesoEsenciaPersonalidadPct { get; set; }

@@ -1,7 +1,8 @@
+@using AltarWeb.ViewModels.Altar
 @{
     ViewData["Title"] = "Recorrido PDF";
     string? recorrido = ViewBag.RecorridoPdf;
-    var avance = (IEnumerable<dynamic>)ViewBag.Avance;
+    var avance = (IEnumerable<AvanceCarreraViewModel>)ViewBag.Avance;
 }
 
 <div class="altar-app">
@@ -16,32 +17,65 @@
                 @if (!string.IsNullOrWhiteSpace(recorrido))
                 {
                     <div class="altar-flex altar-gap-sm" style="justify-content:space-between;">
-                        <div class="altar-flex altar-gap-sm"><i class="fa-solid fa-file-pdf" style="color:var(--altar-danger);"></i> @recorrido</div>
+                        <div class="altar-flex altar-gap-sm"><i class="fa-solid fa-file-pdf" style="color:var(--altar-danger);"></i> @System.IO.Path.GetFileName(recorrido)</div>
                         <a href="@recorrido" class="altar-btn altar-btn-outline altar-btn-sm" target="_blank"><i class="fa-solid fa-download"></i> Descargar</a>
                     </div>
+                    <object data="@recorrido" type="application/pdf" style="width:100%; height:520px; border:1px solid var(--altar-border); border-radius:var(--altar-radius); margin-top:16px;">
+                        <div style="border:1px dashed var(--altar-border); border-radius:var(--altar-radius); padding:60px 20px; text-align:center;" class="altar-text-muted">
+                            Tu navegador no puede mostrar el PDF aqu&iacute;. <a href="@recorrido" target="_blank">&Aacute;brelo en una pesta&ntilde;a nueva</a>.
+                        </div>
+                    </object>
                 }
                 else
                 {
                     <p class="altar-text-muted">El administrador todav&iacute;a no sube un recorrido para este periodo.</p>
+                    <div style="border:1px dashed var(--altar-border); border-radius:var(--altar-radius); padding:60px 20px; text-align:center; margin-top:16px;" class="altar-text-muted">
+                        mapa del recorrido por carrera (PDF subido por el administrador)
+                    </div>
                 }
-                <div style="border:1px dashed var(--altar-border); border-radius:var(--altar-radius); padding:60px 20px; text-align:center; margin-top:16px;" class="altar-text-muted">
-                    mapa del recorrido por carrera (PDF subido por el administrador)
-                </div>
             </div>
 
             <div class="altar-card">
                 <div class="altar-card-title">Avance por carrera</div>
-                @foreach (var carrera in avance)
+
+                @if (!avance.Any())
                 {
-                    var pct = carrera.Total > 0 ? (int)(100.0 * carrera.Calificados / carrera.Total) : 0;
-                    <div style="margin-bottom:14px;">
-                        <div class="altar-flex" style="justify-content:space-between; font-size:13px; margin-bottom:4px;">
-                            <span>@carrera.Carrera</span>
-                            <span class="altar-text-muted">@carrera.Calificados/@carrera.Total calificados</span>
+                    <p class="altar-text-muted">No hay equipos registrados en este periodo.</p>
+                }
+
+                @{
+                    var grupos = new[]
+                    {
+                        (Estado: AvanceEstado.Final,        Titulo: "Final",        Badge: "altar-badge-success", Barra: "var(--altar-primary)"),
+                        (Estado: AvanceEstado.Preliminar,   Titulo: "En preliminar", Badge: "altar-badge-warning", Barra: "var(--altar-amber)"),
+                        (Estado: AvanceEstado.SinCalificar, Titulo: "Sin calificar", Badge: "altar-badge-muted",   Barra: "var(--altar-text-muted)")
+                    };
+                }
+
+                @foreach (var grupo in grupos)
+                {
+                    var carreras = avance.Where(a => a.Estado == grupo.Estado).ToList();
+                    if (carreras.Count == 0) { continue; }
+
+                    <div style="margin-top:18px;">
+                        <div class="altar-flex altar-gap-sm" style="margin-bottom:10px;">
+                            <span class="altar-badge @grupo.Badge">@grupo.Titulo</span>
+                            <span class="altar-text-muted" style="font-size:12px;">@carreras.Count carrera@(carreras.Count == 1 ? "" : "s")</span>
                         </div>
-                        <div style="background:var(--altar-surface-alt); border-radius:999px; height:6px;">
-                            <div style="background:var(--altar-primary); border-radius:999px; height:6px; width:@(pct)%;"></div>
-                        </div>
+
+                        @foreach (var carrera in carreras)
+                        {
+                            var pct = carrera.Total > 0 ? (int)(100.0 * carrera.Finales / carrera.Total) : 0;
+                            <div style="margin-bottom:14px;">
+                                <div class="altar-flex" style="justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                                    <span>@carrera.Carrera</span>
+                                    <span class="altar-text-muted">@carrera.Finales final &middot; @carrera.Preliminares prelim. &middot; @carrera.SinCalificar sin calif. &middot; @carrera.Total total</span>
+                                </div>
+                                <div style="background:var(--altar-surface-alt); border-radius:999px; height:6px;">
+                                    <div style="background:@grupo.Barra; border-radius:999px; height:6px; width:@(pct)%;"></div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
             </div>

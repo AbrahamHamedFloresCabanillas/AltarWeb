@@ -426,12 +426,14 @@ namespace AltarWeb.Controllers
                 .Include(e => e.Carrera)
                 .Where(e => e.Periodo == periodo)
                 .GroupBy(e => e.Carrera.Nombre)
-                .Select(g => new
+                .Select(g => new AvanceCarreraViewModel
                 {
                     Carrera = g.Key,
                     Total = g.Count(),
-                    Calificados = g.Count(e => e.Evaluacion != null && e.Evaluacion.Estado == EstadoEvaluacion.Final)
+                    Finales = g.Count(e => e.Evaluacion != null && e.Evaluacion.Estado == EstadoEvaluacion.Final),
+                    Preliminares = g.Count(e => e.Evaluacion != null && e.Evaluacion.Estado == EstadoEvaluacion.Preliminar)
                 })
+                .OrderBy(a => a.Carrera)
                 .ToListAsync();
 
             ViewBag.RecorridoPdf = config.RecorridoPdf;

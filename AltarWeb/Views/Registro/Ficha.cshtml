@@ -110,6 +110,10 @@
             {
                 <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
             }
+            else if (Model.TieneEvaluacion)
+            {
+                <div class="altar-hint" style="border-color:var(--altar-danger); color:var(--altar-danger);"><i class="fa-solid fa-lock"></i> El equipo ya tiene una calificaci&oacute;n registrada; la ficha ya no puede editarse.</div>
+            }
             else if (Model.FechaLimiteRequisitosPasada)
             {
                 <div class="altar-hint" style="border-color:var(--altar-danger); color:var(--altar-danger);"><i class="fa-solid fa-lock"></i> La fecha l&iacute;mite para completar los requisitos ya pas&oacute;; la ficha ya no puede editarse. Contacta a un administrador si necesitas hacer cambios.</div>

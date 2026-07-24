@@ -75,5 +75,7 @@ namespace AltarWeb.ViewModels.Altar
         public bool PuedeEditar { get; set; }
         public bool ExigirMinimoUnAnioFallecimiento { get; set; }
         public bool FechaLimiteRequisitosPasada { get; set; }
+        // Existe una evaluacion (preliminar o final): la ficha queda cerrada aunque no haya pasado la fecha.
+        public bool TieneEvaluacion { get; set; }
     }
 }

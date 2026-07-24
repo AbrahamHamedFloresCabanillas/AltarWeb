@@ -368,3 +368,5 @@ FodyWeavers.xsd
 # Configuration files containing credentials
 AltarWeb/appsettings.json
 AltarWeb/appsettings.Development.json
+# Archivos subidos en runtime (recorridos PDF, etc.) — no son parte del codigo
+AltarWeb/wwwroot/uploads/

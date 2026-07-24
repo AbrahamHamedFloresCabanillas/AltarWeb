@@ -15,7 +15,7 @@
             <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
         }
 
-        <form asp-controller="AltarAdmin" asp-action="Configuracion" method="post">
+        <form asp-controller="AltarAdmin" asp-action="Configuracion" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="altar-error"></div>
             <input type="hidden" asp-for="Periodo" />
             <input type="hidden" asp-for="RecorridoPdf" />
@@ -40,8 +40,30 @@
 
             <div class="altar-card">
                 <div class="altar-card-title">Recorrido en PDF</div>
-                <p class="altar-card-subtitle">Lo consultan los jueces durante la evaluaci&oacute;n. La subida de archivo real queda pendiente de una fase posterior; por ahora se guarda solo la ruta.</p>
-                <div class="altar-hint">@(string.IsNullOrEmpty(Model.RecorridoPdf) ? "Sin recorrido subido para este periodo." : Model.RecorridoPdf)</div>
+                <p class="altar-card-subtitle">Lo consultan los jueces durante la evaluaci&oacute;n. Sube el mapa del recorrido por carrera (PDF, m&aacute;ximo 25 MB).</p>
+
+                @if (!string.IsNullOrEmpty(Model.RecorridoPdf))
+                {
+                    <div class="altar-flex altar-gap-sm" style="justify-content:space-between; margin-bottom:12px;">
+                        <div class="altar-flex altar-gap-sm">
+                            <i class="fa-solid fa-file-pdf" style="color:var(--altar-danger);"></i>
+                            <a href="@Model.RecorridoPdf" target="_blank">@System.IO.Path.GetFileName(Model.RecorridoPdf)</a>
+                        </div>
+                        <button type="submit" formaction="@Url.Action("QuitarRecorrido")" formnovalidate class="altar-btn altar-btn-outline altar-btn-sm" style="color:var(--altar-danger);" onclick="return confirm('¿Quitar el recorrido en PDF de este periodo?');">
+                            <i class="fa-solid fa-trash"></i> Quitar
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="altar-hint">Sin recorrido subido para este periodo.</div>
+                }
+
+                <div class="altar-field" style="margin-bottom:0;">
+                    <label class="altar-label">@(string.IsNullOrEmpty(Model.RecorridoPdf) ? "Subir recorrido" : "Reemplazar recorrido")</label>
+                    <input asp-for="ArchivoRecorrido" type="file" accept="application/pdf" class="altar-input" />
+                    <span asp-validation-for="ArchivoRecorrido" class="altar-error"></span>
+                </div>
             </div>
 
             <div class="altar-card">

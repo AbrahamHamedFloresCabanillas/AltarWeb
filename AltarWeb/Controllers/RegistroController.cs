@@ -447,6 +447,7 @@ namespace AltarWeb.Controllers
                 EsOrganizador = equipo != null && equipo.CreadoPorRegistranteId == registrante.Id,
                 FichaCompleta = equipo != null && EquipoValidacionHelper.EsFichaCompleta(equipo),
                 EquipoEvaluado = equipo?.Evaluacion?.Estado == EstadoEvaluacion.Final,
+                EdicionBloqueada = equipo?.Evaluacion != null,
                 Elementos = elementos
             });
         }
@@ -595,9 +596,9 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            if (equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
+            if (equipo.Evaluacion != null)
             {
-                TempData["Error"] = "El equipo ya fue evaluado en definitiva; la ficha no puede editarse.";
+                TempData["Error"] = "El equipo ya tiene una calificación registrada; la ficha no puede editarse.";
                 return RedirectToAction("Dashboard");
             }
 
@@ -652,7 +653,7 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
+            if (equipo == null || equipo.Evaluacion != null)
             {
                 TempData["Error"] = "No puedes modificar integrantes de este equipo.";
                 return RedirectToAction("Ficha");
@@ -701,7 +702,7 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
+            if (equipo == null || equipo.Evaluacion != null)
             {
                 TempData["Error"] = "No puedes modificar integrantes de este equipo.";
                 return RedirectToAction("Ficha");
@@ -730,7 +731,7 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
+            if (equipo == null || equipo.Evaluacion != null)
             {
                 TempData["Error"] = "No puedes modificar integrantes de este equipo.";
                 return RedirectToAction("Ficha");
@@ -842,7 +843,8 @@ namespace AltarWeb.Controllers
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
             vm.ExigirMinimoUnAnioFallecimiento = config?.ExigirMinimoUnAnioFallecimiento ?? true;
             vm.FechaLimiteRequisitosPasada = FechaPasada(config?.FechaLimiteRequisitos);
-            vm.PuedeEditar = equipo.Evaluacion?.Estado != EstadoEvaluacion.Final && !vm.FechaLimiteRequisitosPasada;
+            vm.TieneEvaluacion = equipo.Evaluacion != null;
+            vm.PuedeEditar = !vm.TieneEvaluacion && !vm.FechaLimiteRequisitosPasada;
 
             return vm;
         }
