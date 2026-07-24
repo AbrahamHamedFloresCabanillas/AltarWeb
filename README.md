@@ -28,8 +28,8 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 - **Auto-registro de jueces** (`/Registro/SignupJuez`, local o Google): un juez nuevo captura nombre, correo institucional y matrícula/número de empleado (5 dígitos). Si entra por Google, primero se autentica y luego solo completa la matrícula (`/Registro/CompletarGoogleJuez`), ya que Google no la proporciona.
 - Toda cuenta auto-registrada queda **pendiente** hasta que un administrador la aprueba desde `/AltarAdmin/Jueces` (badge "Pendiente" + botón "Aprobar"). Mientras esté pendiente, el login queda bloqueado con un mensaje explícito.
 - El administrador también puede crear jueces manualmente desde `/AltarAdmin/CrearJuez` (quedan activos de inmediato, sin aprobación).
-- **Rol Juez:** crea y edita evaluaciones (`Preliminar` → `Final`), consulta el historial por periodo, ve avance por carrera, consulta el recorrido en PDF y descarga/envía constancias.
-- **Rol Administrador:** todo lo del juez, más gestión de jueces (alta, aprobación, soft-delete/reactivación), gestión de registrantes y equipos, y configuración del periodo (fechas límite, recorrido PDF, pesos de calificación).
+- **Rol Juez:** crea y edita evaluaciones (`Preliminar` → `Final`), consulta el historial por periodo, ve el avance por carrera clasificado en *Final / En preliminar / Sin calificar*, consulta el recorrido en PDF (embebido en la página) y descarga/envía constancias.
+- **Rol Administrador:** todo lo del juez, más gestión de jueces (alta, aprobación, soft-delete/reactivación), gestión de registrantes y equipos, y configuración del periodo (fechas límite, **subida del recorrido en PDF**, pesos de calificación).
 
 ### Participantes (Portal de Registro)
 - Alumnos (matrícula de **7 dígitos**), maestros y administrativos (matrícula/no. de empleado de **5 dígitos**) se registran en `/Registro/Signup` con correo institucional y contraseña, o con **Google OAuth**.
@@ -41,8 +41,8 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 ## 👥 Equipos y Ficha de Registro del Altar
 
 - Un registrante crea su equipo (`/Registro/CrearEquipo`) y completa la **Ficha de Registro del Altar** (`/Registro/Ficha`): nombre del grupo, nombre del altar, difunto (nombre y fecha de defunción), programa educativo, lugar de exposición, maestro encargado (por matrícula; si aún no está registrado queda pendiente hasta que él mismo se registre) y si el equipo **hará Catrina o no**.
-- La ficha es editable mientras el equipo no tenga una evaluación `Final` **y** no haya pasado la fecha límite de requisitos.
-- El organizador administra integrantes y designa un narrador; una vez evaluado en `Final`, la lista de integrantes queda cerrada para conservar el historial y las constancias.
+- La ficha es editable mientras el equipo **no tenga ninguna evaluación registrada** (ni `Preliminar` ni `Final`) **y** no haya pasado la fecha límite de requisitos. En cuanto existe una calificación —aunque sea preliminar— la ficha e integrantes quedan cerrados, para que el equipo no cambie respecto a lo que el juez ya evaluó. (La descarga de constancia sí sigue atada al estado `Final`.)
+- El organizador administra integrantes y designa un narrador; en cuanto el equipo tiene una evaluación (preliminar o final), la lista de integrantes queda cerrada para conservar la consistencia con lo evaluado y las constancias.
 - Un registrante solo puede pertenecer a un equipo activo por periodo (`YYYY-1` / `YYYY-2`).
 - **Fechas límite configurables por el administrador** desde `/AltarAdmin/Configuracion` (aplican por periodo académico):
   - **Inscripción de equipos:** pasada esa fecha, ya no se pueden crear equipos nuevos (`/Registro/CrearEquipo` se bloquea con un mensaje explicativo). No afecta el registro de participantes, solo la creación de equipos.
