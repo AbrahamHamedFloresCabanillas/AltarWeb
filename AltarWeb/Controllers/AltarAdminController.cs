@@ -27,14 +27,17 @@ namespace AltarWeb.Controllers
             _entorno = entorno;
         }
 
-        // --- Jueces (nuevo controlador/vistas sobre el modelo legado Juez; no toca JuecesController) ---
+        // --- Jueces (vistas de backoffice sobre la entidad Juez, que sigue siendo la tabla de auth) ---
 
         public IActionResult Jueces()
         {
             if (!EsAdmin()) return RedirigirSinPermisos();
             ViewBag.Nav = ObtenerNavContext("Jueces");
 
-            var jueces = _context.Jueces.OrderBy(j => j.NombreCompleto).ToList();
+            // IgnoreQueryFilters: el filtro global de Juez es !IsDeleted, asi que sin esto los
+            // desactivados no aparecen y el boton "Reactivar" de la vista queda inalcanzable
+            // (mismo criterio que RegistrantesYEquipos, que ya listaba inactivos).
+            var jueces = _context.Jueces.IgnoreQueryFilters().OrderBy(j => j.NombreCompleto).ToList();
             return View(jueces);
         }
 

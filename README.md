@@ -55,9 +55,9 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 Desde `/AltarEvaluacion/NuevaEvaluacion` el juez busca el equipo por carrera (tiempo real) y la vista precarga en solo lectura todos los datos de la Ficha de Registro.
 
 - **Niveles:** el altar es de **3 o 7 niveles**; el checklist se agrupa por nivel y el juez asigna una nota de **Distribución por Niveles**.
-- **Checklist de 21 elementos** (catálogo documentado en `vision.md` §8) con **escala de satisfacción** por elemento (No presente / Poco / Satisfactorio / Muy satisfactorio) en vez de check binario, más un marcador de "¿tematizado?" que otorga un bono configurable. Cada elemento tiene un ícono **(i)** con su mini-manual (significado y colocación).
+- **Checklist de 24 elementos** (catálogo documentado en `vision.md` §8) con **escala de satisfacción** por elemento (No presente / Poco / Satisfactorio / Muy satisfactorio) en vez de check binario, más un marcador de "¿tematizado?" que otorga un bono configurable. Cada elemento tiene un ícono **(i)** con su mini-manual (significado y colocación).
 - **Categorías de calificación** (0–10 cada una): **Objetivo Cultural** (sugerido automáticamente a partir del Puntaje de Elementos), **Esencia y Personalidad**, **Valoración General**, **Distribución por Niveles** y **Narrador**.
-- **Catrina:** el equipo declara en su Ficha de Registro si hará Catrina o no; la pestaña de evaluación de Catrina solo aparece si el equipo lo declaró. Es una **categoría independiente** con su propio ranking por carrera — no suma a la Nota Final del altar.
+- **Catrina:** el equipo declara en su Ficha de Registro si hará Catrina o no; la pestaña de evaluación de Catrina solo aparece si el equipo lo declaró. Es una **categoría independiente** con su propio ranking por carrera — no suma a la Nota Final del altar. Se califica con 5 criterios ponderados (Vestuario 25%, Maquillaje 20%, Accesorios 10%, Originalidad y Creatividad 20%, Apego a las Tradiciones 25%), **configurables por periodo** desde `/AltarAdmin/Configuracion`.
 - **Estados:** `Preliminar` (editable las veces que se necesite) y `Final` (requiere confirmación explícita; solo las evaluaciones `Final` cuentan para ranking, constancias y reportería).
 
 ### Fórmula de la Nota Final
@@ -70,6 +70,15 @@ NotaFinal = ObjetivoCultural·30% + EsenciaPersonalidad·30% + ValoracionGeneral
 ```
 
 El **Puntaje de Elementos** alimenta como sugerencia al Objetivo Cultural, en vez de sumar aparte. El lugar (1°/2°/3°) se calcula por carrera al cerrar una evaluación como `Final`.
+
+La **Nota de Catrina** es independiente y tiene su propio bloque de pesos en la misma pantalla (también deben sumar 100%):
+
+```
+NotaCatrina = Vestuario·25% + Maquillaje·20% + Accesorios·10%
+            + OriginalidadCreatividad·20% + ApegoTradiciones·25%
+```
+
+> Los pesos se aplican **al momento de guardar** cada evaluación: cambiarlos no recalcula las notas ya guardadas, así que conviene ajustarlos antes de que los jueces empiecen a evaluar.
 
 ---
 

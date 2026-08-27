@@ -35,7 +35,7 @@ Esta versión **no es retrocompatible** con el esquema actual. Cambios estructur
 2. **Identificador unificado**: matrícula (alumno) / no. de empleado o matrícula de 5 dígitos (maestro/administrativo).
 3. **Nuevos campos demográficos** del registrante: género, carrera, autodescripción cultural.
 4. **Características del difunto**: se agrega año de fallecimiento (y semblanza/hobbies).
-5. **Checklist completamente nuevo**: nuevo catálogo de ~21 elementos (sección 8) y **escala de satisfacción** por elemento en lugar de check binario + bonus temático.
+5. **Checklist completamente nuevo**: nuevo catálogo de 24 elementos (sección 8) y **escala de satisfacción** por elemento en lugar de check binario + bonus temático.
 6. **Evaluación organizada por nivel** del altar; los **niveles entran en la calificación**.
 7. **Renombre de las tres grandes categorías** de calificación (sección 7.3).
 8. **Evaluación del narrador** como componente calificable.
@@ -139,7 +139,13 @@ contraseña o Google OAuth restringido a ese dominio).
 - `FechaLimiteInscripcion`
 - `FechaLimiteRequisitos` *(para X fecha los equipos deben tener todos los requisitos)*
 - `RecorridoPdf` *(archivo subido por el admin)*
-- Pesos de calificación (sección 7.7) si se decide hacerlos configurables.
+- Pesos de la **Nota Final** del altar (sección 7.7): `PesoObjetivoCultural`, `PesoEsenciaPersonalidad`, `PesoValoracionGeneral`, `PesoDistribucionNiveles`, `PesoNarrador` *(deben sumar 100%)*
+- Pesos de la **Nota de Catrina** (sección 7.5): `PesoCatrinaVestuario`, `PesoCatrinaMaquillaje`, `PesoCatrinaAccesorios`, `PesoCatrinaOriginalidadCreatividad`, `PesoCatrinaApegoTradiciones` *(deben sumar 100%)*
+- Escala de satisfacción y pesos de elemento ritual/decorativo (sección 7.2), más `BonusPorElementoTematizado`
+- `UmbralAgrupacionDemografica` *(privacidad del Reporte de Cierre, sección 12.2)*
+
+> Todos son editables desde `/AltarAdmin/Configuracion` sin desplegar código. Se aplican **al
+> guardar** cada evaluación: cambiarlos no recalcula las notas ya registradas.
 
 ---
 
@@ -246,15 +252,20 @@ El sistema puede **sugerir** un valor inicial de *Objetivo Cultural* a partir de
 Si el equipo decide hacer **Catrina**, se habilita una sección aparte (`IncluyeCatrina = true`).
 **Confirmado: la Catrina es una categoría independiente** — no suma a `NotaFinal` del altar.
 Se evalúa, rankea y premia por separado (p. ej. "Mejor Catrina" por carrera o general).
-Se califican (escala 0–10 c/u, o satisfacción si se prefiere homologar con 7.2) los elementos:
-- Sombrero y tocado
-- Guantes
-- Vestimenta
-- Zapatos
-- Collar
-- Maquillaje
+Se califican (escala 0–10 c/u) los **Criterios de Evaluación de la Personificación de Catrinas**,
+cada uno con su peso porcentual. Los pesos son **configurables por periodo** desde
+`/AltarAdmin/Configuracion` (campos `PesoCatrina*` de **ConfiguracionPeriodo**) y deben sumar 100%:
 
-Se calcula una **Nota de Catrina** (promedio de sus rubros) y un **ranking propio de Catrina por carrera**, independiente del ranking del altar.
+| Criterio | Peso por defecto |
+|---|---|
+| Vestuario | 25% |
+| Maquillaje | 20% |
+| Accesorios | 10% |
+| Originalidad y Creatividad | 20% |
+| Apego a las Tradiciones | 25% |
+
+Se calcula una **Nota de Catrina** (suma ponderada de sus criterios) y un **ranking propio de
+Catrina por carrera**, independiente del ranking del altar.
 
 ### 7.6 Estados: Preliminar / Final
 - El juez puede **guardar como `Preliminar`** y volver a modificar las veces que necesite.
@@ -306,6 +317,9 @@ el listado de elementos requeridos del Portal de Registro. *(`R` = Ritual/Obliga
 19. **El Arco** — `R`. *Significado:* puerta/umbral que une el mundo de los vivos con el más allá y da la bienvenida a las almas. *Colocación:* en la cúspide/último nivel o al frente del altar; tradicionalmente de carrizo, palma o madera flexible, con cruz de palma al centro, adornado con cempasúchil (frutas opcionales).
 20. **El Camino** — `R`. *Significado:* sendero que guía a las almas desde el más allá hasta el altar y de regreso. *Colocación:* camino de pétalos de cempasúchil (opcional sobre base de aserrín) desde el último escalón hasta el arco de bienvenida, acompañado de veladoras encendidas a los lados.
 21. **Vasijas de Metal y de Barro** — `D`. *Significado/uso:* elementos de decoración del altar. *Colocación:* al final, como parte de la decoración general.
+22. **Estampa del Alma del Purgatorio** — `R`. *Significado:* recuerda el propósito religioso original de la ofrenda: orar por el alma del difunto en su tránsito por el purgatorio. *Colocación:* imagen o estampa religiosa junto a las demás imágenes santas, en los niveles superiores.
+23. **Monedas** — `R`. *Significado:* representan el pago del paso que el alma debe cubrir en su travesía de regreso al mundo de los vivos. *Colocación:* sobre el altar o junto al camino de pétalos de cempasúchil.
+24. **Figura de Perro Negro o Xoloitzcuintli** — `R`. *Significado:* el xoloitzcuintli guía y ayuda al alma a cruzar el río hacia el Mictlán; simboliza lealtad y protección durante el viaje. *Colocación:* figura del perro colocada cerca del camino o en la base del altar.
 
 > **Nota de evaluación:** algunos elementos pueden repetirse o colocarse en otras áreas del
 > altar, siempre que cumplan con su norma de colocación, sin que ello interfiera con la

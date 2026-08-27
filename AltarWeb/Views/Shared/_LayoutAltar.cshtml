@@ -189,6 +189,10 @@
         })();
     </script>
 
+    <!-- jQuery debe cargarse antes de la seccion Scripts: las vistas con formulario incluyen ahi
+         _ValidationScriptsPartial (jquery.validate + unobtrusive), que depende de jQuery. -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
