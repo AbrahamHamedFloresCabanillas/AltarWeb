@@ -68,7 +68,7 @@
 
             <div class="altar-card">
                 <div class="altar-card-title">Pesos de la nota final</div>
-                <p class="altar-card-subtitle">Editables sin tocar el c&oacute;digo. Deben sumar 100%.</p>
+                <p class="altar-card-subtitle">Define qu&eacute; tanto vale cada categor&iacute;a en la calificaci&oacute;n final del altar. Los porcentajes deben sumar 100%.</p>
                 <div class="altar-grid-3">
                     <div class="altar-field">
                         <label class="altar-label">Objetivo Cultural (%)</label>
@@ -98,6 +98,37 @@
             </div>
 
             <div class="altar-card">
+                <div class="altar-card-title">Criterios de Evaluaci&oacute;n de la Personificaci&oacute;n de Catrinas</div>
+                <p class="altar-card-subtitle">Esta es una categor&iacute;a aparte del altar, con su propio premio &quot;Mejor Catrina&quot; por carrera. Define qu&eacute; tanto vale cada criterio; los porcentajes deben sumar 100%.</p>
+                <div class="altar-grid-3">
+                    <div class="altar-field">
+                        <label class="altar-label">Vestuario (%)</label>
+                        <input asp-for="PesoCatrinaVestuarioPct" type="number" step="1" class="altar-input altar-peso-catrina-input" oninput="AltarPesosCatrina.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Maquillaje (%)</label>
+                        <input asp-for="PesoCatrinaMaquillajePct" type="number" step="1" class="altar-input altar-peso-catrina-input" oninput="AltarPesosCatrina.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Accesorios (%)</label>
+                        <input asp-for="PesoCatrinaAccesoriosPct" type="number" step="1" class="altar-input altar-peso-catrina-input" oninput="AltarPesosCatrina.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Originalidad y Creatividad (%)</label>
+                        <input asp-for="PesoCatrinaOriginalidadCreatividadPct" type="number" step="1" class="altar-input altar-peso-catrina-input" oninput="AltarPesosCatrina.recalcular()" />
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Apego a las Tradiciones (%)</label>
+                        <input asp-for="PesoCatrinaApegoTradicionesPct" type="number" step="1" class="altar-input altar-peso-catrina-input" oninput="AltarPesosCatrina.recalcular()" />
+                    </div>
+                </div>
+                <div class="altar-flex" style="justify-content:space-between;">
+                    <span>Suma total</span>
+                    <span id="altar-suma-pesos-catrina" style="font-weight:800; color:@(Model.SumaPesosCatrina == 100 ? "var(--altar-primary)" : "var(--altar-danger)");">@Model.SumaPesosCatrina%</span>
+                </div>
+            </div>
+
+            <div class="altar-card">
                 <div class="altar-card-title">Privacidad del Reporte de Cierre de Periodo</div>
                 <p class="altar-card-subtitle">Cualquier categor&iacute;a de g&eacute;nero o autodescripci&oacute;n cultural con menos personas que este n&uacute;mero se agrupa como &quot;Otros / grupo reducido&quot; en el reporte, para evitar identificar a alguien en un corte peque&ntilde;o.</p>
                 <div class="altar-field" style="max-width:220px;">
@@ -111,8 +142,8 @@
         </form>
 
         <div class="altar-card" style="margin-top:20px;">
-            <div class="altar-card-title">Cat&aacute;logos editables</div>
-            <p class="altar-card-subtitle">Tablas administrables. El editor CRUD de estos catálogos queda pendiente de una fase posterior; por ahora son de solo lectura aquí.</p>
+            <div class="altar-card-title">Cat&aacute;logos del concurso</div>
+            <p class="altar-card-subtitle">Las listas de carreras, g&eacute;neros y elementos del altar que usa el sistema. Por ahora solo puedes consultarlas aqu&iacute;; la opci&oacute;n para editarlas estar&aacute; disponible m&aacute;s adelante.</p>
             <div class="altar-grid-3">
                 <div class="altar-stat-card"><div class="altar-stat-value">@Model.CarrerasCount</div><div class="altar-stat-label">Carreras FIM</div></div>
                 <div class="altar-stat-card"><div class="altar-stat-value">@Model.GenerosCount</div><div class="altar-stat-label">Cat&aacute;logo de g&eacute;nero</div></div>
@@ -132,6 +163,20 @@
                     suma += Number(input.value) || 0;
                 });
                 var el = document.getElementById('altar-suma-pesos');
+                el.textContent = suma + '%';
+                el.style.color = suma === 100 ? 'var(--altar-primary)' : 'var(--altar-danger)';
+            }
+            return { recalcular: recalcular };
+        })();
+
+        var AltarPesosCatrina = (function () {
+            function recalcular() {
+                var inputs = document.querySelectorAll('.altar-peso-catrina-input');
+                var suma = 0;
+                inputs.forEach(function (input) {
+                    suma += Number(input.value) || 0;
+                });
+                var el = document.getElementById('altar-suma-pesos-catrina');
                 el.textContent = suma + '%';
                 el.style.color = suma === 100 ? 'var(--altar-primary)' : 'var(--altar-danger)';
             }

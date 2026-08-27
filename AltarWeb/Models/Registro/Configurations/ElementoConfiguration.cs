@@ -248,6 +248,39 @@ namespace AltarWeb.Models.Registro.Configurations
                     NivelSugerido7 = 1,
                     Significado = "Elementos de decoración del altar.",
                     Colocacion = "Al final, como parte de la decoración general."
+                },
+                new Elemento
+                {
+                    Id = 22,
+                    Nombre = "Estampa del Alma del Purgatorio",
+                    Categoria = CategoriaElemento.RitualObligatorio,
+                    Orden = 22,
+                    NivelSugerido3 = 3,
+                    NivelSugerido7 = 7,
+                    Significado = "Recuerda el propósito religioso original de la ofrenda: orar por el alma del difunto en su tránsito por el purgatorio.",
+                    Colocacion = "Imagen o estampa religiosa junto a las demás imágenes santas, en los niveles superiores."
+                },
+                new Elemento
+                {
+                    Id = 23,
+                    Nombre = "Monedas",
+                    Categoria = CategoriaElemento.RitualObligatorio,
+                    Orden = 23,
+                    NivelSugerido3 = 1,
+                    NivelSugerido7 = 2,
+                    Significado = "Representan el pago del paso que el alma debe cubrir en su travesía de regreso al mundo de los vivos.",
+                    Colocacion = "Sobre el altar o junto al camino de pétalos de cempasúchil."
+                },
+                new Elemento
+                {
+                    Id = 24,
+                    Nombre = "Figura de Perro Negro o Xoloitzcuintli",
+                    Categoria = CategoriaElemento.RitualObligatorio,
+                    Orden = 24,
+                    NivelSugerido3 = 1,
+                    NivelSugerido7 = 1,
+                    Significado = "El xoloitzcuintli guía y ayuda al alma a cruzar el río hacia el Mictlán; simboliza lealtad y protección durante el viaje.",
+                    Colocacion = "Figura del perro colocada cerca del camino o en la base del altar."
                 }
             );
         }

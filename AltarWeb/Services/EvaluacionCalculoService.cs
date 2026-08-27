@@ -69,14 +69,14 @@ namespace AltarWeb.Services
             return Math.Round(nota, 2);
         }
 
-        public decimal CalcularNotaCatrina(EvaluacionCatrina catrina)
+        public decimal CalcularNotaCatrina(EvaluacionCatrina catrina, ConfiguracionPeriodo config)
         {
-            var valores = new[]
-            {
-                catrina.SombreroTocado, catrina.Guantes, catrina.Vestimenta,
-                catrina.Zapatos, catrina.Collar, catrina.Maquillaje
-            };
-            return Math.Round(valores.Average(), 2);
+            var nota = catrina.Vestuario * config.PesoCatrinaVestuario
+                + catrina.Maquillaje * config.PesoCatrinaMaquillaje
+                + catrina.Accesorios * config.PesoCatrinaAccesorios
+                + catrina.OriginalidadCreatividad * config.PesoCatrinaOriginalidadCreatividad
+                + catrina.ApegoTradiciones * config.PesoCatrinaApegoTradiciones;
+            return Math.Round(nota, 2);
         }
 
         // Lugar (1/2/3) por Carrera+Periodo, solo entre evaluaciones en estado Final (seccion 13.4).

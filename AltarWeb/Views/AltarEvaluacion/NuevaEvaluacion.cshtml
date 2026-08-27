@@ -293,25 +293,31 @@
                         </div>
                     </div>
 
+                    @{
+                        var notaCatrinaInicial = Model.Vestuario * Model.PesoCatrinaVestuario
+                            + Model.Maquillaje * Model.PesoCatrinaMaquillaje
+                            + Model.Accesorios * Model.PesoCatrinaAccesorios
+                            + Model.OriginalidadCreatividad * Model.PesoCatrinaOriginalidadCreatividad
+                            + Model.ApegoTradiciones * Model.PesoCatrinaApegoTradiciones;
+                    }
                     <div class="altar-grid-2">
                         <div class="altar-card">
-                            <div class="altar-card-title">Rubros de la Catrina (0&ndash;10)</div>
+                            <div class="altar-card-title">Criterios de Evaluaci&oacute;n de la Personificaci&oacute;n de Catrinas (0&ndash;10)</div>
                             @{
-                                var rubros = new (string Name, string Label, decimal Valor)[]
+                                var rubros = new (string Name, string Label, decimal Peso, decimal Valor)[]
                                 {
-                                    ("sombreroTocado", "Sombrero y tocado", Model.SombreroTocado),
-                                    ("guantes", "Guantes", Model.Guantes),
-                                    ("vestimenta", "Vestimenta", Model.Vestimenta),
-                                    ("zapatos", "Zapatos", Model.Zapatos),
-                                    ("collar", "Collar", Model.Collar),
-                                    ("maquillaje", "Maquillaje", Model.Maquillaje)
+                                    ("vestuario", "Vestuario", Model.PesoCatrinaVestuario, Model.Vestuario),
+                                    ("maquillaje", "Maquillaje", Model.PesoCatrinaMaquillaje, Model.Maquillaje),
+                                    ("accesorios", "Accesorios", Model.PesoCatrinaAccesorios, Model.Accesorios),
+                                    ("originalidadCreatividad", "Originalidad y Creatividad", Model.PesoCatrinaOriginalidadCreatividad, Model.OriginalidadCreatividad),
+                                    ("apegoTradiciones", "Apego a las Tradiciones", Model.PesoCatrinaApegoTradiciones, Model.ApegoTradiciones)
                                 };
                             }
                             @foreach (var r in rubros)
                             {
                                 <div class="altar-slider-row">
                                     <div class="altar-slider-row-head">
-                                        <span>@r.Label</span>
+                                        <span>@r.Label &middot; @((r.Peso * 100).ToString("0"))%</span>
                                         <span id="out-@r.Name">@r.Valor.ToString("0.0")</span>
                                     </div>
                                     <input type="range" min="0" max="10" step="0.1" name="@r.Name" value="@Inv(r.Valor)" class="altar-slider altar-slider-purple" data-live-catrina="@r.Name" @(Model.SoloLectura ? "disabled" : null) />
@@ -319,8 +325,8 @@
                             }
                         </div>
                         <div class="altar-card" style="background:var(--altar-purple-soft-bg); border-color:var(--altar-purple);">
-                            <div class="altar-card-title">Nota de Catrina (promedio)</div>
-                            <div id="out-nota-catrina" style="font-size:28px; font-weight:800; color:var(--altar-purple);">@(((Model.SombreroTocado + Model.Guantes + Model.Vestimenta + Model.Zapatos + Model.Collar + Model.Maquillaje) / 6).ToString("0.0"))</div>
+                            <div class="altar-card-title">Nota de Catrina (ponderada)</div>
+                            <div id="out-nota-catrina" style="font-size:28px; font-weight:800; color:var(--altar-purple);">@notaCatrinaInicial.ToString("0.0")</div>
                             <p class="altar-slider-hint">Se rankea por separado del altar &mdash; premio &quot;Mejor Catrina&quot; por carrera, sin sumar a la Nota Final del altar.</p>
                         </div>
                     </div>
@@ -345,7 +351,7 @@
                             <div><div class="altar-text-muted">Nota Final del altar</div><div id="resumen-nota-final" style="font-size:24px; font-weight:800; color:var(--altar-primary);">@Model.NotaFinalPreview.ToString("0.0")</div></div>
                             @if (Model.HaceCatrina)
                             {
-                                <div><div class="altar-text-muted">Nota de Catrina</div><div id="resumen-nota-catrina" style="font-size:24px; font-weight:800; color:var(--altar-purple);">@(((Model.SombreroTocado + Model.Guantes + Model.Vestimenta + Model.Zapatos + Model.Collar + Model.Maquillaje) / 6).ToString("0.0"))</div></div>
+                                <div><div class="altar-text-muted">Nota de Catrina</div><div id="resumen-nota-catrina" style="font-size:24px; font-weight:800; color:var(--altar-purple);">@((Model.Vestuario * Model.PesoCatrinaVestuario + Model.Maquillaje * Model.PesoCatrinaMaquillaje + Model.Accesorios * Model.PesoCatrinaAccesorios + Model.OriginalidadCreatividad * Model.PesoCatrinaOriginalidadCreatividad + Model.ApegoTradiciones * Model.PesoCatrinaApegoTradiciones).ToString("0.0"))</div></div>
                             }
                         </div>
 
@@ -395,6 +401,11 @@
             pesoDistribucionNiveles: @Inv(Model.PesoDistribucionNiveles),
             pesoNarrador: @Inv(Model.PesoNarrador),
             bonusPorTematizado: @Inv(Model.BonusPorElementoTematizado),
+            pesoCatrinaVestuario: @Inv(Model.PesoCatrinaVestuario),
+            pesoCatrinaMaquillaje: @Inv(Model.PesoCatrinaMaquillaje),
+            pesoCatrinaAccesorios: @Inv(Model.PesoCatrinaAccesorios),
+            pesoCatrinaOriginalidadCreatividad: @Inv(Model.PesoCatrinaOriginalidadCreatividad),
+            pesoCatrinaApegoTradiciones: @Inv(Model.PesoCatrinaApegoTradiciones),
             valorSatisfaccion: {
                 NoPresente: @Inv(Model.ValorSatisfaccionNoPresente),
                 Poco: @Inv(Model.ValorSatisfaccionPoco),
@@ -539,15 +550,21 @@
         altarPopulateNivelSelects();
 
         function altarRecalcularNotaCatrina() {
-            var names = ['sombreroTocado', 'guantes', 'vestimenta', 'zapatos', 'collar', 'maquillaje'];
-            var suma = 0;
-            names.forEach(function (name) {
-                suma += parseFloat(document.querySelector('[data-live-catrina="' + name + '"]').value);
+            var pesos = {
+                vestuario: altarConfig.pesoCatrinaVestuario,
+                maquillaje: altarConfig.pesoCatrinaMaquillaje,
+                accesorios: altarConfig.pesoCatrinaAccesorios,
+                originalidadCreatividad: altarConfig.pesoCatrinaOriginalidadCreatividad,
+                apegoTradiciones: altarConfig.pesoCatrinaApegoTradiciones
+            };
+            var nota = 0;
+            Object.keys(pesos).forEach(function (name) {
+                var valor = parseFloat(document.querySelector('[data-live-catrina="' + name + '"]').value);
+                nota += valor * pesos[name];
             });
-            var promedio = suma / names.length;
-            document.getElementById('out-nota-catrina').textContent = promedio.toFixed(1);
+            document.getElementById('out-nota-catrina').textContent = nota.toFixed(1);
             var resumenCatrina = document.getElementById('resumen-nota-catrina');
-            if (resumenCatrina) resumenCatrina.textContent = promedio.toFixed(1);
+            if (resumenCatrina) resumenCatrina.textContent = nota.toFixed(1);
         }
 
         document.querySelectorAll('[data-live-catrina]').forEach(function (slider) {

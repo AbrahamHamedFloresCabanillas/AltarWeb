@@ -304,18 +304,6 @@ namespace AltarWeb.Services
                     page.PageColor(Colors.White);
                     page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(9));
 
-                    // PRIV-02: marca de agua diagonal en cada pagina — el contenido agrega datos
-                    // institucionales sensibles (demografia, promedios por juez) y no debe circular
-                    // como si fuera un documento publico.
-                    page.Foreground()
-                        .AlignCenter()
-                        .AlignMiddle()
-                        .Rotate(-35)
-                        .Text("CONFIDENCIAL")
-                        .FontSize(72)
-                        .Bold()
-                        .FontColor(Colors.Grey.Lighten3);
-
                     page.Header().Column(col =>
                     {
                         col.Item().Text($"Reporte de Cierre de Periodo · {r.Periodo}").Bold().FontSize(18).FontColor("#00703c");

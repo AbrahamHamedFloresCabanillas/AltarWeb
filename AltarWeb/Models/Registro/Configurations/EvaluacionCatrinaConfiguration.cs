@@ -9,12 +9,11 @@ namespace AltarWeb.Models.Registro.Configurations
         {
             builder.ToTable("EvaluacionesCatrina");
 
-            builder.Property(c => c.SombreroTocado).HasColumnType("decimal(5,2)");
-            builder.Property(c => c.Guantes).HasColumnType("decimal(5,2)");
-            builder.Property(c => c.Vestimenta).HasColumnType("decimal(5,2)");
-            builder.Property(c => c.Zapatos).HasColumnType("decimal(5,2)");
-            builder.Property(c => c.Collar).HasColumnType("decimal(5,2)");
+            builder.Property(c => c.Vestuario).HasColumnType("decimal(5,2)");
             builder.Property(c => c.Maquillaje).HasColumnType("decimal(5,2)");
+            builder.Property(c => c.Accesorios).HasColumnType("decimal(5,2)");
+            builder.Property(c => c.OriginalidadCreatividad).HasColumnType("decimal(5,2)");
+            builder.Property(c => c.ApegoTradiciones).HasColumnType("decimal(5,2)");
             builder.Property(c => c.NotaCatrina).HasColumnType("decimal(5,2)");
 
             builder.HasIndex(c => c.EvaluacionId).IsUnique();

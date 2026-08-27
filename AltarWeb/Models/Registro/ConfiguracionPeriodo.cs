@@ -42,5 +42,13 @@ namespace AltarWeb.Models.Registro
         // 12.2 de vision.md): cualquier categoria de Genero/AutodescripcionCultural con
         // menos personas que este numero se agrupa bajo "Otros / grupo reducido".
         public int UmbralAgrupacionDemografica { get; set; } = 5;
+
+        // Pesos de la formula de NotaCatrina, suman 1.0. Categoria independiente del altar
+        // (premio "Mejor Catrina" por carrera), con su propio ranking.
+        public decimal PesoCatrinaVestuario { get; set; } = 0.25m;
+        public decimal PesoCatrinaMaquillaje { get; set; } = 0.20m;
+        public decimal PesoCatrinaAccesorios { get; set; } = 0.10m;
+        public decimal PesoCatrinaOriginalidadCreatividad { get; set; } = 0.20m;
+        public decimal PesoCatrinaApegoTradiciones { get; set; } = 0.25m;
     }
 }

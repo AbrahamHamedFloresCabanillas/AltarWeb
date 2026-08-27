@@ -531,6 +531,21 @@ namespace AltarWeb.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<decimal>("PesoCatrinaAccesorios")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal>("PesoCatrinaApegoTradiciones")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal>("PesoCatrinaMaquillaje")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal>("PesoCatrinaOriginalidadCreatividad")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal>("PesoCatrinaVestuario")
+                        .HasColumnType("decimal(5,4)");
+
                     b.Property<decimal>("PesoDistribucionNiveles")
                         .HasColumnType("decimal(5,4)");
 
@@ -584,6 +599,11 @@ namespace AltarWeb.Migrations
                             BonusPorElementoTematizado = 0.25m,
                             ExigirMinimoUnAnioFallecimiento = true,
                             Periodo = "2026-1",
+                            PesoCatrinaAccesorios = 0.10m,
+                            PesoCatrinaApegoTradiciones = 0.25m,
+                            PesoCatrinaMaquillaje = 0.20m,
+                            PesoCatrinaOriginalidadCreatividad = 0.20m,
+                            PesoCatrinaVestuario = 0.25m,
                             PesoDistribucionNiveles = 0.10m,
                             PesoElementoDecorativo = 0.5m,
                             PesoElementoRitual = 1.0m,
@@ -929,6 +949,42 @@ namespace AltarWeb.Migrations
                             Nombre = "Vasijas de Metal y de Barro",
                             Orden = 21,
                             Significado = "Elementos de decoración del altar."
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Activo = true,
+                            Categoria = "RitualObligatorio",
+                            Colocacion = "Imagen o estampa religiosa junto a las demás imágenes santas, en los niveles superiores.",
+                            NivelSugerido3 = 3,
+                            NivelSugerido7 = 7,
+                            Nombre = "Estampa del Alma del Purgatorio",
+                            Orden = 22,
+                            Significado = "Recuerda el propósito religioso original de la ofrenda: orar por el alma del difunto en su tránsito por el purgatorio."
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Activo = true,
+                            Categoria = "RitualObligatorio",
+                            Colocacion = "Sobre el altar o junto al camino de pétalos de cempasúchil.",
+                            NivelSugerido3 = 1,
+                            NivelSugerido7 = 2,
+                            Nombre = "Monedas",
+                            Orden = 23,
+                            Significado = "Representan el pago del paso que el alma debe cubrir en su travesía de regreso al mundo de los vivos."
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Activo = true,
+                            Categoria = "RitualObligatorio",
+                            Colocacion = "Figura del perro colocada cerca del camino o en la base del altar.",
+                            NivelSugerido3 = 1,
+                            NivelSugerido7 = 1,
+                            Nombre = "Figura de Perro Negro o Xoloitzcuintli",
+                            Orden = 24,
+                            Significado = "El xoloitzcuintli guía y ayuda al alma a cruzar el río hacia el Mictlán; simboliza lealtad y protección durante el viaje."
                         });
                 });
 
@@ -1123,14 +1179,14 @@ namespace AltarWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Collar")
+                    b.Property<decimal>("Accesorios")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("ApegoTradiciones")
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("EvaluacionId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("Guantes")
-                        .HasColumnType("decimal(5,2)");
 
                     b.Property<int?>("LugarCatrina")
                         .HasColumnType("int");
@@ -1141,13 +1197,10 @@ namespace AltarWeb.Migrations
                     b.Property<decimal?>("NotaCatrina")
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<decimal>("SombreroTocado")
+                    b.Property<decimal>("OriginalidadCreatividad")
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<decimal>("Vestimenta")
-                        .HasColumnType("decimal(5,2)");
-
-                    b.Property<decimal>("Zapatos")
+                    b.Property<decimal>("Vestuario")
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");

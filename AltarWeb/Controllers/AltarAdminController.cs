@@ -240,6 +240,11 @@ namespace AltarWeb.Controllers
                 PesoValoracionGeneralPct = NormalizarPorcentaje(config.PesoValoracionGeneral),
                 PesoDistribucionNivelesPct = NormalizarPorcentaje(config.PesoDistribucionNiveles),
                 PesoNarradorPct = NormalizarPorcentaje(config.PesoNarrador),
+                PesoCatrinaVestuarioPct = NormalizarPorcentaje(config.PesoCatrinaVestuario),
+                PesoCatrinaMaquillajePct = NormalizarPorcentaje(config.PesoCatrinaMaquillaje),
+                PesoCatrinaAccesoriosPct = NormalizarPorcentaje(config.PesoCatrinaAccesorios),
+                PesoCatrinaOriginalidadCreatividadPct = NormalizarPorcentaje(config.PesoCatrinaOriginalidadCreatividad),
+                PesoCatrinaApegoTradicionesPct = NormalizarPorcentaje(config.PesoCatrinaApegoTradiciones),
                 UmbralAgrupacionDemografica = config.UmbralAgrupacionDemografica,
                 CarrerasCount = await _context.CatalogoCarreras.CountAsync(c => c.Activo),
                 GenerosCount = await _context.CatalogoGeneros.CountAsync(g => g.Activo),
@@ -256,7 +261,12 @@ namespace AltarWeb.Controllers
 
             if (model.SumaPesos != 100)
             {
-                ModelState.AddModelError(string.Empty, "Los pesos deben sumar 100%.");
+                ModelState.AddModelError(string.Empty, "Los pesos de la nota final deben sumar 100%.");
+            }
+
+            if (model.SumaPesosCatrina != 100)
+            {
+                ModelState.AddModelError(string.Empty, "Los pesos de los criterios de Catrina deben sumar 100%.");
             }
 
             // PRIV-01: validacion server-side explicita ademas del [Range] del ViewModel, para que el
@@ -311,6 +321,11 @@ namespace AltarWeb.Controllers
             config.PesoValoracionGeneral = model.PesoValoracionGeneralPct / 100;
             config.PesoDistribucionNiveles = model.PesoDistribucionNivelesPct / 100;
             config.PesoNarrador = model.PesoNarradorPct / 100;
+            config.PesoCatrinaVestuario = model.PesoCatrinaVestuarioPct / 100;
+            config.PesoCatrinaMaquillaje = model.PesoCatrinaMaquillajePct / 100;
+            config.PesoCatrinaAccesorios = model.PesoCatrinaAccesoriosPct / 100;
+            config.PesoCatrinaOriginalidadCreatividad = model.PesoCatrinaOriginalidadCreatividadPct / 100;
+            config.PesoCatrinaApegoTradiciones = model.PesoCatrinaApegoTradicionesPct / 100;
             config.UmbralAgrupacionDemografica = model.UmbralAgrupacionDemografica;
 
             await _context.SaveChangesAsync();

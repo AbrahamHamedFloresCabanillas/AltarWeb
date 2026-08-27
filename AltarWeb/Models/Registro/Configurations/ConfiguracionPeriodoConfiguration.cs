@@ -23,6 +23,11 @@ namespace AltarWeb.Models.Registro.Configurations
             builder.Property(c => c.PesoElementoRitual).HasColumnType("decimal(5,4)");
             builder.Property(c => c.PesoElementoDecorativo).HasColumnType("decimal(5,4)");
             builder.Property(c => c.BonusPorElementoTematizado).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.PesoCatrinaVestuario).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.PesoCatrinaMaquillaje).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.PesoCatrinaAccesorios).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.PesoCatrinaOriginalidadCreatividad).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.PesoCatrinaApegoTradiciones).HasColumnType("decimal(5,4)");
 
             // Punto de partida editable desde /Admin (seccion 7.7). Periodo actual segun PeriodoHelper al momento de esta migracion.
             builder.HasData(
@@ -46,7 +51,12 @@ namespace AltarWeb.Models.Registro.Configurations
                     PesoElementoDecorativo = 0.5m,
                     BonusPorElementoTematizado = 0.25m,
                     ExigirMinimoUnAnioFallecimiento = true,
-                    UmbralAgrupacionDemografica = 5
+                    UmbralAgrupacionDemografica = 5,
+                    PesoCatrinaVestuario = 0.25m,
+                    PesoCatrinaMaquillaje = 0.20m,
+                    PesoCatrinaAccesorios = 0.10m,
+                    PesoCatrinaOriginalidadCreatividad = 0.20m,
+                    PesoCatrinaApegoTradiciones = 0.25m
                 }
             );
         }

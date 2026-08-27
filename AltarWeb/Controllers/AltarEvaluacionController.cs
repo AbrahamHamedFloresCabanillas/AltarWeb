@@ -198,12 +198,11 @@ namespace AltarWeb.Controllers
                 vm.NotaFinalPreview = eval?.NotaFinal ?? 0;
 
                 vm.HaceCatrina = equipo.HaceCatrina;
-                vm.SombreroTocado = eval?.EvaluacionCatrina?.SombreroTocado ?? 0;
-                vm.Guantes = eval?.EvaluacionCatrina?.Guantes ?? 0;
-                vm.Vestimenta = eval?.EvaluacionCatrina?.Vestimenta ?? 0;
-                vm.Zapatos = eval?.EvaluacionCatrina?.Zapatos ?? 0;
-                vm.Collar = eval?.EvaluacionCatrina?.Collar ?? 0;
+                vm.Vestuario = eval?.EvaluacionCatrina?.Vestuario ?? 0;
                 vm.Maquillaje = eval?.EvaluacionCatrina?.Maquillaje ?? 0;
+                vm.Accesorios = eval?.EvaluacionCatrina?.Accesorios ?? 0;
+                vm.OriginalidadCreatividad = eval?.EvaluacionCatrina?.OriginalidadCreatividad ?? 0;
+                vm.ApegoTradiciones = eval?.EvaluacionCatrina?.ApegoTradiciones ?? 0;
             }
 
             var config = await ObtenerConfiguracionAsync(periodo);
@@ -214,6 +213,11 @@ namespace AltarWeb.Controllers
             vm.PesoNarrador = config.PesoNarrador;
             vm.PesoElementoRitual = config.PesoElementoRitual;
             vm.PesoElementoDecorativo = config.PesoElementoDecorativo;
+            vm.PesoCatrinaVestuario = config.PesoCatrinaVestuario;
+            vm.PesoCatrinaMaquillaje = config.PesoCatrinaMaquillaje;
+            vm.PesoCatrinaAccesorios = config.PesoCatrinaAccesorios;
+            vm.PesoCatrinaOriginalidadCreatividad = config.PesoCatrinaOriginalidadCreatividad;
+            vm.PesoCatrinaApegoTradiciones = config.PesoCatrinaApegoTradiciones;
             vm.ValorSatisfaccionNoPresente = config.ValorSatisfaccionNoPresente;
             vm.ValorSatisfaccionPoco = config.ValorSatisfaccionPoco;
             vm.ValorSatisfaccionSatisfactorio = config.ValorSatisfaccionSatisfactorio;
@@ -228,8 +232,8 @@ namespace AltarWeb.Controllers
             int equipoId, int niveles, string tipoAltar, string semblanza,
             decimal esenciaPersonalidad, decimal valoracionGeneral,
             decimal distribucionNiveles, decimal narrador,
-            decimal sombreroTocado, decimal guantes, decimal vestimenta,
-            decimal zapatos, decimal collar, decimal maquillaje,
+            decimal vestuario, decimal maquillaje, decimal accesorios,
+            decimal originalidadCreatividad, decimal apegoTradiciones,
             string accion)
         {
             var juezId = HttpContext.Session.GetInt32("JuezId");
@@ -317,7 +321,7 @@ namespace AltarWeb.Controllers
             }
 
             // Checklist de elementos: los campos llegan como Satisfaccion_{id}, Nivel_{id},
-            // Tematizado_{id} (uno por cada uno de los 21 elementos).
+            // Tematizado_{id} (uno por cada elemento activo del catalogo).
             var elementos = await _context.Elementos.Where(el => el.Activo).ToListAsync();
             var existentes = await _context.ElementosEvaluados.Where(ee => ee.EvaluacionId == eval.Id).ToListAsync();
 
@@ -392,13 +396,12 @@ namespace AltarWeb.Controllers
                     catrina = new EvaluacionCatrina { EvaluacionId = eval.Id };
                     _context.EvaluacionesCatrina.Add(catrina);
                 }
-                catrina.SombreroTocado = sombreroTocado;
-                catrina.Guantes = guantes;
-                catrina.Vestimenta = vestimenta;
-                catrina.Zapatos = zapatos;
-                catrina.Collar = collar;
+                catrina.Vestuario = vestuario;
                 catrina.Maquillaje = maquillaje;
-                catrina.NotaCatrina = _calculo.CalcularNotaCatrina(catrina);
+                catrina.Accesorios = accesorios;
+                catrina.OriginalidadCreatividad = originalidadCreatividad;
+                catrina.ApegoTradiciones = apegoTradiciones;
+                catrina.NotaCatrina = _calculo.CalcularNotaCatrina(catrina, config);
             }
 
             await _context.SaveChangesAsync();
