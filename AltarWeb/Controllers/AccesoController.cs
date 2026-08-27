@@ -100,12 +100,8 @@ namespace AltarWeb.Controllers
             return RedirectToAction("Historial", "AltarEvaluacion");
         }
 
-        // Registro público deshabilitado — solo Admins pueden crear Jueces desde /AltarAdmin/Jueces
-        public IActionResult Registrar()
-        {
-            return RedirectToAction("Login");
-        }
-
+        // Nota: no hay registro público de Jueces; solo un Admin puede crearlos desde
+        // /AltarAdmin/Jueces (o quedan Pendientes vía /Registro/SignupJuez hasta su aprobación).
         public IActionResult Salir()
         {
             HttpContext.Session.Clear();

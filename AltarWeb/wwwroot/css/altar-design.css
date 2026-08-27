@@ -470,9 +470,7 @@ html, [data-theme="dark"] {
 /* Envoltura de tablas fuera de una .altar-card: se desplazan horizontalmente en pantallas
    angostas en vez de desbordar el layout (mismo comportamiento que .altar-card:has(.altar-table)). */
 .altar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.altar-mt-0 { margin-top: 0; }
 .altar-text-muted { color: var(--altar-text-muted); }
-.altar-w-100 { width: 100%; }
 
 /* ---------- Responsivo ---------- */
 
