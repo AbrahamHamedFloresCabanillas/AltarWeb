@@ -60,6 +60,7 @@
                                 }
                             </td>
                             <td>
+                                <a asp-controller="AltarAdmin" asp-action="EditarJuez" asp-route-id="@j.Id" class="altar-btn altar-btn-sm altar-btn-outline" style="margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></a>
                                 @if (j.Pendiente)
                                 {
                                     <form asp-controller="AltarAdmin" asp-action="AprobarJuez" method="post" style="display:inline;">

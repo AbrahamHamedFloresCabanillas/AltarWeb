@@ -37,10 +37,11 @@
             </div>
 
             <form asp-controller="Registro" asp-action="Signup" method="post">
+                <p class="altar-required-note"><span class="altar-required" aria-hidden="true">*</span>Campos obligatorios.</p>
                 <div asp-validation-summary="ModelOnly" class="altar-error"></div>
 
                 <div class="altar-field">
-                    <label class="altar-label">Nombre completo</label>
+                    <label class="altar-label">Nombre completo<span class="altar-required" aria-hidden="true">*</span></label>
                     <input asp-for="NombreCompleto" class="altar-input" />
                     <span asp-validation-for="NombreCompleto" class="altar-error"></span>
                 </div>
@@ -51,13 +52,13 @@
                 </div>
 
                 <div class="altar-field">
-                    <label class="altar-label">Identificador</label>
+                    <label class="altar-label">Identificador<span class="altar-required" aria-hidden="true">*</span></label>
                     <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="7 dígitos (alumno) o 5 dígitos (maestro/administrativo)" />
                     <span asp-validation-for="Identificador" class="altar-error"></span>
                 </div>
 
                 <div class="altar-field">
-                    <label class="altar-label">Correo institucional</label>
+                    <label class="altar-label">Correo institucional<span class="altar-required" aria-hidden="true">*</span></label>
                     <input asp-for="CorreoInstitucional" class="altar-input" placeholder="nombre.apellido@uabc.edu.mx" />
                     <span asp-validation-for="CorreoInstitucional" class="altar-error"></span>
                 </div>
@@ -98,12 +99,12 @@
 
                 <div class="altar-grid-2">
                     <div class="altar-field">
-                        <label class="altar-label">Contrase&ntilde;a</label>
+                        <label class="altar-label">Contrase&ntilde;a<span class="altar-required" aria-hidden="true">*</span></label>
                         <input asp-for="Password" type="password" class="altar-input" />
                         <span asp-validation-for="Password" class="altar-error"></span>
                     </div>
                     <div class="altar-field">
-                        <label class="altar-label">Confirmar contrase&ntilde;a</label>
+                        <label class="altar-label">Confirmar contrase&ntilde;a<span class="altar-required" aria-hidden="true">*</span></label>
                         <input asp-for="ConfirmarPassword" type="password" class="altar-input" />
                         <span asp-validation-for="ConfirmarPassword" class="altar-error"></span>
                     </div>

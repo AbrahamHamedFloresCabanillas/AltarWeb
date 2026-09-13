@@ -92,6 +92,61 @@
                             </div>
                             <p class="altar-card-subtitle">Precargado desde la Ficha de Registro del Altar, capturada por los participantes en su portal.</p>
 
+                            @* Estado de la Ficha de Registro: el juez necesita saber ANTES de calificar si
+                               va a poder cerrar como Final. "Validada" es un estado administrativo de
+                               seguimiento y no sustituye a los datos faltantes, por eso se muestran ambos. *@
+                            <div class="altar-ficha-estado" id="altar-ficha-estado"
+                                 data-equipo-id="@Model.EquipoId"
+                                 data-validada="@(Model.FichaValidada ? "true" : "false")">
+                                @* El estado se renderiza server-side y JS solo lo repinta cuando el
+                                   admin lo cambia en vivo: si el script falla, el juez igual lo ve. *@
+                                <div class="altar-ficha-linea" id="altar-ficha-linea"
+                                     style="color:@(Model.FichaValidada || Model.FichaCompleta ? "var(--altar-primary)" : "var(--altar-amber)");">
+                                    @if (Model.FichaValidada)
+                                    {
+                                        <i class="fa-solid fa-user-check" aria-hidden="true"></i><text> Ficha validada por administraci&oacute;n</text>
+                                    }
+                                    else if (Model.FichaCompleta)
+                                    {
+                                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i><text> Ficha completa</text>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><text> Ficha pendiente</text>
+                                    }
+                                </div>
+                                <div class="altar-ficha-faltantes" id="altar-ficha-faltantes" hidden="@(!Model.FichaFaltantes.Any())">
+                                    @if (Model.FichaFaltantes.Any())
+                                    {
+                                        <text>Falta capturar: @string.Join(", ", Model.FichaFaltantes). La evaluaci&oacute;n no se podr&aacute; cerrar como Final hasta completarlo.</text>
+                                    }
+                                </div>
+                                @if (!Model.TieneNarrador)
+                                {
+                                    <div class="altar-ficha-faltantes">
+                                        El equipo no tiene un Narrador designado: hasta que lo designen desde su portal,
+                                        la evaluaci&oacute;n solo podr&aacute; guardarse como Preliminar.
+                                    </div>
+                                }
+                                @if (Model.EsAdmin)
+                                {
+                                    <div class="altar-ficha-acciones">
+                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" id="altar-ficha-boton"
+                                                onclick="AltarFichaAdmin.alternar()"
+                                                title="@(Model.FichaValidada ? "La ficha volverá a listarse como pendiente." : "Deja de listarse como pendiente. No sustituye a los datos faltantes.")">
+                                            @if (Model.FichaValidada)
+                                            {
+                                                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><text> Marcar como pendiente</text>
+                                            }
+                                            else
+                                            {
+                                                <i class="fa-solid fa-user-check" aria-hidden="true"></i><text> Validar ficha</text>
+                                            }
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+
                             <div class="altar-grid-2" style="margin-bottom:14px;">
                                 <div><span class="altar-label">Equipo / carrera</span>@Model.NombreEquipo / @Model.Carrera</div>
                                 <div><span class="altar-label">Nombre del altar</span>&quot;@Model.NombreAltar&quot;</div>
@@ -162,16 +217,15 @@
                                 <div class="altar-flex" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
                                     <div class="altar-card-title">Checklist de elementos</div>
                                     <div class="altar-flex altar-gap-sm">
-                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('MuySatisfactorio')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-check-double"></i> Marcar todo</button>
-                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('NoPresente')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-xmark"></i> Desmarcar todo</button>
+                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('Bueno')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-check-double"></i> Marcar todo</button>
+                                        <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="altarMarcarTodo('NoLoTiene')" @(Model.SoloLectura ? "disabled" : null)><i class="fa-solid fa-xmark"></i> Desmarcar todo</button>
                                     </div>
                                 </div>
                                 <p class="altar-card-subtitle">Elige el nivel donde qued&oacute; colocado cada elemento y calif&iacute;calo con la escala de satisfacci&oacute;n. Toca (i) para ver el mini-manual.</p>
                                 <div class="altar-flex altar-gap-sm" style="flex-wrap:wrap; margin-bottom:16px;">
-                                    <span class="altar-badge altar-badge-muted">No presente &middot; @Model.ValorSatisfaccionNoPresente.ToString("0.##")</span>
-                                    <span class="altar-badge altar-badge-muted">Poco &middot; @Model.ValorSatisfaccionPoco.ToString("0.##")</span>
-                                    <span class="altar-badge altar-badge-muted">Satisfactorio &middot; @Model.ValorSatisfaccionSatisfactorio.ToString("0.##")</span>
-                                    <span class="altar-badge altar-badge-success">Muy satisfactorio &middot; @Model.ValorSatisfaccionMuySatisfactorio.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-muted">No lo tiene &middot; @Model.ValorSatisfaccionNoLoTiene.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-muted">Regular &middot; @Model.ValorSatisfaccionRegular.ToString("0.##")</span>
+                                    <span class="altar-badge altar-badge-success">Bueno &middot; @Model.ValorSatisfaccionBueno.ToString("0.##")</span>
                                 </div>
 
                                 @foreach (var el in Model.Elementos.OrderBy(e => e.Nombre))
@@ -186,17 +240,17 @@
                                         <input type="hidden" name="Nivel_@el.ElementoId" id="hidden-nivel-@el.ElementoId" value="@el.NivelAsignado" />
 
                                         <div class="altar-seg" data-elemento-seg="@el.ElementoId">
-                                            @foreach (var (valor, etiqueta) in new[] { ("NoPresente", "No"), ("Poco", "Poco"), ("Satisfactorio", "Satisf."), ("MuySatisfactorio", "Muy") })
+                                            @foreach (var (valor, etiqueta) in new[] { ("NoLoTiene", "No lo tiene"), ("Regular", "Regular"), ("Bueno", "Bueno") })
                                             {
                                                 <button type="button" class="altar-seg-option @(el.Satisfaccion.ToString() == valor ? "selected" : "")" data-valor="@valor" onclick="altarSetSatisfaccion(@el.ElementoId, '@valor', this)" @(Model.SoloLectura ? "disabled" : null)>@etiqueta</button>
                                             }
                                         </div>
                                         <input type="hidden" name="Satisfaccion_@el.ElementoId" id="hidden-sat-@el.ElementoId" value="@el.Satisfaccion" />
 
-                                        <label class="altar-flex altar-gap-sm" style="font-size:12px; cursor:pointer;" title="¿Tiene personalización?">
-                                            <input type="checkbox" data-elemento-tematizado="@el.ElementoId" @(el.Tematizado ? "checked" : null) @(el.Satisfaccion == AltarWeb.Models.Registro.Satisfaccion.NoPresente || Model.SoloLectura ? "disabled" : null) onchange="altarToggleTematizado(@el.ElementoId, this.checked)" />
+                                        <label class="altar-flex altar-gap-sm" style="font-size:12px; cursor:pointer;" title="¿El elemento está tematizado (alusivo al difunto o a la temática del altar)?">
+                                            <input type="checkbox" data-elemento-tematizado="@el.ElementoId" @(el.Tematizado ? "checked" : null) @(el.Satisfaccion == AltarWeb.Models.Registro.Satisfaccion.NoLoTiene || Model.SoloLectura ? "disabled" : null) onchange="altarToggleTematizado(@el.ElementoId, this.checked)" />
                                             <input type="hidden" name="Tematizado_@el.ElementoId" id="hidden-tem-@el.ElementoId" value="@(el.Tematizado ? "true" : "false")" />
-                                            &iquest;Personalizado?
+                                            &iquest;Tematizado?
                                         </label>
 
                                         <button type="button" class="altar-btn-sm altar-btn-outline" style="padding:2px 8px;"
@@ -222,10 +276,10 @@
                                 @{
                                     var sliders = new (string Name, string Label, int Peso, decimal Valor, string Hint)[]
                                     {
-                                        ("esenciaPersonalidad", "Esencia y Personalidad", 30, Model.EsenciaPersonalidad, "¿Plasmó la esencia de a quién va dirigido? Apóyate en la temática/hobbies. Suma el bonus por elementos personalizados."),
+                                        ("esenciaPersonalidad", "Creatividad", 30, Model.EsenciaPersonalidad, "¿Plasmó con creatividad la esencia de a quién va dirigido? Apóyate en la temática/hobbies. Suma el bonus por elementos tematizados."),
                                         ("valoracionGeneral", "Valoración General", 20, Model.ValoracionGeneral, "En lo personal y lo cultural, valoración general."),
                                         ("distribucionNiveles", "Distribución por Niveles", 10, Model.DistribucionNiveles, "¿Los elementos están colocados en los niveles correctos?"),
-                                        ("narrador", "Narrador", 10, Model.Narrador, "Explicación del equipo al presentar el altar.")
+                                        ("narrador", "Explicación oral", 10, Model.Narrador, "Explicación oral del equipo al presentar el altar.")
                                     };
                                 }
                                 @foreach (var s in sliders)
@@ -241,10 +295,10 @@
                                 }
                                 <div class="altar-slider-row">
                                     <div class="altar-slider-row-head">
-                                        <span>Esencia y Personalidad + bonus</span>
+                                        <span>Creatividad + bonus</span>
                                         <span id="out-esenciaPersonalidadFinal" style="color:var(--altar-primary);">@((Model.EsenciaPersonalidad).ToString("0.0"))</span>
                                     </div>
-                                    <div class="altar-slider-hint">Bonus de @Model.BonusPorElementoTematizado.ToString("0.##") por cada elemento marcado &quot;&iquest;Personalizado?&quot;, tope 10 (equivalente al bono tem&aacute;tico del sistema anterior).</div>
+                                    <div class="altar-slider-hint">Bonus de @Model.BonusPorElementoTematizado.ToString("0.##") por cada elemento marcado &quot;&iquest;Tematizado?&quot;, tope 10 (equivalente al bono tem&aacute;tico del sistema anterior).</div>
                                 </div>
                             </div>
 
@@ -266,10 +320,21 @@
                                         <button type="submit" class="altar-btn altar-btn-outline" onclick="document.getElementById('input-accion').value='preliminar'">
                                             <i class="fa-solid fa-floppy-disk"></i> Guardar preliminar
                                         </button>
-                                        <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()">
+                                        @* El servidor rechaza el cierre si falta narrador o ficha completa; no tiene caso
+                                           ofrecer el boton para que truene despues de capturar toda la evaluacion. *@
+                                        <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()"
+                                                disabled="@(!Model.PuedeCerrarFinal)"
+                                                title="@(Model.PuedeCerrarFinal ? null : "Aún no se puede cerrar como Final: " + Model.MotivoNoFinal)">
                                             <i class="fa-solid fa-lock"></i> Cerrar como Final
                                         </button>
                                     </div>
+                                    @if (!Model.PuedeCerrarFinal)
+                                    {
+                                        <p class="altar-slider-hint">
+                                            Puedes guardarla como Preliminar, pero a&uacute;n no se puede cerrar como Final:
+                                            @(Model.MotivoNoFinal).
+                                        </p>
+                                    }
                                 }
                                 else
                                 {
@@ -341,10 +406,10 @@
 
                         <div class="altar-grid-3" style="grid-template-columns:repeat(5, 1fr); margin:20px 0;">
                             <div><div class="altar-text-muted" style="font-size:11px;">OBJ. CULTURAL</div><div id="resumen-objetivoCultural" style="font-weight:800;">@Model.ObjetivoCultural.ToString("0.0")</div></div>
-                            <div><div class="altar-text-muted" style="font-size:11px;">ESENCIA</div><div id="resumen-esenciaPersonalidad" style="font-weight:800;">@Model.EsenciaPersonalidad.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">CREATIVIDAD</div><div id="resumen-esenciaPersonalidad" style="font-weight:800;">@Model.EsenciaPersonalidad.ToString("0.0")</div></div>
                             <div><div class="altar-text-muted" style="font-size:11px;">VAL. GENERAL</div><div id="resumen-valoracionGeneral" style="font-weight:800;">@Model.ValoracionGeneral.ToString("0.0")</div></div>
                             <div><div class="altar-text-muted" style="font-size:11px;">NIVELES</div><div id="resumen-distribucionNiveles" style="font-weight:800;">@Model.DistribucionNiveles.ToString("0.0")</div></div>
-                            <div><div class="altar-text-muted" style="font-size:11px;">NARRADOR</div><div id="resumen-narrador" style="font-weight:800;">@Model.Narrador.ToString("0.0")</div></div>
+                            <div><div class="altar-text-muted" style="font-size:11px;">EXPL. ORAL</div><div id="resumen-narrador" style="font-weight:800;">@Model.Narrador.ToString("0.0")</div></div>
                         </div>
 
                         <div class="altar-flex" style="justify-content:center; gap:32px; margin-bottom:20px;">
@@ -357,8 +422,16 @@
 
                         @if (!Model.SoloLectura)
                         {
-                            <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()"><i class="fa-solid fa-lock"></i> Confirmar y cerrar como Final</button>
-                            <p class="altar-slider-hint">Al cerrar como Final se habilitan ranking, constancias y reportería.</p>
+                            <button type="button" class="altar-btn altar-btn-primary" onclick="altarConfirmarFinal()"
+                                    disabled="@(!Model.PuedeCerrarFinal)"><i class="fa-solid fa-lock"></i> Confirmar y cerrar como Final</button>
+                            @if (Model.PuedeCerrarFinal)
+                            {
+                                <p class="altar-slider-hint">Al cerrar como Final se habilitan ranking, constancias y reportería, y la evaluación deja de ser editable.</p>
+                            }
+                            else
+                            {
+                                <p class="altar-slider-hint">No se puede cerrar como Final: @(Model.MotivoNoFinal). Guárdala como Preliminar mientras tanto.</p>
+                            }
                         }
                     </div>
                 </div>
@@ -394,6 +467,108 @@
 
 @section Scripts {
     <script>
+        // Estado de la Ficha de Registro del equipo seleccionado. Se pinta desde JS (y no solo desde
+        // Razor) porque la accion administrativa lo actualiza en vivo: recargar la pagina aqui
+        // perderia una evaluacion a medio capturar.
+        var AltarFichaAdmin = (function () {
+            var URL_VALIDAR = '@Url.Action("ValidarFicha", "AltarAdmin")';
+            var URL_QUITAR = '@Url.Action("QuitarValidacionFicha", "AltarAdmin")';
+            var contenedor = document.getElementById('altar-ficha-estado');
+            var estado = {
+                validada: contenedor ? contenedor.dataset.validada === 'true' : false,
+                completa: @(Model.FichaCompleta ? "true" : "false"),
+                faltantes: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FichaFaltantes))
+            };
+
+            function pintar() {
+                if (!contenedor) return;
+                var linea = document.getElementById('altar-ficha-linea');
+                var faltantes = document.getElementById('altar-ficha-faltantes');
+                var boton = document.getElementById('altar-ficha-boton');
+
+                if (estado.validada) {
+                    linea.style.color = 'var(--altar-primary)';
+                    linea.innerHTML = '<i class="fa-solid fa-user-check" aria-hidden="true"></i> Ficha validada por administracion';
+                } else if (estado.completa) {
+                    linea.style.color = 'var(--altar-primary)';
+                    linea.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ficha completa';
+                } else {
+                    linea.style.color = 'var(--altar-amber)';
+                    linea.innerHTML = '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Ficha pendiente';
+                }
+
+                if (estado.faltantes.length) {
+                    faltantes.textContent = 'Falta capturar: ' + estado.faltantes.join(', ') +
+                        '. La evaluacion no se podra cerrar como Final hasta completarlo.';
+                    faltantes.hidden = false;
+                } else {
+                    faltantes.hidden = true;
+                }
+
+                if (boton) {
+                    boton.innerHTML = estado.validada
+                        ? '<i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Marcar como pendiente'
+                        : '<i class="fa-solid fa-user-check" aria-hidden="true"></i> Validar ficha';
+                    boton.title = estado.validada
+                        ? 'La ficha volvera a listarse como pendiente.'
+                        : 'Deja de listarse como pendiente. No sustituye a los datos faltantes.';
+                }
+            }
+
+            // El servidor revalida sesion, rol y antiforgery: esto es solo comodidad de UI.
+            function alternar() {
+                if (!contenedor) return;
+                var boton = document.getElementById('altar-ficha-boton');
+                var url = estado.validada ? URL_QUITAR : URL_VALIDAR;
+                var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!token) return;
+
+                var datos = new FormData();
+                datos.append('equipoId', contenedor.dataset.equipoId);
+                datos.append('origen', 'evaluacion');
+                datos.append('__RequestVerificationToken', token.value);
+
+                boton.disabled = true;
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: datos
+                })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+                .then(function (d) {
+                    estado.validada = d.validada;
+                    estado.completa = d.completa;
+                    estado.faltantes = d.faltantes || [];
+                    pintar();
+                    altarAvisar(d.mensaje, estado.validada && estado.faltantes.length > 0 ? 'aviso' : 'ok');
+                })
+                .catch(function () {
+                    altarAvisar('No se pudo actualizar el estado de la ficha. Vuelve a intentarlo.', 'error');
+                })
+                .finally(function () { boton.disabled = false; });
+            }
+
+            return { alternar: alternar };
+        })();
+
+        // Aviso efimero, para confirmar una accion sin recargar ni usar alert().
+        var altarAvisoTimer = null;
+        function altarAvisar(texto, tipo) {
+            var caja = document.getElementById('altar-aviso');
+            if (!caja) {
+                caja = document.createElement('div');
+                caja.id = 'altar-aviso';
+                caja.className = 'altar-aviso';
+                caja.setAttribute('role', 'status');
+                document.body.appendChild(caja);
+            }
+            caja.textContent = texto;
+            caja.dataset.tipo = tipo || 'ok';
+            caja.classList.add('visible');
+            clearTimeout(altarAvisoTimer);
+            altarAvisoTimer = setTimeout(function () { caja.classList.remove('visible'); }, 6000);
+        }
+
         var altarConfig = {
             pesoObjetivoCultural: @Inv(Model.PesoObjetivoCultural),
             pesoEsenciaPersonalidad: @Inv(Model.PesoEsenciaPersonalidad),
@@ -407,12 +582,11 @@
             pesoCatrinaOriginalidadCreatividad: @Inv(Model.PesoCatrinaOriginalidadCreatividad),
             pesoCatrinaApegoTradiciones: @Inv(Model.PesoCatrinaApegoTradiciones),
             valorSatisfaccion: {
-                NoPresente: @Inv(Model.ValorSatisfaccionNoPresente),
-                Poco: @Inv(Model.ValorSatisfaccionPoco),
-                Satisfactorio: @Inv(Model.ValorSatisfaccionSatisfactorio),
-                MuySatisfactorio: @Inv(Model.ValorSatisfaccionMuySatisfactorio)
+                NoLoTiene: @Inv(Model.ValorSatisfaccionNoLoTiene),
+                Regular: @Inv(Model.ValorSatisfaccionRegular),
+                Bueno: @Inv(Model.ValorSatisfaccionBueno)
             },
-            valorSatisfaccionMax: @Inv(Model.ValorSatisfaccionMuySatisfactorio)
+            valorSatisfaccionMax: @Inv(Model.ValorSatisfaccionBueno)
         };
 
         function altarPopulateNivelSelects() {
@@ -465,7 +639,7 @@
 
             var chkTematizado = document.querySelector('[data-elemento-tematizado="' + elementoId + '"]');
             if (chkTematizado) {
-                if (valor === 'NoPresente') {
+                if (valor === 'NoLoTiene') {
                     chkTematizado.checked = false;
                     chkTematizado.disabled = true;
                     document.getElementById('hidden-tem-' + elementoId).value = 'false';

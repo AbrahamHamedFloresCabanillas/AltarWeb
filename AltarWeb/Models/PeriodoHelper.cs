@@ -4,7 +4,7 @@ namespace AltarWeb.Models
     {
         public static string ObtenerPeriodoActual(DateTime? fecha = null)
         {
-            var valor = fecha ?? DateTime.Now;
+            var valor = fecha ?? AltarWeb.Services.FechaConcursoHelper.AhoraLocal;
             return valor.Month <= 7 ? $"{valor.Year}-1" : $"{valor.Year}-2";
         }
 

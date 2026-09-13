@@ -19,6 +19,19 @@
         {
             <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
         }
+        @if (TempData["Error"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-amber); color:var(--altar-amber);">@TempData["Error"]</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="altar-card altar-empty">
+                <i class="fa-solid fa-people-group altar-empty-icon" aria-hidden="true"></i>
+                <div class="altar-card-title">Todav&iacute;a no hay equipos en este periodo</div>
+                <p class="altar-text-muted">Los equipos aparecen aqu&iacute; cuando un participante crea el suyo desde el Portal de Registro.</p>
+            </div>
+        }
 
         <div class="altar-grid-2">
             @foreach (var e in Model)
@@ -26,7 +39,9 @@
                 <div class="altar-card">
                     <div class="altar-flex" style="justify-content:space-between;">
                         <div class="altar-card-title" style="margin-bottom:0;">@e.Nombre</div>
-                        <span class="altar-badge @(e.Evaluado ? "altar-badge-success" : "altar-badge-warning")">@(e.Evaluado ? "Evaluado" : "Pendiente")</span>
+                        @* Decia "Pendiente" a secas y convivia con "Ficha de registro pendiente" en la misma
+                           tarjeta: dos estados distintos con la misma palabra. Este es el de la evaluacion. *@
+                        <span class="altar-badge @(e.Evaluado ? "altar-badge-success" : "altar-badge-muted")">@(e.Evaluado ? "Evaluado" : "Sin evaluar")</span>
                     </div>
                     <div class="altar-card-subtitle" style="font-style:italic;">Altar &quot;@e.NombreAltar&quot;</div>
                     <div style="color:var(--altar-primary); font-size:14px; margin-bottom:8px;">@e.Carrera</div>
@@ -39,14 +54,72 @@
                     {
                         <div style="font-size:13px; margin-bottom:8px;"><i class="fa-solid fa-location-dot"></i> @e.UbicacionAltar</div>
                     }
-                    @if (e.FichaCompleta)
-                    {
-                        <div style="font-size:13px; color:var(--altar-primary);"><i class="fa-solid fa-circle-check"></i> Ficha de registro completa</div>
-                    }
-                    else
-                    {
-                        <div style="font-size:13px; color:var(--altar-amber);"><i class="fa-solid fa-triangle-exclamation"></i> Ficha de registro pendiente</div>
-                    }
+                    @* Estado de la Ficha de Registro. Se muestran por separado el dato objetivo
+                       (completa / faltantes) y la validacion administrativa, porque validar no
+                       rellena los datos que hacen falta para cerrar la evaluacion como Final. *@
+                    <div class="altar-ficha-estado">
+                        @if (e.FichaValidada)
+                        {
+                            <div class="altar-ficha-linea" style="color:var(--altar-primary);">
+                                <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+                                Ficha validada por administraci&oacute;n
+                                @if (e.FichaValidadaEn != null)
+                                {
+                                    <span class="altar-text-muted">&middot; @e.FichaValidadaEn.Value.ToString("d MMM yyyy")</span>
+                                }
+                            </div>
+                        }
+                        else if (e.FichaCompleta)
+                        {
+                            <div class="altar-ficha-linea" style="color:var(--altar-primary);">
+                                <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ficha de registro completa
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="altar-ficha-linea" style="color:var(--altar-amber);">
+                                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Ficha de registro pendiente
+                            </div>
+                        }
+
+                        @if (e.FichaFaltantes.Any())
+                        {
+                            <div class="altar-ficha-faltantes">
+                                Falta capturar: @string.Join(", ", e.FichaFaltantes).
+                                @if (e.FichaValidada)
+                                {
+                                    <text>La evaluaci&oacute;n no se podr&aacute; cerrar como Final hasta completarlo.</text>
+                                }
+                            </div>
+                        }
+
+                        <div class="altar-ficha-acciones">
+                            <a asp-controller="AltarAdmin" asp-action="EditarEquipo" asp-route-id="@e.Id" class="altar-btn altar-btn-sm altar-btn-outline">
+                                <i class="fa-solid fa-pen" aria-hidden="true"></i> Editar ficha
+                            </a>
+                            @if (e.FichaValidada)
+                            {
+                                <form asp-controller="AltarAdmin" asp-action="QuitarValidacionFicha" method="post">
+                                    <input type="hidden" name="equipoId" value="@e.Id" />
+                                    <input type="hidden" name="origen" value="equipos" />
+                                    <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline">
+                                        <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Marcar como pendiente
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-controller="AltarAdmin" asp-action="ValidarFicha" method="post">
+                                    <input type="hidden" name="equipoId" value="@e.Id" />
+                                    <input type="hidden" name="origen" value="equipos" />
+                                    <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline"
+                                            title="Deja de listarse como pendiente. No sustituye a los datos faltantes.">
+                                        <i class="fa-solid fa-user-check" aria-hidden="true"></i> Validar ficha
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
                 </div>
             }
         </div>

@@ -16,10 +16,9 @@ namespace AltarWeb.Models.Registro.Configurations
             builder.Property(c => c.PesoValoracionGeneral).HasColumnType("decimal(5,4)");
             builder.Property(c => c.PesoDistribucionNiveles).HasColumnType("decimal(5,4)");
             builder.Property(c => c.PesoNarrador).HasColumnType("decimal(5,4)");
-            builder.Property(c => c.ValorSatisfaccionNoPresente).HasColumnType("decimal(5,4)");
-            builder.Property(c => c.ValorSatisfaccionPoco).HasColumnType("decimal(5,4)");
-            builder.Property(c => c.ValorSatisfaccionSatisfactorio).HasColumnType("decimal(5,4)");
-            builder.Property(c => c.ValorSatisfaccionMuySatisfactorio).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.ValorSatisfaccionNoLoTiene).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.ValorSatisfaccionRegular).HasColumnType("decimal(5,4)");
+            builder.Property(c => c.ValorSatisfaccionBueno).HasColumnType("decimal(5,4)");
             builder.Property(c => c.PesoElementoRitual).HasColumnType("decimal(5,4)");
             builder.Property(c => c.PesoElementoDecorativo).HasColumnType("decimal(5,4)");
             builder.Property(c => c.BonusPorElementoTematizado).HasColumnType("decimal(5,4)");
@@ -43,10 +42,9 @@ namespace AltarWeb.Models.Registro.Configurations
                     PesoValoracionGeneral = 0.20m,
                     PesoDistribucionNiveles = 0.10m,
                     PesoNarrador = 0.10m,
-                    ValorSatisfaccionNoPresente = 0.0m,
-                    ValorSatisfaccionPoco = 0.5m,
-                    ValorSatisfaccionSatisfactorio = 0.75m,
-                    ValorSatisfaccionMuySatisfactorio = 1.0m,
+                    ValorSatisfaccionNoLoTiene = 0.0m,
+                    ValorSatisfaccionRegular = 0.5m,
+                    ValorSatisfaccionBueno = 1.0m,
                     PesoElementoRitual = 1.0m,
                     PesoElementoDecorativo = 0.5m,
                     BonusPorElementoTematizado = 0.25m,

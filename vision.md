@@ -1,15 +1,22 @@
-# AltarWeb — Visión y Especificación Funcional (v2.5)
+# AltarWeb — Visión y Especificación Funcional (v2.6)
 
 > Documento base para la **re-implementación** del sistema de gestión y evaluación del
 > **Concurso de Altares de Muertos de la Facultad de Ingeniería (FIM) de la UABC**,
 > tras el cambio de requerimientos. Sustituye al README anterior como fuente de verdad
 > del *qué* construir. Está redactado para guiar directamente a los agentes de desarrollo.
 >
-> **v2.5** especifica el **Reporte de Cierre de Periodo** (sección 12): lista completa
+> **v2.6** (2026-09-11) recoge los ajustes de nomenclatura y escala pedidos por el comité:
+> la **escala de satisfacción pasa de 4 a 3 niveles** (*No lo tiene / Regular / Bueno*,
+> sección 7.2), *Personalizado* pasa a **Tematizado**, *Esencia y Personalidad* pasa a
+> **Creatividad** y *Narrador* (como componente de calificación) pasa a **Explicación
+> oral** (secciones 7.3 y 7.4). Suma además tres requisitos **pendientes de definición**
+> sobre niveles y repetición de elementos (sección 13, puntos 13–15).
+>
+> **v2.5** especificó el **Reporte de Cierre de Periodo** (sección 12): lista completa
 > de métricas a contabilizar (participación, distribución académica, resultados de
 > evaluación, demografía) y una **regla obligatoria de umbral de agrupación (`N = 5`)**
 > para proteger `Genero` y `AutodescripcionCultural` de des-anonimización en cortes
-> reducidos. **Pendiente:** escala de satisfacción, regla de empates, y normalización de
+> reducidos. **Pendiente:** regla de empates y normalización de
 > `AutodescripcionCultural` para conteo (sección 13).
 
 ---
@@ -100,6 +107,7 @@ contraseña o Google OAuth restringido a ese dominio).
 - `MaestroEncargadoId` *(FK a Registrante tipo Maestro — obligatorio; el alumno lo ingresa)*
 - `UbicacionAltar` *("Lugar de exposición" — el organizador lo declara al llenar la Ficha de Registro; el administrador puede revisarlo/corregirlo antes de la fecha límite de requisitos)*
 - `Activo`
+- `FichaValidadaPorAdminEn` / `FichaValidadaPorJuezId` *(validación administrativa de la ficha — sección 6.3)*
 - Relación **RegistranteEquipo** (integrantes, de cualquier carrera) con `Rol` *(Integrante | Narrador)*.
 
 **Reglas de equipo**
@@ -132,7 +140,7 @@ contraseña o Google OAuth restringido a ese dominio).
 
 ### 4.5 Elemento (catálogo) y ElementoEvaluado
 - **Elemento** (catálogo maestro, ver sección 8): `Id`, `Nombre`, `Categoria` *(Ritual/Obligatorio | Decorativo)*, `NivelSugerido`, `Significado`, `Colocacion` *(textos del mini-manual)*, `Orden`.
-- **ElementoEvaluado** (por evaluación): `ElementoId`, `Satisfaccion` *(No presente | Poco | Satisfactorio | Muy satisfactorio)*.
+- **ElementoEvaluado** (por evaluación): `ElementoId`, `Satisfaccion` *(No lo tiene | Regular | Bueno)*, `NivelAsignado`, `Tematizado`.
 
 ### 4.6 ConfiguracionPeriodo
 - `Periodo`
@@ -141,7 +149,7 @@ contraseña o Google OAuth restringido a ese dominio).
 - `RecorridoPdf` *(archivo subido por el admin)*
 - Pesos de la **Nota Final** del altar (sección 7.7): `PesoObjetivoCultural`, `PesoEsenciaPersonalidad`, `PesoValoracionGeneral`, `PesoDistribucionNiveles`, `PesoNarrador` *(deben sumar 100%)*
 - Pesos de la **Nota de Catrina** (sección 7.5): `PesoCatrinaVestuario`, `PesoCatrinaMaquillaje`, `PesoCatrinaAccesorios`, `PesoCatrinaOriginalidadCreatividad`, `PesoCatrinaApegoTradiciones` *(deben sumar 100%)*
-- Escala de satisfacción y pesos de elemento ritual/decorativo (sección 7.2), más `BonusPorElementoTematizado`
+- Escala de satisfacción (`ValorSatisfaccionNoLoTiene`, `ValorSatisfaccionRegular`, `ValorSatisfaccionBueno`) y pesos de elemento ritual/decorativo (sección 7.2), más `BonusPorElementoTematizado`
 - `UmbralAgrupacionDemografica` *(privacidad del Reporte de Cierre, sección 12.2)*
 
 > Todos son editables desde `/AltarAdmin/Configuracion` sin desplegar código. Se aplican **al
@@ -186,11 +194,41 @@ capturados aquí son los que **se precargan automáticamente al momento de la ev
 
 **Reglas de la ficha**
 - La ficha debe quedar **completa** antes de la `FechaLimiteRequisitos` configurada por el
-  administrador (sección 11); el sistema puede marcar equipos con ficha incompleta para
-  seguimiento del admin.
+  administrador (sección 11); el sistema marca los equipos con ficha incompleta para
+  seguimiento del admin, indicando **qué campo falta** y no solo que está pendiente.
+- Pasada la `FechaLimiteRequisitos`, el bloqueo alcanza a **todo lo que forma parte de los
+  requisitos del equipo**: la ficha, la lista de integrantes y la designación del Narrador.
 - Mientras el equipo no tenga evaluación, el organizador puede seguir editando su Ficha de
   Registro (incluida `UbicacionAltar`); el administrador también puede editarla/corregirla
   desde `/Admin/EditarEquipo/{id}`.
+
+### 6.3 Validación administrativa de la Ficha de Registro
+
+> Requisito posterior a v2.6 (2026-09-11).
+
+El administrador puede **marcar la ficha de un equipo como validada** para que deje de listarse
+como pendiente. Es un estado de **seguimiento**, pensado para cuando el admin ya confirmó la
+información por fuera del sistema y no quiere seguir viendo ese equipo en la lista de pendientes.
+
+Hay que distinguir **tres conceptos que no son lo mismo** y que el sistema mantiene separados:
+
+| Concepto | Qué significa | Quién lo determina |
+|---|---|---|
+| **Ficha completa** | Están capturados nombre del altar, nombre del difunto, lugar de exposición y maestro encargado vinculado. | El sistema, a partir de los datos. |
+| **Ficha validada** | Un administrador la revisó y la acepta para seguimiento. | El administrador, explícitamente. |
+| **Listo para Final** | Se puede cerrar la evaluación: ficha completa **y** Narrador designado. | El sistema. |
+
+**Regla obligatoria:** validar una ficha **no** la vuelve completa ni habilita el cierre como
+`Final`. Si faltan datos, siguen faltando: el snapshot de la evaluación y las constancias
+(en particular la del maestro encargado) los necesitan de verdad, y el sistema nunca debe
+inventarlos. La UI muestra ambas cosas a la vez — "validada por administración" y "falta
+capturar X" — en vez de ocultar el faltante.
+
+- Disponible desde `/AltarAdmin/RegistrantesYEquipos?tab=equipos` y desde la pantalla de
+  Nueva Evaluación (solo si quien la usa tiene rol **Administrador**; un Juez ve el estado
+  pero no la acción).
+- Es reversible: el administrador puede devolver la ficha a "pendiente".
+- Se registra **cuándo** y **qué administrador** la validó.
 
 ### 6.2 Administración de equipos
 - Los participantes crean/administran sus equipos y su Ficha de Registro asociada, dentro del periodo actual.
@@ -214,19 +252,22 @@ registrada. La interfaz se organiza por pestañas/secciones.
 - Los **niveles entran en la calificación**: el juez asigna una **Nota de Distribución por Niveles (0–10)** según si los elementos están colocados en los niveles correctos.
 
 ### 7.2 Checklist de elementos (escala de satisfacción)
-Reemplaza el check binario + bonus temático. Cada elemento se califica con una **escala de satisfacción** que integra presencia + creatividad/criterio del juez:
+Reemplaza el check binario + bonus temático. Cada elemento se califica con una **escala de satisfacción de tres niveles** que integra presencia + creatividad/criterio del juez:
 
 | Opción | Valor (configurable) |
 |--------|----------------------|
-| No presente | `0.0` |
-| Poco satisfactorio | `0.5` |
-| Satisfactorio | `0.75` |
-| Muy satisfactorio | `1.0` |
+| No lo tiene | `0.0` |
+| Regular | `0.5` |
+| Bueno | `1.0` |
+
+> El nivel más alto (*Bueno*) debe valer `1.0` para que el Puntaje de Elementos pueda
+> llegar a 10; los otros dos son editables por periodo desde `/AltarAdmin/Configuracion`.
 
 - Cada elemento muestra un ícono **(i)** que abre su **mini-manual** (significado + cómo/dónde se coloca) tomado del catálogo de la sección 8.
-- Acción rápida **"Marcar todo"** (p. ej. todo como *Satisfactorio*) cuando el altar tiene todo, ajustable después.
+- Acciones rápidas **"Marcar todo"** (todo como *Bueno*) y **"Desmarcar todo"** (todo como *No lo tiene*), ajustables elemento por elemento después.
 - A medida que se califican elementos, se muestra el **acumulado de puntos** obtenidos.
 - Los elementos **Decorativos** (p. ej. vasijas de metal y barro) van al final y pueden marcarse como opcionales sin penalizar igual que los rituales (peso configurable).
+- Cada elemento puede marcarse además como **"¿Tematizado?"** (alusivo al difunto o a la temática del altar). Cada marca suma `BonusPorElementoTematizado` a **Creatividad** (7.3), con tope 10; solo aplica si el elemento no está en *No lo tiene*.
 
 **Puntaje de Elementos (0–10):**
 ```
@@ -239,13 +280,14 @@ Las tres grandes categorías cambian de nombre y de enfoque conceptual; cada una
 | Antes | Ahora | Pregunta guía |
 |-------|-------|----------------|
 | Tradición | **Objetivo Cultural** | ¿Logró su objetivo cultural el altar? |
-| Personalización | **Esencia y Personalidad** | ¿Logró plasmar la esencia y personalidad de a quién va dirigido el altar? |
+| Personalización | **Creatividad** | ¿Logró plasmar con creatividad la esencia y personalidad de a quién va dirigido el altar? |
 | Estética | **Valoración General** | (Objetivos generales) En términos generales, tanto en lo personal como en lo cultural, ¿qué calificación otorga? |
 
 El sistema puede **sugerir** un valor inicial de *Objetivo Cultural* a partir del Puntaje de Elementos y la Distribución por Niveles, pero el juez confirma o ajusta.
 
-### 7.4 Narrador y Temática/Hobbies
-- **Narrador (0–10)**: se califica la explicación del equipo (el narrador presenta el altar). Incluye su propio (i) con la guía de qué evaluar para el juez.
+### 7.4 Explicación oral y Temática/Hobbies
+- **Explicación oral (0–10)**: se califica la explicación del equipo al presentar el altar. Incluye su propio (i) con la guía de qué evaluar para el juez.
+  > El **rol de equipo sigue llamándose `Narrador`** (4.2): es la *persona* que el equipo designa. *Explicación oral* es el nombre del **componente calificable**. Son dos cosas distintas y el cambio de nombre aplica solo al segundo.
 - **Temática/Hobbies (0–10)**: qué tan bien refleja los gustos/personalidad del difunto y la creatividad del planteamiento. Se apoya en la semblanza capturada (4.3) y en los objetos personales.
 
 ### 7.5 Catrina (categoría de evaluación aparte)
@@ -273,8 +315,8 @@ Catrina por carrera**, independiente del ranking del altar.
 - Solo las evaluaciones `Final` cuentan para ranking, constancias y reportería.
 
 ### 7.7 Fórmulas de cálculo (pesos configurables desde el sistema)
-**Componentes (todos 0–10):** Objetivo Cultural (`C`), Esencia y Personalidad (`P`),
-Valoración General (`G`), Distribución por Niveles (`N`), Narrador (`R`).
+**Componentes (todos 0–10):** Objetivo Cultural (`C`), Creatividad (`P`),
+Valoración General (`G`), Distribución por Niveles (`N`), Explicación oral (`R`).
 
 **Ponderación confirmada como punto de partida** (suma = 100%), **editable desde el panel de
 administración** (parte de `ConfiguracionPeriodo`, sin requerir despliegue de código para
@@ -356,6 +398,10 @@ firmas oficiales).
 ## 11. Configuración del periodo y administración
 
 - **Fechas límite** por periodo: inscripción de equipos y fecha en que los equipos deben tener todos los requisitos.
+  - El día configurado **cuenta completo**: el bloqueo empieza al día siguiente. Un campo vacío significa "sin límite".
+  - Se evalúan contra el **calendario de Mexicali** (`America/Tijuana`), no contra la zona horaria del servidor, para que el hosting no adelante ni atrase el corte.
+  - `FechaLimiteInscripcion` bloquea **crear equipos nuevos**; no afecta el registro de participantes.
+  - `FechaLimiteRequisitos` bloquea **editar la ficha, cambiar integrantes y designar Narrador**.
 - Subida del **recorrido PDF**.
 - Gestión de jueces (alta, edición, soft delete, reactivación, promoción a admin).
 - Gestión de registrantes y equipos (sección 6).
@@ -387,11 +433,11 @@ uso institucional (dirección de la FIM, APFI). Accesible desde
 
 **Resultados de evaluación**
 - Promedio, máximo y mínimo de `NotaFinal` — general y desglosado por carrera.
-- Promedio de cada componente por separado: Objetivo Cultural, Esencia y Personalidad,
-  Valoración General, Distribución por Niveles, Narrador.
+- Promedio de cada componente por separado: Objetivo Cultural, Creatividad,
+  Valoración General, Distribución por Niveles, Explicación oral.
 - Promedio de `NotaCatrina` (entre los equipos que sí la evaluaron).
 - 1°, 2° y 3° lugar por carrera (altar) y por carrera (Catrina).
-- Elemento(s) del checklist con más incidencia de "No presente" y de "Muy satisfactorio"
+- Elemento(s) del checklist con más incidencia de "No lo tiene" y de "Bueno"
   (para detectar qué se está descuidando o qué se está haciendo consistentemente bien).
 
 **Participación de jueces y maestros**
@@ -455,9 +501,12 @@ solo sobre el total del periodo.
 9. **Reporte de cierre de periodo**: se implementa con el alcance completo de la sección 12.1, y con **umbral de agrupación `N = 5`** (propuesto y aceptado como punto de partida, configurable) para proteger `Genero` y `AutodescripcionCultural` de des-anonimización en cortes reducidos (sección 12.2).
 
 ### Pendiente de confirmación
-10. **Valores exactos de la escala de satisfacción** (0 / 0.5 / 0.75 / 1.0) y **pesos de elementos rituales vs. decorativos**: quedan como en la propuesta de la sección 7.2, editables desde `ConfiguracionPeriodo`. Confirmar si el comité quiere ajustar estos valores numéricos.
+10. **Valores exactos de la escala de satisfacción** (0 / 0.5 / 1.0 para *No lo tiene* / *Regular* / *Bueno*) y **pesos de elementos rituales vs. decorativos**: quedan como en la sección 7.2, editables desde `ConfiguracionPeriodo`. Los **nombres** de los tres niveles ya están confirmados (2026-09-11); falta confirmar el valor numérico de *Regular* y los pesos ritual/decorativo.
 11. **Regla de empates** en el ranking por carrera: no especificada; definir criterio de desempate (p. ej. mayor `Objetivo Cultural`, o evaluación conjunta de jueces).
 12. **Normalización de `AutodescripcionCultural`** para efectos de conteo en el reporte (sección 12.2): definir si es manual (catálogo de equivalencias curado por el admin) o heurística.
+13. **Elementos restringidos a un nivel concreto** (pedido del 2026-09-11): hay elementos que *solo* deben ir en cierto nivel, y colocarlos fuera de él debería **penalizar o calificarse**. Falta que el comité confirme **qué elemento va en qué nivel** (para 3 y para 7 niveles) y si la consecuencia es una penalización automática al Puntaje de Elementos o un insumo más para la nota de *Distribución por Niveles*. **Sin esa definición no se puede implementar**: hoy `Elemento.NivelSugerido3/7` es solo una sugerencia y el juez puede reasignar el nivel sin consecuencia sobre la nota.
+14. **Repetición de elementos** (pedido del 2026-09-11): agregar al checklist la pregunta *"¿el elemento está presente más de una vez, respetando las reglas de colocación?"*. Depende del punto 13 (las "reglas" son las de nivel/colocación) y de si repetir suma, no afecta o penaliza. La nota al pie de la sección 8 dice hoy que repetir **no interfiere** con la evaluación — hay que decidir si esa nota se mantiene o se sustituye por esta regla.
+15. **"Los niveles son elementos"** (pedido del 2026-09-11): planteamiento de que cada nivel del altar se evalúe como un elemento más del checklist, en vez de (o además de) la nota única de *Distribución por Niveles* (7.1). Falta definir el alcance: si sustituye esa nota, si convive con ella, y cómo se pondera.
 
 ---
 
@@ -466,7 +515,7 @@ solo sobre el total del periodo.
 - **Framework:** ASP.NET Core MVC 8.0
 - **Datos:** Entity Framework Core + SQL Server (LocalDB en desarrollo)
 - **PDF:** QuestPDF (licencia comunitaria)
-- **UI:** HTML5, CSS3, Bootstrap 5, FontAwesome 6 (temática "Noche de Altar")
+- **UI:** HTML5, CSS3, FontAwesome 6 y sistema de diseño propio "Noche de Altar" (Bootstrap se retiró en `07ead92`)
 - **Correo:** Gmail SMTP
 - **Auth participantes:** Google OAuth restringido a `@uabc.edu.mx`
 - **Periodos:** `YYYY-1` (ene–jul) / `YYYY-2` (ago–dic)

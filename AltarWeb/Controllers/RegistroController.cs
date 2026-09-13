@@ -4,6 +4,7 @@ using AltarWeb.Models.Registro;
 using AltarWeb.Services;
 using AltarWeb.ViewModels.Altar;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -198,21 +199,33 @@ namespace AltarWeb.Controllers
         {
             var props = new AuthenticationProperties
             {
+                // OJO: esta ruta tiene que ser DISTINTA de GoogleAuth:CallbackPath
+                // ("/Registro/google-callback", ver Program.cs). Esa ruta la consume el middleware
+                // de Google: si redirigimos ahi despues del login, el middleware vuelve a intentar
+                // procesarla, ya sin el parametro "state", y el intento truena.
                 RedirectUri = Url.Action("GoogleCallback", "Registro")
             };
             props.Items["intent"] = intent == "juez" ? "juez" : "registrante";
             return Challenge(props, "Google");
         }
 
-        [HttpGet("Registro/google-callback")]
+        [HttpGet("Registro/google-listo")]
         [EnableRateLimiting("login")]
         public async Task<IActionResult> GoogleCallback()
         {
-            var result = await HttpContext.AuthenticateAsync("Google");
+            // El resultado hay que leerlo del esquema de COOKIE, no del esquema "Google": el handler
+            // de Google es un esquema remoto y su AuthenticateAsync siempre devuelve NoResult. Quien
+            // deja la identidad disponible es el SignInScheme (la cookie), donde el middleware
+            // deposito el ticket al procesar el callback.
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (!result.Succeeded || result.Principal == null)
             {
                 return RedirectToAction("Login", new { tab = "registro", error = "No se pudo completar el inicio de sesión con Google." });
             }
+
+            // La identidad de Google ya se leyo; la sesion real de la app es la de HttpContext.Session
+            // (CrearSesionRegistrante / JuezId), asi que la cookie externa no debe quedarse viva.
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             var intent = (result.Properties?.Items.TryGetValue("intent", out var i) == true ? i : "registrante") ?? "registrante";
             var email = result.Principal.FindFirstValue(ClaimTypes.Email)?.Trim().ToLowerInvariant();
@@ -446,6 +459,7 @@ namespace AltarWeb.Controllers
                 Equipo = equipo,
                 EsOrganizador = equipo != null && equipo.CreadoPorRegistranteId == registrante.Id,
                 FichaCompleta = equipo != null && EquipoValidacionHelper.EsFichaCompleta(equipo),
+                FichaFaltantes = equipo != null ? EquipoValidacionHelper.FaltantesFicha(equipo) : new List<string>(),
                 EquipoEvaluado = equipo?.Evaluacion?.Estado == EstadoEvaluacion.Final,
                 EdicionBloqueada = equipo?.Evaluacion != null,
                 Elementos = elementos
@@ -463,9 +477,10 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            if (await FechaLimiteInscripcionPasadaAsync(PeriodoHelper.ObtenerPeriodoActual()))
+            var bloqueoInscripcion = await BloqueoInscripcionAsync(PeriodoHelper.ObtenerPeriodoActual());
+            if (bloqueoInscripcion != null)
             {
-                TempData["Error"] = "La fecha límite de inscripción de equipos para este periodo ya pasó.";
+                TempData["Error"] = bloqueoInscripcion;
                 return RedirectToAction("Dashboard");
             }
 
@@ -486,9 +501,12 @@ namespace AltarWeb.Controllers
 
             var periodo = PeriodoHelper.ObtenerPeriodoActual();
 
-            if (await FechaLimiteInscripcionPasadaAsync(periodo))
+            // Se revalida en el POST y no solo en el GET: un formulario abierto antes de la fecha
+            // limite y enviado despues tiene que rebotar igual.
+            var bloqueoInscripcion = await BloqueoInscripcionAsync(periodo);
+            if (bloqueoInscripcion != null)
             {
-                TempData["Error"] = "La fecha límite de inscripción de equipos para este periodo ya pasó.";
+                TempData["Error"] = bloqueoInscripcion;
                 return RedirectToAction("Dashboard");
             }
 
@@ -602,9 +620,10 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            if (await FechaLimiteRequisitosPasadaAsync(equipo.Periodo))
+            var bloqueoRequisitos = await BloqueoRequisitosAsync(equipo.Periodo);
+            if (bloqueoRequisitos != null)
             {
-                TempData["Error"] = "La fecha límite para completar los requisitos ya pasó; la ficha no puede editarse. Contacta a un administrador.";
+                TempData["Error"] = bloqueoRequisitos;
                 return RedirectToAction("Dashboard");
             }
 
@@ -653,9 +672,10 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion != null)
+            var bloqueo = await BloqueoEdicionIntegrantesAsync(equipo);
+            if (bloqueo != null)
             {
-                TempData["Error"] = "No puedes modificar integrantes de este equipo.";
+                TempData["Error"] = bloqueo;
                 return RedirectToAction("Ficha");
             }
 
@@ -675,7 +695,7 @@ namespace AltarWeb.Controllers
             _context.RegistranteEquipos.Add(new RegistranteEquipo
             {
                 RegistranteId = candidato.Id,
-                EquipoId = equipo.Id,
+                EquipoId = equipo!.Id,
                 Rol = RolEquipo.Integrante,
                 Periodo = equipo.Periodo
             });
@@ -702,13 +722,14 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion != null)
+            var bloqueo = await BloqueoEdicionIntegrantesAsync(equipo);
+            if (bloqueo != null)
             {
-                TempData["Error"] = "No puedes modificar integrantes de este equipo.";
+                TempData["Error"] = bloqueo;
                 return RedirectToAction("Ficha");
             }
 
-            if (registranteId == equipo.CreadoPorRegistranteId)
+            if (registranteId == equipo!.CreadoPorRegistranteId)
             {
                 TempData["Error"] = "El organizador no puede quitarse a sí mismo.";
                 return RedirectToAction("Ficha");
@@ -731,13 +752,14 @@ namespace AltarWeb.Controllers
             if (registrante == null) return RedirectToAction("Login");
 
             var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
-            if (equipo == null || equipo.Evaluacion != null)
+            var bloqueo = await BloqueoEdicionIntegrantesAsync(equipo);
+            if (bloqueo != null)
             {
-                TempData["Error"] = "No puedes modificar integrantes de este equipo.";
+                TempData["Error"] = bloqueo;
                 return RedirectToAction("Ficha");
             }
 
-            foreach (var integrante in equipo.Integrantes)
+            foreach (var integrante in equipo!.Integrantes)
             {
                 integrante.Rol = integrante.RegistranteId == registranteId ? RolEquipo.Narrador : RolEquipo.Integrante;
             }
@@ -745,6 +767,23 @@ namespace AltarWeb.Controllers
             await _context.SaveChangesAsync();
             TempData["Mensaje"] = "Narrador designado.";
             return RedirectToAction("Ficha");
+        }
+
+        // Las tres acciones sobre integrantes (agregar, quitar, designar Narrador) comparten el mismo
+        // candado: existir como organizador, que el equipo no tenga evaluacion (consistencia con lo ya
+        // calificado) y que no haya pasado la fecha limite de requisitos. Antes solo validaban las dos
+        // primeras, asi que el narrador y la lista de integrantes se podian cambiar despues del limite.
+        private async Task<string?> BloqueoEdicionIntegrantesAsync(Equipo? equipo)
+        {
+            if (equipo == null) return "No eres organizador de ningún equipo activo.";
+
+            if (equipo.Evaluacion != null)
+            {
+                return "El equipo ya tiene una calificación registrada; la lista de integrantes quedó cerrada " +
+                       "para que coincida con lo que el juez evaluó.";
+            }
+
+            return await BloqueoRequisitosAsync(equipo.Periodo);
         }
 
         private async Task<bool> TieneEquipoActivoAsync(int registranteId)
@@ -765,36 +804,9 @@ namespace AltarWeb.Controllers
                 .FirstOrDefaultAsync(e => e.Periodo == periodo && e.CreadoPorRegistranteId == registranteId);
         }
 
-        // Resuelve el identificador de maestro capturado por el alumno: si ya existe un
-        // Registrante con ese identificador (Maestro o Administrativo) lo vincula directo y lo
-        // promueve a Maestro; si no existe todavia, lo deja pendiente hasta que se registre.
-        private async Task<(int? MaestroId, string? Pendiente, string? Error)> ResolverMaestroEncargadoAsync(string identificadorCrudo)
-        {
-            var identificador = (identificadorCrudo ?? string.Empty).Trim();
-
-            if (identificador.Length != 5 || !identificador.All(char.IsDigit))
-            {
-                return (null, null, "La matrícula o número de empleado del maestro encargado debe tener exactamente 5 dígitos.");
-            }
-
-            var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == identificador);
-            if (candidato == null)
-            {
-                return (null, identificador, null);
-            }
-
-            if (candidato.Tipo == TipoRegistrante.Alumno)
-            {
-                return (null, null, "Ese identificador pertenece a un alumno; el maestro encargado debe ser maestro o administrativo.");
-            }
-
-            if (candidato.Tipo == TipoRegistrante.Administrativo)
-            {
-                candidato.Tipo = TipoRegistrante.Maestro;
-            }
-
-            return (candidato.Id, null, null);
-        }
+        // La regla vive en MaestroEncargadoHelper porque el admin (EditarEquipo) usa la misma.
+        private Task<(int? MaestroId, string? Pendiente, string? Error)> ResolverMaestroEncargadoAsync(string identificadorCrudo) =>
+            MaestroEncargadoHelper.ResolverAsync(_context, identificadorCrudo);
 
         private async Task ValidarFechaDefuncionAsync(string periodo, DateOnly fecha, string campo)
         {
@@ -843,27 +855,42 @@ namespace AltarWeb.Controllers
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
             vm.ExigirMinimoUnAnioFallecimiento = config?.ExigirMinimoUnAnioFallecimiento ?? true;
             vm.FechaLimiteRequisitosPasada = FechaPasada(config?.FechaLimiteRequisitos);
+            vm.FechaLimiteRequisitos = config?.FechaLimiteRequisitos;
+            vm.FichaFaltantes = EquipoValidacionHelper.FaltantesFicha(equipo);
             vm.TieneEvaluacion = equipo.Evaluacion != null;
             vm.PuedeEditar = !vm.TieneEvaluacion && !vm.FechaLimiteRequisitosPasada;
 
             return vm;
         }
 
-        // Los <input type="date"> guardan solo el dia; comparar por Date trata el dia limite
-        // como incluido completo (vence al empezar el dia siguiente), no desde la medianoche.
-        private static bool FechaPasada(DateTime? limite) => limite != null && DateTime.Now.Date > limite.Value.Date;
+        // El dia limite se cuenta completo (vence al empezar el dia siguiente) y se evalua contra el
+        // calendario de Mexicali, no contra la zona horaria del servidor: ver FechaConcursoHelper.
+        private static bool FechaPasada(DateTime? limite) => FechaConcursoHelper.LimitePasado(limite);
 
-        private async Task<bool> FechaLimiteInscripcionPasadaAsync(string periodo)
+        // Devuelve null si todavia se puede, o el mensaje que explica desde cuando esta bloqueado.
+        // Un solo lugar arma el texto para que GET, POST y vistas digan exactamente lo mismo.
+        private async Task<string?> BloqueoInscripcionAsync(string periodo)
         {
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
-            return FechaPasada(config?.FechaLimiteInscripcion);
+            if (!FechaPasada(config?.FechaLimiteInscripcion)) return null;
+
+            return $"La fecha límite para inscribir equipos del periodo {periodo} terminó el " +
+                   $"{FechaConcursoHelper.Formatear(config!.FechaLimiteInscripcion!.Value)}, así que ya no se pueden crear equipos nuevos. " +
+                   "Si necesitas inscribir uno, contacta a un administrador.";
         }
 
-        private async Task<bool> FechaLimiteRequisitosPasadaAsync(string periodo)
+        private async Task<string?> BloqueoRequisitosAsync(string periodo)
         {
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
-            return FechaPasada(config?.FechaLimiteRequisitos);
+            if (!FechaPasada(config?.FechaLimiteRequisitos)) return null;
+
+            return $"La fecha límite para completar los requisitos del periodo {periodo} terminó el " +
+                   $"{FechaConcursoHelper.Formatear(config!.FechaLimiteRequisitos!.Value)}, así que la ficha y los integrantes ya no se pueden modificar. " +
+                   "Si necesitas un cambio, contacta a un administrador.";
         }
+
+        private async Task<bool> FechaLimiteRequisitosPasadaAsync(string periodo) =>
+            await BloqueoRequisitosAsync(periodo) != null;
 
         private async Task<RegistroSignupViewModel> ConstruirSignupViewModelAsync(RegistroSignupViewModel model)
         {

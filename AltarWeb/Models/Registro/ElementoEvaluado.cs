@@ -17,7 +17,7 @@ namespace AltarWeb.Models.Registro
         public int? NivelAsignado { get; set; }
 
         // Bonus tematico (equivalente al "Bonus Temáticos" del sistema anterior, ver README.md).
-        // Solo aplica si Satisfaccion != NoPresente.
+        // Solo aplica si Satisfaccion != NoLoTiene.
         public bool Tematizado { get; set; }
     }
 }

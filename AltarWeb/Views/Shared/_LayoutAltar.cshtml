@@ -24,19 +24,35 @@
 <body class="altar-root">
     @RenderBody()
 
-    <div id="altar-datepicker-modal" class="altar-datepicker-overlay" style="display:none;">
+    <div id="altar-datepicker-modal" class="altar-datepicker-overlay" role="dialog" aria-modal="true" aria-labelledby="altar-datepicker-campo">
         <div class="altar-datepicker">
-            <div class="altar-datepicker-header">
-                <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                <span id="altar-datepicker-titulo"></span>
-                <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            <div class="altar-datepicker-intro">
+                <div id="altar-datepicker-campo" class="altar-datepicker-campo"></div>
+                <div id="altar-datepicker-actual" class="altar-datepicker-actual"></div>
             </div>
-            <div class="altar-datepicker-dow">
+
+            <div class="altar-datepicker-header">
+                <div class="altar-datepicker-navgroup">
+                    <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarAnio(-1)" aria-label="A&ntilde;o anterior" title="A&ntilde;o anterior"><i class="fa-solid fa-angles-left" aria-hidden="true"></i></button>
+                    <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(-1)" aria-label="Mes anterior" title="Mes anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                </div>
+                <span id="altar-datepicker-titulo" class="altar-datepicker-titulo" aria-live="polite"></span>
+                <div class="altar-datepicker-navgroup">
+                    <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarMes(1)" aria-label="Mes siguiente" title="Mes siguiente"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                    <button type="button" class="altar-datepicker-nav" onclick="AltarDatePicker.cambiarAnio(1)" aria-label="A&ntilde;o siguiente" title="A&ntilde;o siguiente"><i class="fa-solid fa-angles-right" aria-hidden="true"></i></button>
+                </div>
+            </div>
+
+            <div class="altar-datepicker-dow" aria-hidden="true">
                 <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
             </div>
             <div id="altar-datepicker-grid" class="altar-datepicker-grid"></div>
-            <div class="altar-flex altar-gap-sm" style="margin-top:10px; justify-content:space-between;">
-                <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="AltarDatePicker.hoy()">Hoy</button>
+
+            <p class="altar-datepicker-ayuda">Elige un d&iacute;a para aplicarlo. El d&iacute;a de hoy lleva un punto debajo. Con el teclado: flechas para moverte, Re/Av P&aacute;g para cambiar de mes, Esc para cerrar.</p>
+
+            <div class="altar-datepicker-acciones">
+                <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="AltarDatePicker.hoy()"><i class="fa-solid fa-crosshairs" aria-hidden="true"></i> Hoy</button>
+                <button type="button" id="altar-datepicker-limpiar" class="altar-btn altar-btn-sm altar-btn-outline altar-btn-danger" onclick="AltarDatePicker.limpiar()" hidden><i class="fa-solid fa-eraser" aria-hidden="true"></i> Quitar fecha</button>
                 <button type="button" class="altar-btn altar-btn-sm altar-btn-outline" onclick="AltarDatePicker.cerrar()">Cancelar</button>
             </div>
         </div>
@@ -106,91 +122,11 @@
             return { toggle: toggle, open: open, close: close };
         })();
 
-        var AltarDatePicker = (function () {
-            var inputActivo = null;
-            var mesActual = new Date();
-            var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
-            function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
-            function abrir(input) {
-                if (input.disabled || input.hasAttribute('data-readonly-native')) return;
-                inputActivo = input;
-                var valor = input.value ? new Date(input.value + 'T00:00:00') : new Date();
-                if (isNaN(valor.getTime())) valor = new Date();
-                mesActual = new Date(valor.getFullYear(), valor.getMonth(), 1);
-                render(valor);
-                document.getElementById('altar-datepicker-modal').style.display = 'flex';
-            }
-
-            function cerrar() {
-                document.getElementById('altar-datepicker-modal').style.display = 'none';
-                inputActivo = null;
-            }
-
-            function cambiarMes(delta) {
-                mesActual = new Date(mesActual.getFullYear(), mesActual.getMonth() + delta, 1);
-                render(inputActivo && inputActivo.value ? new Date(inputActivo.value + 'T00:00:00') : null);
-            }
-
-            function hoy() {
-                seleccionar(new Date());
-            }
-
-            function seleccionar(fecha) {
-                if (!inputActivo) return;
-                var valor = fecha.getFullYear() + '-' + pad(fecha.getMonth() + 1) + '-' + pad(fecha.getDate());
-                inputActivo.value = valor;
-                inputActivo.dispatchEvent(new Event('input', { bubbles: true }));
-                inputActivo.dispatchEvent(new Event('change', { bubbles: true }));
-                cerrar();
-            }
-
-            function render(seleccionada) {
-                document.getElementById('altar-datepicker-titulo').textContent = meses[mesActual.getMonth()] + ' ' + mesActual.getFullYear();
-                var grid = document.getElementById('altar-datepicker-grid');
-                grid.innerHTML = '';
-
-                var primerDia = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1).getDay();
-                var diasEnMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0).getDate();
-                var hoyFecha = new Date();
-
-                for (var i = 0; i < primerDia; i++) {
-                    grid.appendChild(document.createElement('span'));
-                }
-
-                for (var d = 1; d <= diasEnMes; d++) {
-                    var fecha = new Date(mesActual.getFullYear(), mesActual.getMonth(), d);
-                    var btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.textContent = d;
-                    btn.className = 'altar-datepicker-day';
-                    if (seleccionada && fecha.toDateString() === seleccionada.toDateString()) btn.classList.add('selected');
-                    if (fecha.toDateString() === hoyFecha.toDateString()) btn.classList.add('today');
-                    btn.onclick = (function (f) { return function () { seleccionar(f); }; })(fecha);
-                    grid.appendChild(btn);
-                }
-            }
-
-            function inicializar() {
-                document.querySelectorAll('input[type="date"]').forEach(function (input) {
-                    if (input.dataset.altarDatepickerReady) return;
-                    input.dataset.altarDatepickerReady = 'true';
-                    input.setAttribute('readonly', 'readonly');
-                    input.style.cursor = input.disabled ? 'default' : 'pointer';
-                    input.addEventListener('click', function () { abrir(input); });
-                    input.addEventListener('focus', function () { input.blur(); abrir(input); });
-                });
-            }
-
-            document.addEventListener('DOMContentLoaded', inicializar);
-
-            return { abrir: abrir, cerrar: cerrar, cambiarMes: cambiarMes, hoy: hoy, inicializar: inicializar };
-        })();
     </script>
 
     <!-- jQuery debe cargarse antes de la seccion Scripts: las vistas con formulario incluyen ahi
          _ValidationScriptsPartial (jquery.validate + unobtrusive), que depende de jQuery. -->
+    <script src="~/js/altar-datepicker.js" asp-append-version="true"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

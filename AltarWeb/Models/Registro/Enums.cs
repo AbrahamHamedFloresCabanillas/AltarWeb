@@ -31,11 +31,13 @@ namespace AltarWeb.Models.Registro
         Decorativo
     }
 
+    // Escala de satisfaccion por elemento (vision.md 7.2). Tres niveles desde 2026-09:
+    // "No lo tiene" / "Regular" / "Bueno". Se persiste como texto (ElementoEvaluadoConfiguration),
+    // asi que renombrar un miembro exige migracion de datos.
     public enum Satisfaccion
     {
-        NoPresente,
-        Poco,
-        Satisfactorio,
-        MuySatisfactorio
+        NoLoTiene,
+        Regular,
+        Bueno
     }
 }

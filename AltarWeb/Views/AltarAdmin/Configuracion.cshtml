@@ -25,15 +25,30 @@
 
             <div class="altar-card">
                 <div class="altar-card-title">Fechas l&iacute;mite del periodo @Model.Periodo</div>
-                <p class="altar-card-subtitle">Configurables por el administrador.</p>
+                <p class="altar-card-subtitle">
+                    El d&iacute;a que elijas cuenta completo: el bloqueo empieza al d&iacute;a siguiente.
+                    Deja un campo vac&iacute;o para no aplicar ese l&iacute;mite. Las fechas se eval&uacute;an
+                    con el calendario de Mexicali, sin importar d&oacute;nde est&eacute; alojado el sistema.
+                </p>
                 <div class="altar-grid-2">
                     <div class="altar-field">
-                        <label class="altar-label">Inscripci&oacute;n de equipos</label>
+                        <label class="altar-label" for="FechaLimiteInscripcion">Inscripci&oacute;n de equipos</label>
                         <input asp-for="FechaLimiteInscripcion" type="date" class="altar-input" />
+                        <p class="altar-field-eco" data-altar-date-eco></p>
+                        <p class="altar-slider-hint">
+                            Pasada esta fecha los participantes ya no podr&aacute;n <strong>crear equipos nuevos</strong>.
+                            No afecta el registro de participantes ni a los equipos ya inscritos.
+                        </p>
                     </div>
                     <div class="altar-field">
-                        <label class="altar-label">Requisitos completos</label>
+                        <label class="altar-label" for="FechaLimiteRequisitos">Requisitos completos</label>
                         <input asp-for="FechaLimiteRequisitos" type="date" class="altar-input" />
+                        <p class="altar-field-eco" data-altar-date-eco></p>
+                        <p class="altar-slider-hint">
+                            Pasada esta fecha los participantes ya no podr&aacute;n <strong>editar la Ficha de Registro
+                            ni cambiar integrantes o narrador</strong>. Un equipo con evaluaci&oacute;n registrada
+                            queda bloqueado desde antes, aunque la fecha no haya llegado.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -75,7 +90,7 @@
                         <input asp-for="PesoObjetivoCulturalPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
                     </div>
                     <div class="altar-field">
-                        <label class="altar-label">Esencia y Personalidad (%)</label>
+                        <label class="altar-label">Creatividad (%)</label>
                         <input asp-for="PesoEsenciaPersonalidadPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
                     </div>
                     <div class="altar-field">
@@ -87,7 +102,7 @@
                         <input asp-for="PesoDistribucionNivelesPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
                     </div>
                     <div class="altar-field">
-                        <label class="altar-label">Narrador (%)</label>
+                        <label class="altar-label">Explicación oral (%)</label>
                         <input asp-for="PesoNarradorPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" />
                     </div>
                 </div>

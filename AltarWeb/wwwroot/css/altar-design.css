@@ -36,6 +36,13 @@ html, [data-theme="dark"] {
 
     --altar-danger: rgb(224, 108, 117);
     --altar-danger-soft-bg: rgb(43, 22, 24);
+
+    /* Toggle switch: tokens propios para que el estado OFF tenga contraste garantizado en
+       ambos temas y no herede un color pensado para fondos de tarjeta. */
+    --altar-toggle-off-bg: rgb(52, 70, 60);
+    --altar-toggle-off-border: rgb(84, 106, 93);
+    --altar-toggle-thumb: rgb(226, 235, 229);
+    --altar-toggle-thumb-border: rgb(84, 106, 93);
 }
 
 [data-theme="light"] {
@@ -59,6 +66,13 @@ html, [data-theme="dark"] {
 
     --altar-danger: #b4362f;
     --altar-danger-soft-bg: #fbe7e5;
+
+    /* En claro el track OFF es un gris medio (no #f3f7f3, que se perdia contra la tarjeta blanca)
+       y el thumb es blanco con borde, para que se distinga del track y del fondo. */
+    --altar-toggle-off-bg: #c7d2c9;
+    --altar-toggle-off-border: #93a396;
+    --altar-toggle-thumb: #ffffff;
+    --altar-toggle-thumb-border: #93a396;
 }
 
 .altar-root {
@@ -210,6 +224,25 @@ html, [data-theme="dark"] {
     margin-top: 4px;
 }
 
+/* Marca de campo obligatorio en las etiquetas de formulario. */
+.altar-required {
+    color: var(--altar-danger);
+    margin-left: 3px;
+    font-weight: 800;
+}
+
+/* Leyenda "* Campos obligatorios" al inicio de los formularios de registro. */
+.altar-required-note {
+    font-size: 12px;
+    color: var(--altar-text-muted);
+    margin-bottom: 14px;
+}
+
+.altar-required-note .altar-required {
+    margin-left: 0;
+    margin-right: 3px;
+}
+
 /* ---------- Buttons ---------- */
 .altar-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -227,6 +260,11 @@ html, [data-theme="dark"] {
 .altar-btn-primary:hover { background: var(--altar-primary-dark); color: var(--altar-primary-contrast); }
 
 .altar-btn-outline { background: var(--altar-surface); color: var(--altar-text); border-color: var(--altar-border); }
+
+/* Variante de acciones destructivas/de limpieza sobre .altar-btn-outline. Evita repetir
+   style="color:var(--altar-danger)" en cada vista. */
+.altar-btn-danger { color: var(--altar-danger); }
+.altar-btn-danger:hover { background: var(--altar-danger-soft-bg); border-color: var(--altar-danger); color: var(--altar-danger); }
 .altar-btn-outline:hover { border-color: var(--altar-primary); color: var(--altar-primary); }
 
 .altar-btn-block { width: 100%; }
@@ -415,51 +453,159 @@ html, [data-theme="dark"] {
 .altar-seg-option:last-child { border-right: none; }
 .altar-seg-option.selected { background: var(--altar-primary); color: var(--altar-primary-contrast); }
 
-/* ---------- Toggle switch ---------- */
-.altar-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
-.altar-toggle input { opacity: 0; width: 0; height: 0; }
+/* ---------- Toggle switch ----------
+   El track OFF usaba --altar-surface-alt y el thumb #fff fijo: en tema claro eso es un gris casi
+   blanco sobre una tarjeta blanca con un circulo blanco encima, o sea invisible (se reporto en
+   "Â¿El equipo hara Catrina?"). Ahora el track OFF tiene borde y relleno propios, el thumb usa
+   --altar-surface con sombra, y el estado ON toma el verde del sistema en vez del morado. */
+.altar-toggle { position: relative; display: inline-block; width: 46px; height: 26px; flex: none; }
+.altar-toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
 .altar-toggle-slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background: var(--altar-surface-alt); border-radius: var(--altar-radius-pill); transition: 0.15s;
+    position: absolute; inset: 0; pointer-events: none;
+    background: var(--altar-toggle-off-bg);
+    border: 1px solid var(--altar-toggle-off-border);
+    border-radius: var(--altar-radius-pill);
+    transition: background 0.15s, border-color 0.15s;
 }
 .altar-toggle-slider::before {
     content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px;
-    background: #fff; border-radius: 50%; transition: 0.15s;
+    background: var(--altar-toggle-thumb);
+    border: 1px solid var(--altar-toggle-thumb-border);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    transition: transform 0.15s, background 0.15s, border-color 0.15s;
 }
-.altar-toggle input:checked + .altar-toggle-slider { background: var(--altar-purple); }
-.altar-toggle input:checked + .altar-toggle-slider::before { transform: translateX(20px); }
+.altar-toggle input:checked + .altar-toggle-slider {
+    background: var(--altar-primary); border-color: var(--altar-primary);
+}
+.altar-toggle input:checked + .altar-toggle-slider::before {
+    transform: translateX(20px);
+    background: #fff; border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Hover y focus: el foco no puede vivir en el <input> invisible, se pinta sobre el track. */
+.altar-toggle input:not(:disabled):hover + .altar-toggle-slider { border-color: var(--altar-primary); }
+.altar-toggle input:focus-visible + .altar-toggle-slider {
+    outline: 2px solid var(--altar-primary); outline-offset: 2px;
+}
+
+/* Deshabilitado: se distingue del OFF normal por opacidad + cursor, no solo por color. */
+.altar-toggle input:disabled { cursor: not-allowed; }
+.altar-toggle input:disabled + .altar-toggle-slider { opacity: 0.45; }
+.altar-toggle input:disabled + .altar-toggle-slider::before { box-shadow: none; }
 
 /* ---------- Date picker (reemplaza el picker nativo del navegador) ---------- */
 .altar-datepicker-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
     z-index: 1200; align-items: center; justify-content: center; padding: 16px;
 }
+.altar-datepicker-overlay.open { display: flex; }
+body.altar-modal-abierto { overflow: hidden; }
+
 .altar-datepicker {
     background: var(--altar-surface); border: 1px solid var(--altar-border);
-    border-radius: var(--altar-radius); padding: 16px; width: 300px; max-width: 100%;
+    border-radius: var(--altar-radius); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+    padding: 18px; width: 340px; max-width: 100%; max-height: calc(100vh - 32px); overflow-y: auto;
 }
+
+/* Encabezado de contexto: que campo se esta editando y que valor tiene ahora. */
+.altar-datepicker-intro {
+    border-bottom: 1px solid var(--altar-border); padding-bottom: 12px; margin-bottom: 12px;
+}
+.altar-datepicker-campo { font-weight: 800; font-size: 15px; }
+.altar-datepicker-actual { color: var(--altar-text-muted); font-size: 12px; margin-top: 2px; }
+
 .altar-datepicker-header {
-    display: flex; align-items: center; justify-content: space-between;
-    font-weight: 700; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px;
 }
+.altar-datepicker-navgroup { display: flex; gap: 4px; }
+.altar-datepicker-titulo { font-weight: 800; font-size: 16px; text-align: center; flex: 1; }
 .altar-datepicker-nav {
-    background: var(--altar-surface-alt); border: none; color: var(--altar-text);
-    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    background: var(--altar-surface-alt); border: 1px solid var(--altar-border); color: var(--altar-text);
+    width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center; transition: 0.15s;
 }
+.altar-datepicker-nav:hover { background: var(--altar-primary); border-color: var(--altar-primary); color: var(--altar-primary-contrast); }
+.altar-datepicker-nav:focus-visible { outline: 2px solid var(--altar-primary); outline-offset: 2px; }
+
 .altar-datepicker-dow {
     display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
-    font-size: 11px; color: var(--altar-text-muted); margin-bottom: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--altar-text-muted); margin-bottom: 6px;
 }
-.altar-datepicker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.altar-datepicker-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .altar-datepicker-day {
-    background: transparent; border: none; color: var(--altar-text);
-    padding: 8px 0; border-radius: 8px; cursor: pointer; font-size: 13px;
+    position: relative;
+    background: transparent; border: 1px solid transparent; color: var(--altar-text);
+    min-height: 40px; border-radius: 8px; cursor: pointer; font-size: 14px; font-family: inherit;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
-.altar-datepicker-day:hover { background: var(--altar-surface-alt); }
-.altar-datepicker-day.today { color: var(--altar-primary); font-weight: 700; }
-.altar-datepicker-day.selected { background: var(--altar-primary); color: var(--altar-primary-contrast); }
+.altar-datepicker-day:hover { background: var(--altar-surface-alt); border-color: var(--altar-border); }
+.altar-datepicker-day:focus-visible { outline: 2px solid var(--altar-primary); outline-offset: 1px; }
+
+/* Dias de los meses vecinos: se muestran para que la cuadricula no cambie de alto, atenuados. */
+.altar-datepicker-day.fuera { color: var(--altar-text-muted); opacity: 0.45; }
+
+/* "Hoy" se marca con un punto ademas del color, para no depender solo del color. */
+.altar-datepicker-day.today { color: var(--altar-primary); font-weight: 800; }
+.altar-datepicker-day.today::after {
+    content: ""; position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: currentColor;
+}
+.altar-datepicker-day.selected {
+    background: var(--altar-primary); color: var(--altar-primary-contrast);
+    border-color: var(--altar-primary); font-weight: 800;
+}
+.altar-datepicker-day.selected.fuera { opacity: 1; }
+
+.altar-datepicker-ayuda {
+    color: var(--altar-text-muted); font-size: 11px; margin: 12px 0 0;
+}
+.altar-datepicker-acciones {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+    padding-top: 12px; border-top: 1px solid var(--altar-border);
+}
+.altar-datepicker-acciones .altar-btn { flex: 1 1 auto; }
+
+/* Los <input type="date"> quedan readonly para suprimir el picker nativo; esto evita que parezcan
+   deshabilitados y deja claro que abren el calendario. */
+.altar-input-fecha { cursor: pointer; }
+
+/* Texto de apoyo bajo un campo de fecha (la fecha elegida escrita en palabras). */
+.altar-field-eco { color: var(--altar-text-muted); font-size: 12px; margin-top: 6px; }
+
+/* ---------- Estado vacio ----------
+   Antes cada listado resolvia el "no hay nada" con un <p> suelto o sin nada. */
+.altar-empty { text-align: center; padding: 32px 20px; }
+.altar-empty-icon { font-size: 28px; color: var(--altar-text-muted); opacity: 0.6; margin-bottom: 12px; display: block; }
+
+/* ---------- Estado de la Ficha de Registro (listado admin de equipos) ---------- */
+.altar-ficha-estado { border-top: 1px solid var(--altar-border); margin-top: 12px; padding-top: 12px; }
+.altar-ficha-linea { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.altar-ficha-faltantes { color: var(--altar-text-muted); font-size: 12px; margin-top: 4px; }
+.altar-ficha-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* ---------- Aviso efimero (confirmacion de acciones que no recargan la pagina) ---------- */
+.altar-aviso {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px);
+    z-index: 1300; max-width: min(560px, calc(100vw - 32px));
+    background: var(--altar-surface); color: var(--altar-text);
+    border: 1px solid var(--altar-primary); border-left-width: 4px;
+    border-radius: var(--altar-radius); padding: 12px 16px; font-size: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.altar-aviso.visible { opacity: 1; transform: translate(-50%, 0); }
+.altar-aviso[data-tipo="aviso"] { border-color: var(--altar-amber); }
+.altar-aviso[data-tipo="error"] { border-color: var(--altar-danger); }
 
 /* ---------- Utility ---------- */
+
+/* El [hidden] del user-agent es `display:none`, pero CUALQUIER regla de autor que fije `display`
+   (p. ej. .altar-btn { display:inline-flex }) le gana por especificidad y el elemento se sigue
+   viendo. Esto hace que el atributo hidden funcione de verdad en todo el sistema de diseno. */
+[hidden] { display: none !important; }
+
 .altar-flex { display: flex; align-items: center; }
 .altar-gap-sm { gap: 8px; }
 .altar-gap-md { gap: 16px; }
@@ -550,6 +696,12 @@ html, [data-theme="dark"] {
 
     /* Tablas: celdas mas compactas para reducir el desplazamiento horizontal en telefonos. */
     .altar-table th, .altar-table td { padding: 10px 8px; font-size: 13px; }
+
+    /* Calendario: ocupa el ancho disponible y las celdas crecen para ser comodas con el dedo
+       (44px es el minimo tactil recomendado). Las acciones pasan a ancho completo. */
+    .altar-datepicker { width: 100%; padding: 14px; }
+    .altar-datepicker-day { min-height: 44px; font-size: 15px; }
+    .altar-datepicker-acciones .altar-btn { flex: 1 1 100%; }
 }
 
 /* ---------- Animaciones y micro-interacciones ---------- */

@@ -9,6 +9,51 @@
 
 ---
 
+## 0-bis. Estado de remediación (actualizado 2026-09-02)
+
+> Añadido después de que la sesión de implementación aplicara las tres fases de corrección
+> (commits `78b5592`, `566658c`, `dd1c79e`, 2026-07-04). **El cuerpo original de la auditoría se
+> conserva intacto**; cada hallazgo lleva ahora una línea `**Estado (2026-09-02)**` con lo que
+> realmente se hizo y dónde verificarlo en el código.
+
+**Los 7 hallazgos que bloqueaban producción están cerrados.** En total: **16 corregidos en código**,
+1 cerrado por configuración de despliegue (CFG-01), **4 cerrados como decisión** (riesgo aceptado,
+paridad o diferido) y 1 informativo (E) implementado con validaciones pero con una deuda residual.
+
+| Hallazgo | Severidad | Estado |
+|---|---|---|
+| SEC-01 Bypass de Google OAuth | 🔴 Crítica | ✅ Corregido — identidad de Google server-side, token de un solo uso (10 min) |
+| SEC-02 SHA-256 sin salt | 🟠 Alta | ✅ Corregido — PBKDF2 + rehash-on-login |
+| SEC-03 Admin semilla `abram/1234` | 🟠 Alta | ✅ Corregido — env var o password aleatoria + cambio forzado |
+| SEC-05 Cookie sin `Secure` | 🟠 Alta | ✅ Corregido — `Secure`/`HttpOnly`/`SameSite` + cabeceras (CSP con deuda) |
+| PRIV-01 Umbral anulable a 0 | 🟠 Alta | ✅ Corregido — validación + piso mínimo no anulable |
+| CFG-01 Entorno `Development` | 🟠 Alta | ✅ Cerrado — checklist de despliegue en README |
+| CFG-02 HTTPS/HSTS/forwarded headers | 🟠 Alta | ✅ Corregido — `ForwardedHeaders` + HSTS |
+| SEC-10 CSRF | 🟡 Media | ✅ Corregido — `AutoValidateAntiforgeryToken` global |
+| SEC-04 Sin rate limiting en login | 🟡 Media | ✅ Corregido — 10/min por IP (⚠️ vigilar NAT institucional) |
+| LOG-01 Sin logging de auth | 🟡 Media | ✅ Corregido — logins fallidos y accesos denegados |
+| PRIV-05 Correo sin verificar | 🟡 Media | ⏸️ Riesgo aceptado por el propietario (2026-07-04) |
+| SEC-11 TOCTOU de membresía | 🟡 Media | ✅ Corregido — índice único en BD + transacción |
+| SEC-08 Autorización manual | 🟡 Media | ⏸️ Diferido — sin hueco activo, es robustez |
+| PRIV-02 PDF sin marca confidencial | 🟡 Media | ✅ Corregido — marca de agua + leyenda por página |
+| PRIV-03 Reporte sin rate-limit propio | 🔵 Baja | ⏸️ Cerrado por paridad con el resto del backoffice |
+| SEC-12 Over-posting en `CrearJuez` | 🔵 Baja | ✅ Corregido — ViewModel dedicado |
+| SEC-13 Narrador no forzado en Final | 🔵 Baja | ✅ Corregido — `EquipoValidacionHelper` |
+| SEC-14 `Logout` no limpia sesión | 🔵 Baja | ✅ Corregido — `Session.Clear()` |
+| SEC-15 Índice único sin manejo | 🔵 Baja | ✅ Corregido — mensaje amable en vez de 500 |
+| DEP-01 Scaffolding vulnerable | 🔵 Baja | ✅ Corregido — solo en builds `Debug` |
+| E RecorridoPdf (preventivo) | 🔵 Info | ⚠️ Implementado con validaciones; **falta** sacarlo de `wwwroot` y servirlo autenticado |
+| PRIV-04 Normalización de autodescripción | 🔵 Baja | ⏸️ Diferido — decisión del comité |
+
+**Deudas residuales que siguen abiertas** (ninguna bloquea producción, todas registradas en
+`current_state.md`):
+
+1. CSP con `script-src 'unsafe-inline'` por los `<script>` inline del layout (SEC-05).
+2. El recorrido PDF se sirve como archivo estático público, sin gate de sesión (E).
+3. SEC-08 (autorización por chequeo manual) y PRIV-04/PRIV-05 como decisiones diferidas.
+
+---
+
 ## 0. Nota de encuadre — la premisa "dos capas vivas" ya no aplica al 100%
 
 El prompt describe controladores legados (`JuecesController`, `/Alumno/*`, `Evaluacion` vieja) vivos en
@@ -96,6 +141,11 @@ de alcance moderado, no a checklist genérico.
   `[ValidateAntiForgeryToken]` (ver SEC-10).
 - **Esfuerzo:** **M**
 - **¿Bloquea producción?** **Sí**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). El email/nombre verificados por Google
+  se guardan server-side al llegar al callback (`RegistroController.GuardarIdentidadGoogleVerificada`),
+  como token de un solo uso con `intent` y vida de 10 minutos; los POST de `CompletarGoogle*` leen
+  exclusivamente de esa fuente (`ObtenerIdentidadGoogleVerificada`) e **ignoran** cualquier
+  `CorreoInstitucional` posteado desde el cliente. El antiforgery global (SEC-10) cubre además el CSRF.
 
 ---
 
@@ -119,6 +169,10 @@ de alcance moderado, no a checklist genérico.
   **Hacerlo antes de tocar los flujos de login** para no reescribir dos veces.
 - **Esfuerzo:** **M**
 - **¿Bloquea producción?** **Sí** (deuda ya reconocida en README; con datos reales de una universidad pública, es innegociable)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). `Services/PasswordHashService.cs` usa
+  PBKDF2 (`Microsoft.AspNetCore.Identity.PasswordHasher`) para `Registrante` y `Juez`, con
+  **rehash-on-login** de los hashes SHA-256 legados y un fixup idempotente al arranque
+  (`Program.cs:93-113`) para cualquier valor en formato no reconocido. No rompe cuentas existentes.
 
 ---
 
@@ -141,6 +195,11 @@ de alcance moderado, no a checklist genérico.
   el `Usuario` semilla también configurable.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **Sí**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). `SeedData` ya no usa una contraseña
+  literal: la toma de `SEED_ADMIN_PASSWORD` o genera una aleatoria que se imprime **una sola vez** en el
+  log de arranque (usuario configurable con `SEED_ADMIN_USUARIO`). La cuenta queda con
+  `Juez.DebeCambiarPassword = true` y `ForzarCambioPasswordFilter` bloquea cualquier acción hasta
+  completar `/Acceso/CambiarPasswordObligatorio`.
 
 ---
 
@@ -165,6 +224,12 @@ de alcance moderado, no a checklist genérico.
   `Referrer-Policy`). Considerar `CookiePolicyOptions` global.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **Sí** (fix de una línea; no lanzar sin él)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). Cookie de sesión con
+  `SecurePolicy = Always`, `HttpOnly` y `SameSite=Lax` explícitos (`Program.cs:18-27`), más cabeceras
+  `X-Content-Type-Options`, `Referrer-Policy` y una CSP básica (`Program.cs:134-152`).
+  ⚠️ **Deuda abierta:** la CSP usa `script-src 'self' 'unsafe-inline'` porque el layout y varias vistas
+  tienen `<script>` inline (tema, sidebar, datepicker); cerrarlo exige externalizar esos scripts o usar
+  nonces por request.
 
 ---
 
@@ -192,6 +257,10 @@ de alcance moderado, no a checklist genérico.
   Math.Max(umbral, PISO_MINIMO);`. Documentar en la UI de Configuración por qué no puede bajarse.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **Sí** (es el control técnico que respalda el cumplimiento de protección de datos)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). Doble control: validación server-side
+  explícita además del `[Range]` del ViewModel (`AltarAdminController.cs:275`, `AdminViewModels.cs:84`) y
+  un **piso mínimo absoluto** en `PrivacidadReporteHelper`, de modo que el umbral no puede anularse ni
+  aunque la BD traiga 0 o negativo.
 
 ---
 
@@ -213,6 +282,9 @@ de alcance moderado, no a checklist genérico.
   `UseExceptionHandler` cubra también respuestas JSON si se añaden APIs.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **Sí** (checklist de despliegue)
+- **Estado (2026-09-02):** ✅ **Cerrado** — es configuración de despliegue, no código. El README incluye
+  el checklist de producción con `ASPNETCORE_ENVIRONMENT=Production` como primer punto; en el código,
+  `UseExceptionHandler` + `UseHsts` ya están condicionados a entorno no-Development (`Program.cs:128-132`).
 
 ---
 
@@ -234,6 +306,9 @@ de alcance moderado, no a checklist genérico.
   prod.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **Sí** (para que las cookies `Secure` y el OAuth funcionen tras el proxy)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). `UseForwardedHeaders` con
+  `XForwardedFor | XForwardedProto` y `KnownNetworks`/`KnownProxies` vaciados para App Service
+  (`Program.cs:116-126`), más `UseHsts` y `UseHttpsRedirection`.
 
 ---
 
@@ -262,6 +337,9 @@ de alcance moderado, no a checklist genérico.
   por GET.
 - **Esfuerzo:** **M** (global es S; el M es por verificar cada form/JS)
 - **¿Bloquea producción?** **No** (recomendado; defensa en profundidad sobre el `SameSite=Lax` ya presente)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 1, 2026-07-04). Filtro global
+  `AutoValidateAntiforgeryTokenAttribute` (`Program.cs:73`): valida el token en todos los POST/PUT/DELETE
+  sin tocar las vistas (todas usan tag helpers `asp-action`).
 
 ---
 
@@ -280,6 +358,11 @@ de alcance moderado, no a checklist genérico.
   de intentos fallidos por cuenta con backoff/lockout temporal. Emparejar con LOG-01 (registrar intentos).
 - **Esfuerzo:** **M**
 - **¿Bloquea producción?** **No** (fuerte recomendación; sube a Sí si no se resuelve SEC-03)
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 2, 2026-07-04). Rate limiter de ventana fija,
+  **10 intentos/minuto por IP**, en las rutas de login y en el callback de Google (`Program.cs:49-67`),
+  con redirección y mensaje al usuario en vez de un 429 crudo.
+  ⚠️ **Nota operativa:** la partición es por IP; en la red institucional con NAT varios usuarios comparten
+  IP pública, así que conviene vigilar falsos positivos en producción y ajustar el umbral.
 
 ---
 
@@ -298,6 +381,9 @@ de alcance moderado, no a checklist genérico.
   `RedirigirSinPermisos`. Enviar a Application Insights en Azure. No registrar datos sensibles.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 2, 2026-07-04). Se registran intentos de login fallidos
+  con usuario/correo intentado e IP (`AccesoController.cs:36`, `RegistroController.cs:45`) y los accesos
+  denegados por rol (`AltarAdminController.cs:454`), en nivel Warning y **sin** contraseñas ni tokens.
 
 ---
 
@@ -318,6 +404,10 @@ de alcance moderado, no a checklist genérico.
   registro local. Decisión de producto — documentar.
 - **Esfuerzo:** **M**
 - **¿Bloquea producción?** **No** (requiere confirmación humana sobre el modelo de registro deseado)
+- **Estado (2026-09-02):** ⏸️ **Riesgo aceptado — decisión explícita del propietario (2026-07-04).**
+  No se implementó verificación de correo ni restricción a solo-Google; el registro local sigue sin
+  confirmar la propiedad del correo institucional. Documentado en el README como decisión de producto
+  pendiente de revisión futura.
 
 ---
 
@@ -343,6 +433,11 @@ de alcance moderado, no a checklist genérico.
   `GuardarEvaluacion`, hoy lanzaría 500 en la carrera rara — ver SEC-15).
 - **Esfuerzo:** **M**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 2, 2026-07-04). Se añadió `RegistranteEquipo.Periodo`
+  (copia denormalizada) y un **índice único a nivel de BD** (`RegistranteEquipoConfiguration`, migración
+  `20260704200530_AgregarPeriodoAyRegistranteEquipoIndiceUnico`), más transacción explícita en la creación
+  de equipo y manejo del choque con mensaje amable (`RegistroController.cs:527,689`). Verificado con
+  requests concurrentes reales.
 
 ---
 
@@ -363,6 +458,10 @@ de alcance moderado, no a checklist genérico.
   sesión manual.
 - **Esfuerzo:** **L** (refactor de auth) — puede diferirse post-lanzamiento
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ⏸️ **Diferido post-lanzamiento** (aceptado). La auditoría confirmó que no hay
+  ningún endpoint alcanzable sin sesión, así que **no es un hueco activo**; la fragilidad es que cada
+  acción nueva debe recordar el chequeo manual. Migrar a `[Authorize]`/`ClaimsPrincipal` sigue en la lista
+  de deuda técnica de `current_state.md`.
 
 ---
 
@@ -380,6 +479,9 @@ de alcance moderado, no a checklist genérico.
   en header/footer con la fecha y el usuario que lo generó. Decisión de bajo esfuerzo, alto valor de señal.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 2, 2026-07-04). El PDF del Reporte de Cierre lleva marca
+  de agua "CONFIDENCIAL" y leyenda con fecha y usuario generador en header y footer de cada página
+  (`ReportePeriodoService.cs:293`).
 
 ---
 
@@ -398,6 +500,8 @@ de alcance moderado, no a checklist genérico.
   limiting de SEC-04. No requiere cambio bloqueante.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ⏸️ **Cerrado como aceptable por paridad.** El gate (solo Admin autenticado) es
+  idéntico al del resto del backoffice; no amerita un control distinto al de las demás pantallas pesadas.
 
 ---
 
@@ -417,6 +521,9 @@ de alcance moderado, no a checklist genérico.
   NombreCompleto, Password, Rol) y mapear manualmente, como hace el resto del código.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 3, 2026-07-04). `CrearJuez` usa un ViewModel dedicado con
+  mapeo manual campo por campo, sin bindear la entidad EF (`AdminViewModels.cs:33`,
+  `AltarAdminController.cs:68`).
 
 ---
 
@@ -436,6 +543,10 @@ de alcance moderado, no a checklist genérico.
   ficha completa (`EsFichaCompleta`), maestro asignado. Rechazar con mensaje si no.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 3, 2026-07-04). Cerrar una evaluación como `Final` exige
+  Narrador designado y Ficha de Registro completa (incluido maestro encargado vinculado); la regla vive en
+  `EquipoValidacionHelper` para que la validación del portal y la del cierre no diverjan
+  (`AltarEvaluacionController.cs:256`).
 
 ---
 
@@ -451,6 +562,8 @@ de alcance moderado, no a checklist genérico.
 - **Recomendación:** Usar `HttpContext.Session.Clear()` en ambos logouts para invalidar toda la sesión.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 3, 2026-07-04). `RegistroController.Logout` hace
+  `Session.Clear()`, simétrico con `AccesoController.Salir` (`RegistroController.cs:70`).
 
 ---
 
@@ -468,6 +581,9 @@ de alcance moderado, no a checklist genérico.
   evaluación"; redirigir al detalle existente.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 3, 2026-07-04). `GuardarEvaluacion` captura la violación
+  del índice único (dos jueces evaluando el mismo equipo a la vez) y responde con un mensaje de usuario en
+  vez de un 500 (`AltarEvaluacionController.cs:307`).
 
 ---
 
@@ -488,6 +604,10 @@ de alcance moderado, no a checklist genérico.
   Correr `dotnet list package --vulnerable` en el pipeline de CI como gate recurrente.
 - **Esfuerzo:** **S**
 - **¿Bloquea producción?** **No**
+- **Estado (2026-09-02):** ✅ **Corregido** (Fase 3, 2026-07-04).
+  `Microsoft.VisualStudio.Web.CodeGeneration.Design` quedó condicionado a `'$(Configuration)' == 'Debug'`
+  (`AltarWeb.csproj:26`): un `dotnet publish -c Release` ya no empaqueta la herramienta ni su dependencia
+  transitiva vulnerable, sin perder el scaffolding en desarrollo local.
 
 ---
 
@@ -506,6 +626,14 @@ de alcance moderado, no a checklist genérico.
   (`Path.GetFileName`, rechazar `..`). Escaneo AV básico si el volumen lo amerita.
 - **Esfuerzo:** **M** (cuando se implemente)
 - **¿Bloquea producción?** **No** (la funcionalidad está diferida; documentar como requisito de esa feature)
+- **Estado (2026-09-02):** ⚠️ **La funcionalidad ya se implementó; las recomendaciones están aplicadas en
+  parte.** La subida real existe (`AltarAdminController.GuardarRecorridoAsync`) con: validación de
+  extensión `.pdf`, verificación de **magic bytes** `%PDF` del contenido (`EsContenidoPdf`), tamaño máximo
+  de 25 MB, y **nombre generado por el servidor** (`recorrido-{periodo}.pdf`, nunca el del cliente, por lo
+  que no hay path traversal). **Pendiente de la recomendación original:** el archivo se guarda en
+  `wwwroot/uploads/recorridos/` y se sirve como **estático público** — quien conozca la URL puede
+  descargarlo sin sesión. Falta moverlo fuera de `wwwroot` (o a Blob privado con SAS) y servirlo desde una
+  acción autenticada. Registrado como deuda técnica en `current_state.md`.
 
 ---
 
@@ -535,6 +663,10 @@ es `Trim().ToLowerInvariant()` (temporal, `vision.md §13` pendiente de comité)
   categorías chicas que, aunque el umbral las agrupe, reflejan conteos frágiles. Es una decisión **temporal
   reconocida** en `vision.md §13.12` (pendiente: manual vs. heurística). Sin acción de seguridad inmediata;
   cerrar con el comité. **No bloquea producción.**
+- **Estado (2026-09-02):** ⏸️ **Diferido — pendiente de decisión del comité.** Sigue vigente
+  `Trim().ToLowerInvariant()` como normalización temporal; el comité debe elegir entre catálogo manual de
+  equivalencias o heurística (`vision.md` §13.12). Documentado como decisión de producto pendiente en el
+  README y en `current_state.md`.
 
 ---
 

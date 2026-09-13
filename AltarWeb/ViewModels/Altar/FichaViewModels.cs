@@ -75,6 +75,13 @@ namespace AltarWeb.ViewModels.Altar
         public bool PuedeEditar { get; set; }
         public bool ExigirMinimoUnAnioFallecimiento { get; set; }
         public bool FechaLimiteRequisitosPasada { get; set; }
+
+        // La fecha en si, para poder decirle al organizador CUANDO vencio en vez de solo "ya paso".
+        public DateTime? FechaLimiteRequisitos { get; set; }
+
+        // Lo que falta por capturar (EquipoValidacionHelper): permite listar los pendientes concretos
+        // en vez de un aviso generico de "ficha incompleta".
+        public IReadOnlyList<string> FichaFaltantes { get; set; } = new List<string>();
         // Existe una evaluacion (preliminar o final): la ficha queda cerrada aunque no haya pasado la fecha.
         public bool TieneEvaluacion { get; set; }
     }

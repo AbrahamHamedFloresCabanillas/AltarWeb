@@ -116,7 +116,19 @@
             }
             else if (Model.FechaLimiteRequisitosPasada)
             {
-                <div class="altar-hint" style="border-color:var(--altar-danger); color:var(--altar-danger);"><i class="fa-solid fa-lock"></i> La fecha l&iacute;mite para completar los requisitos ya pas&oacute;; la ficha ya no puede editarse. Contacta a un administrador si necesitas hacer cambios.</div>
+                <div class="altar-hint" style="border-color:var(--altar-danger); color:var(--altar-danger);">
+                    <i class="fa-solid fa-lock"></i>
+                    La fecha l&iacute;mite para completar los requisitos
+                    @if (Model.FechaLimiteRequisitos != null)
+                    {
+                        <text>termin&oacute; el @Model.FechaLimiteRequisitos.Value.ToString("d 'de' MMMM 'de' yyyy")</text>
+                    }
+                    else
+                    {
+                        <text>ya pas&oacute;</text>
+                    }
+                    , as&iacute; que la ficha y los integrantes ya no pueden editarse. Contacta a un administrador si necesitas un cambio.
+                </div>
             }
         </form>
     </div>

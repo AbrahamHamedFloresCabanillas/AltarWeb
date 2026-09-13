@@ -4,7 +4,7 @@ Sistema de gestión y evaluación para el Concurso de Altares de Muertos de la F
 
 AltarWeb permite a los jueces registrar evaluaciones de altares bajo los nuevos criterios culturales, calcular puntajes por nivel y por elemento, gestionar el registro de participantes (alumnos, maestros y administrativos), administrar equipos por carrera y periodo, y generar y enviar constancias oficiales en PDF a todos los participantes, maestros encargados y jueces.
 
-La especificación funcional completa vive en [`vision.md`](vision.md).
+La especificación funcional completa vive en [`vision.md`](vision.md), el estado técnico interno en [`current_state.md`](current_state.md) y la guía de publicación en línea en [`DESPLIEGUE.md`](DESPLIEGUE.md).
 
 ---
 
@@ -43,10 +43,13 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 - Un registrante crea su equipo (`/Registro/CrearEquipo`) y completa la **Ficha de Registro del Altar** (`/Registro/Ficha`): nombre del grupo, nombre del altar, difunto (nombre y fecha de defunción), programa educativo, lugar de exposición, maestro encargado (por matrícula; si aún no está registrado queda pendiente hasta que él mismo se registre) y si el equipo **hará Catrina o no**.
 - La ficha es editable mientras el equipo **no tenga ninguna evaluación registrada** (ni `Preliminar` ni `Final`) **y** no haya pasado la fecha límite de requisitos. En cuanto existe una calificación —aunque sea preliminar— la ficha e integrantes quedan cerrados, para que el equipo no cambie respecto a lo que el juez ya evaluó. (La descarga de constancia sí sigue atada al estado `Final`.)
 - El organizador administra integrantes y designa un narrador; en cuanto el equipo tiene una evaluación (preliminar o final), la lista de integrantes queda cerrada para conservar la consistencia con lo evaluado y las constancias.
+- **Validación administrativa de la ficha:** un administrador puede marcar la ficha de un equipo como *validada* para que deje de listarse como pendiente, desde `/AltarAdmin/RegistrantesYEquipos?tab=equipos` o desde Nueva Evaluación. Es un estado de **seguimiento** y es reversible: **no** rellena datos faltantes ni habilita el cierre como `Final`, que sigue exigiendo ficha completa y Narrador designado. Cuando se valida una ficha a la que aún le faltan datos, la interfaz muestra las dos cosas. Un Juez ve el estado pero no puede cambiarlo.
 - Un registrante solo puede pertenecer a un equipo activo por periodo (`YYYY-1` / `YYYY-2`).
 - **Fechas límite configurables por el administrador** desde `/AltarAdmin/Configuracion` (aplican por periodo académico):
   - **Inscripción de equipos:** pasada esa fecha, ya no se pueden crear equipos nuevos (`/Registro/CrearEquipo` se bloquea con un mensaje explicativo). No afecta el registro de participantes, solo la creación de equipos.
-  - **Requisitos completos:** pasada esa fecha, la Ficha de Registro deja de ser editable (independientemente de si el equipo ya fue evaluado o no). Si no hay fecha configurada, no aplica ningún límite.
+  - **Requisitos completos:** pasada esa fecha, la Ficha de Registro deja de ser editable y tampoco se pueden agregar/quitar integrantes ni cambiar el Narrador (independientemente de si el equipo ya fue evaluado o no). Si no hay fecha configurada, no aplica ningún límite.
+
+  > **Semántica de las fechas límite:** el día configurado cuenta completo — el bloqueo empieza al día siguiente — y se evalúa contra el **calendario de Mexicali** (`America/Tijuana`), no contra la zona horaria del servidor. Esto importa porque el hosting gratuito corre fuera de México: sin esto, un servidor en UTC+2 cortaría la inscripción con ~9 horas de anticipación. La regla vive en `FechaConcursoHelper` y la usan todos los endpoints.
 
 ---
 
@@ -55,8 +58,9 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 Desde `/AltarEvaluacion/NuevaEvaluacion` el juez busca el equipo por carrera (tiempo real) y la vista precarga en solo lectura todos los datos de la Ficha de Registro.
 
 - **Niveles:** el altar es de **3 o 7 niveles**; el checklist se agrupa por nivel y el juez asigna una nota de **Distribución por Niveles**.
-- **Checklist de 24 elementos** (catálogo documentado en `vision.md` §8) con **escala de satisfacción** por elemento (No presente / Poco / Satisfactorio / Muy satisfactorio) en vez de check binario, más un marcador de "¿tematizado?" que otorga un bono configurable. Cada elemento tiene un ícono **(i)** con su mini-manual (significado y colocación).
-- **Categorías de calificación** (0–10 cada una): **Objetivo Cultural** (sugerido automáticamente a partir del Puntaje de Elementos), **Esencia y Personalidad**, **Valoración General**, **Distribución por Niveles** y **Narrador**.
+- **Checklist de 24 elementos** (catálogo documentado en `vision.md` §8) con **escala de satisfacción de tres niveles** por elemento (**No lo tiene / Regular / Bueno**, valores `0 / 0.5 / 1.0` configurables por periodo) en vez de check binario, más un marcador de **"¿Tematizado?"** que otorga un bono configurable a Creatividad. Cada elemento tiene un ícono **(i)** con su mini-manual (significado y colocación).
+- **Categorías de calificación** (0–10 cada una): **Objetivo Cultural** (sugerido automáticamente a partir del Puntaje de Elementos), **Creatividad**, **Valoración General**, **Distribución por Niveles** y **Explicación oral**.
+  > *Explicación oral* es el **componente calificable**; el **rol de equipo** que el organizador designa en la Ficha se sigue llamando **Narrador** (es la persona). Son dos cosas distintas.
 - **Catrina:** el equipo declara en su Ficha de Registro si hará Catrina o no; la pestaña de evaluación de Catrina solo aparece si el equipo lo declaró. Es una **categoría independiente** con su propio ranking por carrera — no suma a la Nota Final del altar. Se califica con 5 criterios ponderados (Vestuario 25%, Maquillaje 20%, Accesorios 10%, Originalidad y Creatividad 20%, Apego a las Tradiciones 25%), **configurables por periodo** desde `/AltarAdmin/Configuracion`.
 - **Estados:** `Preliminar` (editable las veces que se necesite) y `Final` (requiere confirmación explícita; solo las evaluaciones `Final` cuentan para ranking, constancias y reportería).
 
@@ -65,8 +69,8 @@ Desde `/AltarEvaluacion/NuevaEvaluacion` el juez busca el equipo por carrera (ti
 Pesos editables desde `/AltarAdmin/Configuracion` (deben sumar 100%):
 
 ```
-NotaFinal = ObjetivoCultural·30% + EsenciaPersonalidad·30% + ValoracionGeneral·20%
-          + DistribucionPorNiveles·10% + Narrador·10%
+NotaFinal = ObjetivoCultural·30% + Creatividad·30% + ValoracionGeneral·20%
+          + DistribucionPorNiveles·10% + ExplicacionOral·10%
 ```
 
 El **Puntaje de Elementos** alimenta como sugerencia al Objetivo Cultural, en vez de sumar aparte. El lugar (1°/2°/3°) se calcula por carrera al cerrar una evaluación como `Final`.
@@ -177,6 +181,17 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
    (`/Acceso/CambiarPasswordObligatorio`). El usuario semilla es `abram` salvo que se defina
    `SEED_ADMIN_USUARIO`.
 
+### Datos de demostración (opcional)
+
+Para llenar una base ya migrada con contenido de ejemplo (18 registrantes, 4 equipos con Ficha
+completa, 3 evaluaciones y 1 Catrina del periodo `2026-2`), ejecuta `datos-demo.sql` con `sqlcmd` o
+desde SSMS. Las notas del script se calculan con las mismas fórmulas de `EvaluacionCalculoService`,
+no se escriben a mano.
+
+Todo lo que crea queda marcado (correos terminados en `.demo@uabc.edu.mx`, matrículas `19xxxxx` /
+`190xx`), y `limpiar-datos-demo.sql` lo borra sin tocar ningún otro periodo ni los registrantes
+reales. **No ejecutes ninguno de los dos contra una base con datos del concurso real.**
+
 ### Seguridad — estado real del sistema (actualizado tras auditoría de seguridad, 2026-07-04)
 
 `AUDITORIA_SEGURIDAD.md` documenta la auditoría completa (19 hallazgos) y el detalle de cada corrección.
@@ -215,6 +230,10 @@ Resumen del estado actual:
   `dotnet publish -c Release` no la empaqueta.
 
 ### Checklist de despliegue a producción (Azure App Service u otro proxy)
+
+> Para el paso a paso completo de publicar la app en hosting gratuito (MonsterASP.NET o Azure App
+> Service F1), con la configuración de Google OAuth y la cadena de conexión, ver
+> [`DESPLIEGUE.md`](DESPLIEGUE.md).
 
 - [ ] Fijar `ASPNETCORE_ENVIRONMENT=Production` explícitamente en la configuración del App Service (en
   `Development` se muestra la Developer Exception Page con stack trace; no asumir el default).

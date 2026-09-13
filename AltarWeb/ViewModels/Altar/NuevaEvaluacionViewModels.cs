@@ -24,7 +24,7 @@ namespace AltarWeb.ViewModels.Altar
 
         public string Significado { get; set; } = string.Empty;
         public string Colocacion { get; set; } = string.Empty;
-        public Satisfaccion Satisfaccion { get; set; } = Satisfaccion.NoPresente;
+        public Satisfaccion Satisfaccion { get; set; } = Satisfaccion.NoLoTiene;
         public bool Tematizado { get; set; }
     }
 
@@ -48,6 +48,19 @@ namespace AltarWeb.ViewModels.Altar
         public string ResponsableCorreo { get; set; } = string.Empty;
         public string MaestroEncargado { get; set; } = string.Empty;
         public List<RegistranteEquipo> Integrantes { get; set; } = new();
+
+        // Estado de la Ficha de Registro del equipo seleccionado, para que el juez sepa antes de
+        // calificar si podra cerrar la evaluacion como Final. EsAdmin habilita la accion de validar.
+        public bool EsAdmin { get; set; }
+        public bool FichaCompleta { get; set; }
+        public bool FichaValidada { get; set; }
+        public IReadOnlyList<string> FichaFaltantes { get; set; } = new List<string>();
+        public bool TieneNarrador { get; set; }
+
+        // Espejo en UI de EquipoValidacionHelper.EstaListoParaFinal: sirve para no ofrecer un boton
+        // que el servidor va a rechazar. El servidor sigue siendo la fuente de verdad.
+        public bool PuedeCerrarFinal { get; set; }
+        public string? MotivoNoFinal { get; set; }
 
         // Evaluacion del altar
         public string DifuntoNombre { get; set; } = string.Empty;
@@ -82,10 +95,9 @@ namespace AltarWeb.ViewModels.Altar
         public decimal PesoNarrador { get; set; }
         public decimal PesoElementoRitual { get; set; }
         public decimal PesoElementoDecorativo { get; set; }
-        public decimal ValorSatisfaccionNoPresente { get; set; }
-        public decimal ValorSatisfaccionPoco { get; set; }
-        public decimal ValorSatisfaccionSatisfactorio { get; set; }
-        public decimal ValorSatisfaccionMuySatisfactorio { get; set; }
+        public decimal ValorSatisfaccionNoLoTiene { get; set; }
+        public decimal ValorSatisfaccionRegular { get; set; }
+        public decimal ValorSatisfaccionBueno { get; set; }
         public decimal BonusPorElementoTematizado { get; set; }
 
         public decimal PesoCatrinaVestuario { get; set; }

@@ -573,16 +573,13 @@ namespace AltarWeb.Migrations
                     b.Property<int>("UmbralAgrupacionDemografica")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("ValorSatisfaccionMuySatisfactorio")
+                    b.Property<decimal>("ValorSatisfaccionBueno")
                         .HasColumnType("decimal(5,4)");
 
-                    b.Property<decimal>("ValorSatisfaccionNoPresente")
+                    b.Property<decimal>("ValorSatisfaccionNoLoTiene")
                         .HasColumnType("decimal(5,4)");
 
-                    b.Property<decimal>("ValorSatisfaccionPoco")
-                        .HasColumnType("decimal(5,4)");
-
-                    b.Property<decimal>("ValorSatisfaccionSatisfactorio")
+                    b.Property<decimal>("ValorSatisfaccionRegular")
                         .HasColumnType("decimal(5,4)");
 
                     b.HasKey("Id");
@@ -612,10 +609,9 @@ namespace AltarWeb.Migrations
                             PesoObjetivoCultural = 0.30m,
                             PesoValoracionGeneral = 0.20m,
                             UmbralAgrupacionDemografica = 5,
-                            ValorSatisfaccionMuySatisfactorio = 1.0m,
-                            ValorSatisfaccionNoPresente = 0.0m,
-                            ValorSatisfaccionPoco = 0.5m,
-                            ValorSatisfaccionSatisfactorio = 0.75m
+                            ValorSatisfaccionBueno = 1.0m,
+                            ValorSatisfaccionNoLoTiene = 0.0m,
+                            ValorSatisfaccionRegular = 0.5m
                         });
                 });
 
@@ -1041,6 +1037,12 @@ namespace AltarWeb.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("CreadoPorRegistranteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FichaValidadaPorAdminEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FichaValidadaPorJuezId")
                         .HasColumnType("int");
 
                     b.Property<bool>("HaceCatrina")

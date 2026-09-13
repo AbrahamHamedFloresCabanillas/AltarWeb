@@ -39,6 +39,15 @@ namespace AltarWeb.Models.Registro
         public bool Activo { get; set; } = true;
         public DateTime CreadoEn { get; set; } = DateTime.Now;
 
+        // Validacion administrativa de la Ficha de Registro: un administrador reviso el equipo y
+        // acepta su ficha para efectos de SEGUIMIENTO, de modo que deje de listarse como pendiente.
+        // Null = sin validar. No sustituye a EquipoValidacionHelper.EsFichaCompleta: cerrar una
+        // evaluacion como Final sigue exigiendo los datos reales (snapshot y constancias los usan).
+        // Se guarda tambien quien la valido, porque es una accion que relaja un aviso en el que
+        // confian los jueces.
+        public DateTime? FichaValidadaPorAdminEn { get; set; }
+        public int? FichaValidadaPorJuezId { get; set; }
+
         public virtual Difunto? Difunto { get; set; }
         public virtual Evaluacion? Evaluacion { get; set; }
         public virtual ICollection<RegistranteEquipo> Integrantes { get; set; } = new List<RegistranteEquipo>();

@@ -75,8 +75,8 @@ namespace AltarWeb.ViewModels.Altar
         public List<PodiumEntry> PodiumAltarPorCarrera { get; set; } = new();
         public List<PodiumEntry> PodiumCatrinaPorCarrera { get; set; } = new();
 
-        public List<(string Elemento, int Conteo)> TopNoPresente { get; set; } = new();
-        public List<(string Elemento, int Conteo)> TopMuySatisfactorio { get; set; } = new();
+        public List<(string Elemento, int Conteo)> TopNoLoTiene { get; set; } = new();
+        public List<(string Elemento, int Conteo)> TopBueno { get; set; } = new();
     }
 
     public class ParticipacionJuecesViewModel

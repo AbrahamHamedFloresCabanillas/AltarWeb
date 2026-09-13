@@ -1,86 +1,210 @@
 ﻿# AltarWeb - Estado Actual del Proyecto
 
-> Actualizado: 2026-06-06
+> Actualizado: 2026-09-11 · Commit de referencia: `07ead92` (`master`, sincronizado con `origin/master`)
+> más cambios locales sin commitear (corrección del callback de Google, marcado de campos
+> obligatorios, la escala de satisfacción de tres niveles + renombres de `vision.md` v2.6, y la
+> ronda de UX / validación administrativa de ficha / auditoría de fechas límite).
 
-## Stack Tecnologico
-| Capa | Tecnologia |
+Este documento describe el **estado técnico interno** del sistema (qué existe hoy en el código).
+Los otros documentos del repo cubren lo demás:
+
+| Documento | Responde a |
+|---|---|
+| [`vision.md`](vision.md) (v2.6) | **Qué** debe construirse — especificación funcional, fuente de verdad del comité. |
+| [`README.md`](README.md) | **Cómo** se usa, se configura y se despliega. |
+| [`DESPLIEGUE.md`](DESPLIEGUE.md) | Guía paso a paso de despliegue en hosting gratuito (MonsterASP / Azure). |
+| [`AUDITORIA_SEGURIDAD.md`](AUDITORIA_SEGURIDAD.md) | Auditoría de seguridad (19 hallazgos) y **estado de remediación** de cada uno. |
+| Este archivo | Estado técnico: arquitectura, modelo de datos, deuda técnica, historial. |
+
+---
+
+## Estado general
+
+El sistema está **funcionalmente completo** respecto al alcance de `vision.md` v2.6: se
+re-implementó sobre el modelo `Registro` (Fase 2), se eliminaron las rutas legadas, se corrió una
+auditoría de seguridad completa con sus tres fases de corrección, y después cuatro rondas de
+ajustes de UI/UX, fórmulas, responsividad y tema claro/oscuro/sistema.
+
+Lo que queda abierto son **decisiones de comité** (no implementación pendiente) y la deuda técnica
+listada más abajo.
+
+---
+
+## Stack tecnológico
+
+| Capa | Tecnología |
 |---|---|
 | Framework | ASP.NET Core MVC 8.0 |
 | ORM | Entity Framework Core + SQL Server / LocalDB |
-| PDF | QuestPDF Community |
-| Frontend | Bootstrap 5 + FontAwesome 6 + JS vanilla |
+| PDF | QuestPDF 2025.7.4 (licencia comunitaria) |
+| Frontend | Sistema de diseño propio "Noche de Altar" (CSS3) + FontAwesome 6 + JS vanilla |
 | Email | SMTP configurable en `Smtp:*` |
-| Auth | Sistema propio por sesiones + Google OAuth para alumnos |
+| Auth | Sesión propia (`ISession`) + Google OAuth (`@uabc.edu.mx`) para participantes y jueces |
+| Hash de contraseñas | PBKDF2 vía `Microsoft.AspNetCore.Identity.PasswordHasher` |
 
-## Modelos Principales
+`AltarWeb/appsettings.json` **no se versiona** (está en `.gitignore`): un clon limpio debe recrearlo
+con la plantilla del README antes de poder ejecutar. Lo mismo aplica a `AltarWeb/wwwroot/uploads/`.
 
-### `Juez`
-`Id, NombreCompleto, Usuario, Password, Rol, IsDeleted, FechaEliminado`
+---
 
-### `Alumno`
-`Id, NombreCompleto, Matricula, CorreoElectronico, PasswordHash, ProveedorAuth, Activo, FechaRegistro, PeriodoRegistro`
+## Arquitectura
 
-### `Equipo`
-`Id, NombreEquipo, PeriodoAcademico, CreadoPorAlumnoId, SnapshotNombreCreador, Activo, FechaCreacion`
+### Controladores (5 — son el 100% de la superficie HTTP)
 
-### `AlumnoEquipo`
-Tabla puente `Alumno <-> Equipo` con `FechaIngreso` y `EsCreador`.
+| Controlador | Responsabilidad |
+|---|---|
+| `AccesoController` | Login/logout real de jueces y admins, cambio de contraseña obligatorio. |
+| `RegistroController` | Portal de Registro: landing, signup local y Google (participante y juez), completar datos de Google, dashboard, creación de equipo, Ficha de Registro, gestión de integrantes. |
+| `AltarEvaluacionController` | Nueva evaluación, historial, detalle, avance por carrera, recorrido en PDF. |
+| `AltarAdminController` | Jueces (alta/edición/aprobación/soft-delete), registrantes (edición/soft-delete) y equipos (edición completa de la Ficha e integrantes, validación administrativa), configuración del periodo, Reporte de Cierre de Periodo. |
+| `ConstanciaController` | Generación y envío de constancias (grupal, individuales ZIP, maestro, juez, propia). |
 
-### `Integrante`
-Se mantiene para historial de evaluaciones antiguas creadas antes del portal de alumnos. El nuevo flujo usa `Alumno`.
+No existen `JuecesController` ni `AlumnoController`: las rutas legadas se eliminaron por completo.
 
-### `Evaluacion`
-Ahora soporta `EquipoId`, `SnapshotNombreEquipo`, `NotaTradicionFinal` y `NotaPersonalizacionFinal`, conservando `NombreEquipo` para historial/snapshot.
+### Servicios y filtros
 
-## Funcionalidades Completadas
+- `ConstanciaService` — generación (QuestPDF) y envío por correo de todas las constancias.
+- `EvaluacionCalculoService` — puntaje de elementos, nota final, nota de Catrina y cálculo de lugar por carrera.
+- `ReportePeriodoService` — Reporte de Cierre de Periodo (vista y PDF, con marca de confidencialidad).
+- `PrivacidadReporteHelper` — regla de umbral de agrupación demográfica (`vision.md` §12.2), con piso mínimo no anulable.
+- `PasswordHashService` — PBKDF2 + reconocimiento y migración de hashes SHA-256 legados (rehash-on-login).
+- `EquipoValidacionHelper` — regla única del estado de un equipo: `EsFichaCompleta`, `FaltantesFicha` (qué falta, para poder decirlo), `TieneNarradorDesignado`, `FueValidadaPorAdmin` y `EstaListoParaFinal` (narrador + ficha completa, con el motivo del rechazo). Es la **única** fuente: el portal del participante, el panel admin, Nueva Evaluación y el Reporte de Cierre la consumen, ya no hay copias.
+- `MaestroEncargadoHelper` — resuelve el identificador de maestro encargado capturado en la Ficha (vincula si existe como Maestro/Administrativo y lo promueve a Maestro; lo deja pendiente si no existe; rechaza alumnos). Era un método privado de `RegistroController`; se extrajo porque `AltarAdminController.EditarEquipo` usa la misma regla.
+- `FechaConcursoHelper` — "hoy" según el calendario de Mexicali (`America/Tijuana`) y la comparación de fechas límite. Existe porque las fechas límite son fechas de calendario y compararlas contra `DateTime.Now` las hacía depender de la zona horaria del hosting (Europa en MonsterASP, UTC en Azure).
+- `ForzarCambioPasswordFilter` — bloquea toda acción de una cuenta con `DebeCambiarPassword=true`.
+- Filtro global `AutoValidateAntiforgeryTokenAttribute` (CSRF en todos los POST/PUT/DELETE).
 
-- [x] Login/Logout para Jueces y Admins existente conservado.
-- [x] Modelo `Alumno` con registro local y Google OAuth.
-- [x] Validacion de matricula numerica y unica global.
-- [x] Validacion de correo unico `@uabc.edu.mx` para alumnos.
-- [x] Sesion de alumno separada (`AlumnoId`, `AlumnoNombre`, `AlumnoMatricula`).
-- [x] Portal `/Alumno/Login`, `/Alumno/Registro`, `/Alumno/Dashboard`.
-- [x] Google OAuth configurado con placeholders en `appsettings.json`.
-- [x] Modelo `Equipo` y relacion many-to-many con `AlumnoEquipo`.
-- [x] Un alumno solo puede pertenecer a un equipo por periodo academico.
-- [x] Creacion de equipo por alumno con busqueda de integrantes.
-- [x] Vista `/Alumno/MiEquipo`.
-- [x] Edicion de integrantes por el creador del equipo mientras el equipo no tenga evaluacion registrada.
-- [x] Vista `/Alumno/MiEvaluacion` con estados sin equipo, pendiente y evaluado.
-- [x] Descarga de constancia individual propia con validacion de pertenencia.
-- [x] Evaluacion refactorizada para seleccionar equipo con dropdown en tiempo real.
-- [x] Endpoints JSON `/Evaluacion/BuscarEquipos` y `/Evaluacion/ObtenerIntegrantesEquipo`.
-- [x] Constancias grupal e individual centralizadas en `ConstanciaService`.
-- [x] Descarga de constancia grupal y ZIP de individuales.
-- [x] Envio de constancias por correo desde servicio configurable.
-- [x] Panel admin `/Admin/Alumnos` para buscar, desactivar y reactivar alumnos.
-- [x] Panel admin `/Admin/Equipos` y `/Admin/EquiposHistorico` para listar/reactivar/desactivar equipos.
-- [x] Migracion `SprintAlumnosEquiposConstancias` creada y aplicada.
+---
 
-## Dependencias NuGet
+## Modelo de datos
 
-- `Microsoft.EntityFrameworkCore.SqlServer`
-- `Microsoft.EntityFrameworkCore.Tools`
-- `Microsoft.AspNetCore.Authentication.Google`
-- `Microsoft.VisualStudio.Web.CodeGeneration.Design`
-- `QuestPDF`
+### Vigente — namespace `AltarWeb.Models.Registro`
 
-## Decisiones de Arquitectura
+| Entidad | Notas |
+|---|---|
+| `Registrante` | Alumno (7 dígitos) / Maestro / Administrativo (5 dígitos); correo institucional, teléfono, género, carrera, autodescripción cultural, soft delete. |
+| `Equipo` | Nombre del grupo y del altar, carrera del altar, periodo, organizador, maestro encargado (o identificador pendiente), ubicación, `HaceCatrina`, y la validación administrativa de la ficha (`FichaValidadaPorAdminEn`, `FichaValidadaPorJuezId`). |
+| `RegistranteEquipo` | Membresía con `Rol` (Integrante \| Narrador) y `Periodo` denormalizado para el índice único. |
+| `Difunto` | Nombre, fecha de defunción, semblanza/temática, tipo de altar (Tradicional \| Niños). |
+| `Elemento` / `ElementoEvaluado` | Catálogo maestro de 24 elementos (mini-manual: significado y colocación) y su escala de satisfacción por evaluación (**No lo tiene / Regular / Bueno**, persistida como texto). |
+| `Evaluacion` / `EvaluacionIntegrante` | Estado `Preliminar` \| `Final`, componentes 0–10, nota final, lugar, snapshots de equipo/integrantes/difunto. |
+| `EvaluacionCatrina` | Categoría independiente con sus 5 criterios ponderados y ranking propio. |
+| `ConfiguracionPeriodo` | Fechas límite, recorrido PDF, pesos de nota final y de Catrina, escala de satisfacción (3 valores), pesos ritual/decorativo, bonus temático, umbral demográfico. |
+| `CatalogoGenero` / `CatalogoCarrera` | Catálogos editables desde el admin (13 carreras FIM). |
 
-- Se mantiene `Integrante` para datos historicos de evaluaciones antiguas.
-- El flujo nuevo usa `Alumno` como entidad autenticable y `AlumnoEquipo` como membresia.
-- La membresia del equipo queda editable por su creador solo hasta que exista una `Evaluacion` asociada; despues se conserva cerrada para historial y constancias.
-- `appsettings.json` usa placeholders para Google OAuth y SMTP; los secretos reales deben ir en user-secrets, variables de entorno o configuracion local no versionada.
+### Legado durmiente
 
-## Deuda Tecnica
+`Juez` sigue vigente (backoffice). `Alumno`, `AlumnoEquipo`, `Integrante` y la `Evaluacion` antigua
+permanecen en el `DbContext` **sin ningún controlador ni ruta HTTP que los exponga**: son datos
+históricos, deuda de esquema y no superficie de ataque.
 
-- `AlumnoEquipo` no tiene soft delete propio. La edicion admin de integrantes actualiza la membresia de la tabla puente; si se requiere trazabilidad completa de membresias removidas, agregar `Activo` a `AlumnoEquipo` en una migracion posterior.
-- El login de jueces sigue usando el campo `Password` existente en texto plano. No se cambio para evitar romper cuentas actuales; conviene migrarlo a hash en un sprint dedicado.
-- Las vistas nuevas son funcionales, pero pueden recibir una segunda pasada visual para pulir detalles del tema.
+---
 
-## Historial de Sesiones
+## Funcionalidades completadas
 
-| Fecha | Agente | Cambios Realizados |
+**Portal de Registro (participantes)**
+- [x] Signup local y Google OAuth restringido a `@uabc.edu.mx`, con `CompletarGoogle` para los datos que Google no entrega.
+- [x] Validación de identificador por tipo (7 dígitos alumno / 5 dígitos maestro y administrativo), server-side.
+- [x] Dashboard: estado del equipo y de la Ficha, integrantes, maestro encargado, catálogo de elementos requeridos.
+- [x] Creación de equipo y **Ficha de Registro del Altar** completa, editable hasta la primera evaluación o la fecha límite de requisitos.
+- [x] Un registrante por equipo activo por periodo, forzado también por índice único en BD.
+- [x] Designación de narrador y cierre de la lista de integrantes al existir evaluación.
+- [x] Descarga de constancia propia cuando la evaluación del equipo está en `Final`.
+
+**Jueces y evaluación**
+- [x] Auto-registro de juez (local o Google) con aprobación del administrador; login bloqueado mientras esté pendiente.
+- [x] Búsqueda de equipo por carrera en tiempo real y precarga en solo lectura de la Ficha.
+- [x] Checklist de 24 elementos agrupado por nivel (3 o 7), con escala de satisfacción de 3 niveles, marcador de tematizado, mini-manual (i) y acumulado en vivo.
+- [x] Categorías 0–10: Objetivo Cultural (sugerido desde el puntaje de elementos), Creatividad, Valoración General, Distribución por Niveles, Explicación oral.
+- [x] Catrina como categoría independiente y opcional, con ranking propio por carrera.
+- [x] Estados `Preliminar` (reeditable) y `Final` (confirmación explícita; exige narrador y ficha completa).
+- [x] Historial por periodo, avance por carrera (Final / En preliminar / Sin calificar) y recorrido en PDF embebido.
+
+**Administración**
+- [x] Gestión de jueces: alta manual, **edición** (`/AltarAdmin/EditarJuez/{id}`: nombre, usuario, rol Juez↔Admin, contraseña nueva opcional que fuerza cambio en el siguiente login; las cuentas Google no exponen usuario ni contraseña; un admin no puede quitarse su propio rol), aprobación de pendientes, soft delete y reactivación.
+- [x] Gestión de registrantes: listado, **edición** (`/AltarAdmin/EditarRegistrante/{id}`: nombre, tipo, identificador, correo, teléfono, género, carrera, autodescripción; sin contraseña; unicidad contra activos e inactivos; vincula equipos que esperaban ese identificador como maestro encargado, igual que el signup; no permite pasar a Alumno a quien ya es maestro encargado), soft delete y reactivación.
+- [x] Gestión de equipos: listado del periodo y **edición completa de la Ficha** (`/AltarAdmin/EditarEquipo/{id}`, la ruta `/Admin/EditarEquipo` de `vision.md` §6.2): nombre, altar, difunto, carrera, maestro encargado, lugar, Catrina, más agregar/quitar integrantes y designar Narrador. El admin **no está sujeto a las fechas límite**; con evaluación registrada puede corregir la ficha (el snapshot de la evaluación no se reescribe) pero la lista de integrantes y el narrador quedan cerrados. El organizador no puede quitarse desde ahí.
+- [x] Validación administrativa de la Ficha de Registro (`vision.md` §6.3), desde el listado de equipos y desde Nueva Evaluación.
+- [x] Configuración por periodo: fechas límite, subida del recorrido PDF, pesos de nota final y de Catrina, umbral demográfico.
+- [x] Reporte de Cierre de Periodo (`vision.md` §12) con umbral de agrupación demográfica y exportación a PDF marcado como confidencial.
+
+**Constancias**
+- [x] Grupal, individuales en ZIP, maestro encargado, juez y descarga propia del participante.
+- [x] Envío manual por correo desde el detalle de la evaluación; se generan para todos, sin umbral de nota.
+
+**Transversal**
+- [x] Tema claro / oscuro / sistema con persistencia en `localStorage` y sin parpadeo al recargar.
+- [x] Diseño responsivo y animaciones/micro-interacciones del sistema de diseño.
+- [x] Auditoría de seguridad aplicada en 3 fases (ver `AUDITORIA_SEGURIDAD.md`).
+
+---
+
+## Deuda técnica (vigente)
+
+1. **CSP con `script-src 'unsafe-inline'`** (`Program.cs:134-152`) — el layout y varias vistas tienen `<script>` inline (tema, sidebar, datepicker). Reduce el valor de la CSP contra XSS. Cerrarlo exige mover esos scripts a archivos estáticos o usar nonces por request.
+2. **Autorización por chequeo manual de sesión** (SEC-08) — la cobertura actual es completa, pero depende de que cada acción nueva recuerde llamar `EstaAutenticado()`/`EsAdmin()`. Migrar a `[Authorize]`/`ClaimsPrincipal` es robustez, no un hueco activo.
+3. **Recorrido PDF servido como archivo estático público** — se guarda en `wwwroot/uploads/recorridos/recorrido-{periodo}.pdf` con validación de extensión, firma `%PDF` y límite de 25 MB, pero quien conozca la URL puede abrirlo sin sesión. Servirlo desde una acción autenticada (o Blob privado con SAS) sigue pendiente.
+4. **Rate limiting de login particionado por IP** — 10 intentos/minuto. En la red institucional con NAT, varios usuarios comparten IP pública; vigilar falsos positivos en producción y ajustar el umbral.
+5. **`RegistranteEquipo` sin soft delete propio** — quitar un integrante borra la membresía. Si se requiere trazabilidad de membresías removidas, agregar `Activo` en una migración posterior.
+6. **Modelos legados en el `DbContext`** (`Alumno`, `AlumnoEquipo`, `Integrante`, `Evaluacion` antigua) — sin rutas que los expongan; conviene decidir si se archivan sus datos y se retiran del esquema.
+7. **Regla de empates no implementada** — `vision.md` §13, pendiente 11: el ranking por carrera no define criterio de desempate. No hay nada en código al respecto.
+8. **Nombres internos desalineados con la UI** — el cambio de etiquetas de 2026-09-11 se aplicó **solo a los textos visibles**. En código y BD siguen llamándose `EsenciaPersonalidad` (UI: *Creatividad*) y `Narrador`/`PesoNarrador` (UI: *Explicación oral*). Renombrarlos tocaría 17 archivos más migraciones de columnas sin ningún beneficio para el usuario, así que se decidió **no hacerlo**; quien lea el código debe tener presente el mapeo. El enum `Satisfaccion` sí se renombró (`NoLoTiene`/`Regular`/`Bueno`) porque sus valores se persisten como texto y quedaban ilegibles.
+9. **Restricción de nivel y repetición de elementos sin implementar** — `vision.md` §13, pendientes 13–15 (elementos que solo pueden ir en cierto nivel y su penalización, pregunta de "¿está presente más de una vez?", y "los niveles son elementos"). Están **bloqueados por definición del comité**, no por esfuerzo técnico: hoy `NivelSugerido3/7` es solo sugerencia y reasignar el nivel no afecta la nota.
+10. **Sin proyecto de tests** — la solución solo contiene `AltarWeb.csproj`. Las reglas de `EquipoValidacionHelper` y `FechaConcursoHelper` son funciones puras y serían el primer candidato natural a cubrir con xUnit; hoy se verifican a mano contra el ensamblado compilado.
+
+---
+
+## Estado de la Ficha de Registro (cómo se decide)
+
+No existe una columna "ficha pendiente": el estado se **deriva**. Los tres conceptos viven
+separados a propósito y no deben mezclarse (`vision.md` §6.3):
+
+| Concepto | Origen | Efecto |
 |---|---|---|
-| 2026-06-06 | Codex | Creador de equipo puede agregar o quitar integrantes desde `/Alumno/MiEquipo` solo antes de que el equipo sea evaluado; documentacion y reglas actualizadas. |
-| 2026-06-05 | Codex | Portal de alumnos, Google OAuth, equipos por periodo, seleccion de equipo en evaluaciones, constancias grupales/individuales, admin de alumnos/equipos, migracion aplicada y documentacion actualizada. |
+| **Ficha completa** | `EquipoValidacionHelper.EsFichaCompleta` — nombre del altar, nombre del difunto, lugar de exposición y maestro encargado **vinculado**. | Requisito para cerrar `Final`. |
+| **Ficha validada** | `Equipo.FichaValidadaPorAdminEn != null`, lo pone un administrador. | Solo seguimiento: deja de listarse como pendiente. |
+| **Listo para Final** | `EquipoValidacionHelper.EstaListoParaFinal` — ficha completa **+** exactamente un Narrador. | Habilita el cierre como `Final`. |
+
+Validar **no** relaja las otras dos: si faltan datos, la UI muestra "validada" y el faltante a la vez.
+
+## Fechas límite (cómo se comparan)
+
+Regla única en `FechaConcursoHelper.LimitePasado`: el día configurado **cuenta completo** (el
+bloqueo empieza al día siguiente), `null` significa "sin límite", y la comparación se hace contra
+el calendario de **Mexicali** (`America/Tijuana`, que sí observa horario de verano), nunca contra
+la zona horaria del servidor.
+
+| Fecha | Bloquea | No bloquea |
+|---|---|---|
+| `FechaLimiteInscripcion` | Crear equipos nuevos (GET y POST de `CrearEquipo`). | El registro de participantes, ni los equipos ya creados. |
+| `FechaLimiteRequisitos` | Editar la Ficha, agregar/quitar integrantes y designar Narrador. | La evaluación del juez ni las acciones del administrador. |
+
+Independientemente de la fecha, un equipo **con evaluación registrada** (Preliminar o Final) tiene
+la ficha y los integrantes cerrados, para que coincidan con lo que el juez evaluó.
+
+## Decisiones de producto pendientes (no técnicas)
+
+- **Verificación de correo en registro local** (PRIV-05): riesgo **aceptado explícitamente** por el propietario el 2026-07-04, sin cambios de código. Pendiente de revisión futura.
+- **Normalización de `AutodescripcionCultural`** (PRIV-04 / `vision.md` §13.12): hoy `Trim().ToLowerInvariant()` como solución temporal. El comité debe elegir entre catálogo manual de equivalencias o heurística.
+- **Valores de la escala de satisfacción y pesos ritual/decorativo** (`vision.md` §13.10): los **nombres** de los tres niveles quedaron confirmados el 2026-09-11 (*No lo tiene / Regular / Bueno*); los **valores** `0 / 0.5 / 1.0` y los pesos ritual/decorativo siguen pendientes de confirmación, configurables por periodo.
+- **Regla de empates en el ranking por carrera** (`vision.md` §13.11): sin definir.
+- **Elementos restringidos a un nivel, repetición de elementos y "los niveles son elementos"** (`vision.md` §13.13–15): pedidos el 2026-09-11 pero **sin la definición necesaria para implementarlos** (falta el mapeo elemento→nivel obligatorio y la consecuencia sobre la nota).
+
+---
+
+## Historial de sesiones
+
+| Fecha | Agente | Cambios realizados |
+|---|---|---|
+| 2026-06-05 | Codex | Portal de alumnos, Google OAuth, equipos por periodo, selección de equipo en evaluaciones, constancias grupales/individuales, admin de alumnos/equipos, migración aplicada. |
+| 2026-06-06 | Codex | El creador del equipo puede agregar o quitar integrantes desde `/Alumno/MiEquipo` solo antes de que el equipo sea evaluado. |
+| 2026-07-01/02 | Claude | Fase 1 y 2 de `vision.md`: modelo `Registro`, Portal de Registro, paneles de juez y admin, eliminación de rutas legadas. |
+| 2026-07-03 | Opus 4.8 | Auditoría de seguridad, privacidad y preparación para producción: 19 hallazgos, sin tocar código. |
+| 2026-07-04 | Claude | Fases 1–3 de remediación de la auditoría, Reporte de Cierre de Periodo, fechas límite e índices únicos de concurrencia. |
+| 2026-08-06 | Claude | Reconfiguración de criterios de Catrina, precarga del catálogo de elementos y ajustes de UX. |
+| 2026-08-27 | Claude | Animaciones y micro-interacciones, corrección de validación en cliente, listado de jueces inactivos, limpieza de código muerto y alineación de documentación. |
+| 2026-09-02 | Claude | Actualización de este documento y anotación del estado de remediación en `AUDITORIA_SEGURIDAD.md`; guía `DESPLIEGUE.md` y scripts de datos de demostración. |
+| 2026-09-05 | Claude | Corrección del callback de Google (ruta propia `/Registro/google-listo` y lectura del ticket desde el esquema de cookie), marcado de campos obligatorios en los formularios de registro y revisión de documentación. |
+| 2026-09-11 | Opus 5 | Escala de satisfacción de 4 a 3 niveles (*No lo tiene / Regular / Bueno*) con migración de datos `EscalaSatisfaccionTresNiveles`; renombres de UI *Personalizado*→*Tematizado*, *Esencia y Personalidad*→*Creatividad*, *Narrador*→*Explicación oral* (el rol de equipo sigue siendo *Narrador*); `vision.md` a v2.6 con tres pendientes nuevos. |
+| 2026-09-13 | Opus 5 | Edición administrativa de jueces, registrantes y equipos (`EditarJuez`, `EditarRegistrante`, `EditarEquipo` + `AgregarIntegranteEquipo` / `QuitarIntegranteEquipo` / `DesignarNarradorEquipo`), botones de edición en los tres listados y extracción de `MaestroEncargadoHelper`. Sin migraciones. |
+| 2026-09-11 | Opus 5 | Ronda de UX y lógica administrativa: datepicker rehecho y movido a `wwwroot/js/altar-datepicker.js`; arreglo de contraste del toggle en tema claro; validación administrativa de la Ficha de Registro (migración `ValidacionAdminDeFichaDeRegistro`); auditoría de fechas límite (huecos server-side en integrantes/narrador y comparación dependiente de la zona horaria del servidor); unificación de `EsFichaCompleta`, que tenía una copia divergente en el panel admin. |

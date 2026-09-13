@@ -120,6 +120,7 @@ namespace AltarWeb.Controllers
 
             var vm = new NuevaEvaluacionViewModel
             {
+                EsAdmin = EsAdmin(),
                 Busqueda = q ?? string.Empty,
                 Resultados = equipos.Select(e => new EquipoBusquedaItemViewModel
                 {
@@ -163,6 +164,14 @@ namespace AltarWeb.Controllers
                     ?? (equipo.MaestroEncargadoIdentificadorPendiente != null ? $"Pendiente ({equipo.MaestroEncargadoIdentificadorPendiente})" : string.Empty);
                 vm.Integrantes = equipo.Integrantes.ToList();
 
+                // Misma regla que usa el portal del participante y que exige el cierre como Final.
+                vm.FichaCompleta = EquipoValidacionHelper.EsFichaCompleta(equipo);
+                vm.FichaFaltantes = EquipoValidacionHelper.FaltantesFicha(equipo);
+                vm.FichaValidada = EquipoValidacionHelper.FueValidadaPorAdmin(equipo);
+                vm.TieneNarrador = EquipoValidacionHelper.TieneNarradorDesignado(equipo);
+                vm.PuedeCerrarFinal = EquipoValidacionHelper.EstaListoParaFinal(equipo, out var motivoNoFinal);
+                vm.MotivoNoFinal = motivoNoFinal;
+
                 vm.DifuntoNombre = equipo.Difunto?.Nombre ?? string.Empty;
                 vm.DifuntoFechaDefuncion = equipo.Difunto?.FechaDefuncion ?? DateOnly.FromDateTime(DateTime.Today);
                 vm.TipoAltar = equipo.Difunto?.TipoAltar ?? TipoAltar.Tradicional;
@@ -184,7 +193,7 @@ namespace AltarWeb.Controllers
                         NivelAsignado = ee?.NivelAsignado ?? nivelSugerido,
                         Significado = el.Significado,
                         Colocacion = el.Colocacion,
-                        Satisfaccion = ee?.Satisfaccion ?? Satisfaccion.NoPresente,
+                        Satisfaccion = ee?.Satisfaccion ?? Satisfaccion.NoLoTiene,
                         Tematizado = ee?.Tematizado ?? false
                     };
                 }).OrderBy(el => el.Nombre).ToList();
@@ -218,10 +227,9 @@ namespace AltarWeb.Controllers
             vm.PesoCatrinaAccesorios = config.PesoCatrinaAccesorios;
             vm.PesoCatrinaOriginalidadCreatividad = config.PesoCatrinaOriginalidadCreatividad;
             vm.PesoCatrinaApegoTradiciones = config.PesoCatrinaApegoTradiciones;
-            vm.ValorSatisfaccionNoPresente = config.ValorSatisfaccionNoPresente;
-            vm.ValorSatisfaccionPoco = config.ValorSatisfaccionPoco;
-            vm.ValorSatisfaccionSatisfactorio = config.ValorSatisfaccionSatisfactorio;
-            vm.ValorSatisfaccionMuySatisfactorio = config.ValorSatisfaccionMuySatisfactorio;
+            vm.ValorSatisfaccionNoLoTiene = config.ValorSatisfaccionNoLoTiene;
+            vm.ValorSatisfaccionRegular = config.ValorSatisfaccionRegular;
+            vm.ValorSatisfaccionBueno = config.ValorSatisfaccionBueno;
             vm.BonusPorElementoTematizado = config.BonusPorElementoTematizado;
 
             return View(vm);
@@ -256,20 +264,15 @@ namespace AltarWeb.Controllers
             // SEC-13: vision.md §4.2 exige un Narrador por equipo; una evaluacion Final tambien implica
             // que la ficha (incluido maestro encargado) esta completa. La designacion de narrador ya se
             // fuerza auto-exclusiva en RegistroController.DesignarNarrador, pero nada impedia cerrar
-            // Final sin haber pasado por ahi.
-            if (accion == "final")
+            // Final sin haber pasado por ahi. La regla vive en EquipoValidacionHelper.
+            //
+            // Ojo: la validacion administrativa de la ficha (Equipo.FichaValidadaPorAdminEn) NO relaja
+            // esto. Es a proposito: el snapshot de la evaluacion y las constancias necesitan los datos
+            // reales, y marcar la ficha como revisada no los inventa.
+            if (accion == "final" && !EquipoValidacionHelper.EstaListoParaFinal(equipo, out var motivoFinal))
             {
-                if (!EquipoValidacionHelper.TieneNarradorDesignado(equipo))
-                {
-                    TempData["Error"] = "No se puede cerrar como Final: el equipo no tiene un Narrador designado.";
-                    return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
-                }
-
-                if (!EquipoValidacionHelper.EsFichaCompleta(equipo))
-                {
-                    TempData["Error"] = "No se puede cerrar como Final: la Ficha de Registro del equipo está incompleta.";
-                    return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
-                }
+                TempData["Error"] = $"No se puede cerrar como Final: {motivoFinal}.";
+                return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
             }
 
             var periodo = PeriodoHelper.ObtenerPeriodoActual();
@@ -328,13 +331,13 @@ namespace AltarWeb.Controllers
             foreach (var elemento in elementos)
             {
                 var campoSatisfaccion = Request.Form["Satisfaccion_" + elemento.Id];
-                if (!Enum.TryParse<Satisfaccion>(campoSatisfaccion, out var satisfaccion)) satisfaccion = Satisfaccion.NoPresente;
+                if (!Enum.TryParse<Satisfaccion>(campoSatisfaccion, out var satisfaccion)) satisfaccion = Satisfaccion.NoLoTiene;
 
                 var campoNivel = Request.Form["Nivel_" + elemento.Id];
                 int? nivelAsignado = int.TryParse(campoNivel, out var nivelParsed) ? nivelParsed : null;
 
                 // Tematizado solo aplica si el elemento esta presente en alguna medida.
-                var tematizado = satisfaccion != Satisfaccion.NoPresente && Request.Form["Tematizado_" + elemento.Id] == "true";
+                var tematizado = satisfaccion != Satisfaccion.NoLoTiene && Request.Form["Tematizado_" + elemento.Id] == "true";
 
                 var existente = existentes.FirstOrDefault(ee => ee.ElementoId == elemento.Id);
                 if (existente != null)
@@ -452,6 +455,9 @@ namespace AltarWeb.Controllers
         }
 
         private bool EstaAutenticado() => HttpContext.Session.GetInt32("JuezId") != null;
+
+        private bool EsAdmin() =>
+            HttpContext.Session.GetInt32("JuezId") != null && HttpContext.Session.GetString("JuezRol") == "Admin";
 
         internal AltarWeb.ViewModels.Altar.AltarNavContext ObtenerNavContext(string activeItem)
         {

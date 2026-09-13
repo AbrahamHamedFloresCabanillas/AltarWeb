@@ -1,0 +1,251 @@
+@model AltarWeb.ViewModels.Altar.EditarEquipoViewModel
+@using AltarWeb.Models.Registro
+@{
+    ViewData["Title"] = "Editar equipo";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main" style="max-width:900px;">
+        <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="equipos" class="altar-text-muted" style="display:inline-block; margin-bottom:16px;"><i class="fa-solid fa-arrow-left"></i> Volver a equipos</a>
+        <div class="altar-page-title">Editar equipo</div>
+        <div class="altar-page-subtitle" style="margin-bottom:16px;">
+            Ficha de Registro del Altar &middot; periodo @Model.Periodo &middot; inscrito el @Model.CreadoEn.ToString("d MMM yyyy")
+            @if (Model.TieneEvaluacion)
+            {
+                <span class="altar-badge altar-badge-success" style="margin-left:6px;">Evaluado (@Model.EstadoEvaluacion)</span>
+            }
+        </div>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+        }
+
+        @* Estado de la ficha: mismo bloque que el listado de equipos, para que el admin vea desde aqui
+           que falta y pueda validar sin volver al listado. *@
+        <div class="altar-card">
+            <div class="altar-ficha-estado" style="margin-top:0;">
+                @if (Model.FichaValidada)
+                {
+                    <div class="altar-ficha-linea" style="color:var(--altar-primary);">
+                        <i class="fa-solid fa-user-check" aria-hidden="true"></i> Ficha validada por administraci&oacute;n
+                        @if (Model.FichaValidadaEn != null)
+                        {
+                            <span class="altar-text-muted">&middot; @Model.FichaValidadaEn.Value.ToString("d MMM yyyy")</span>
+                        }
+                    </div>
+                }
+                else if (!Model.FichaFaltantes.Any())
+                {
+                    <div class="altar-ficha-linea" style="color:var(--altar-primary);"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Ficha de registro completa</div>
+                }
+                else
+                {
+                    <div class="altar-ficha-linea" style="color:var(--altar-amber);"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Ficha de registro pendiente</div>
+                }
+
+                @if (Model.FichaFaltantes.Any())
+                {
+                    <div class="altar-ficha-faltantes">Falta capturar: @string.Join(", ", Model.FichaFaltantes).</div>
+                }
+                @if (!Model.TieneNarrador)
+                {
+                    <div class="altar-ficha-faltantes">El equipo no tiene Narrador designado; sin &eacute;l la evaluaci&oacute;n no podr&aacute; cerrarse como Final.</div>
+                }
+
+                <div class="altar-ficha-acciones">
+                    @if (Model.FichaValidada)
+                    {
+                        <form asp-controller="AltarAdmin" asp-action="QuitarValidacionFicha" method="post">
+                            <input type="hidden" name="equipoId" value="@Model.Id" />
+                            <input type="hidden" name="origen" value="equipos" />
+                            <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Marcar como pendiente</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-controller="AltarAdmin" asp-action="ValidarFicha" method="post">
+                            <input type="hidden" name="equipoId" value="@Model.Id" />
+                            <input type="hidden" name="origen" value="equipos" />
+                            <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline" title="Deja de listarse como pendiente. No sustituye a los datos faltantes."><i class="fa-solid fa-user-check" aria-hidden="true"></i> Validar ficha</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="altar-card">
+            <form asp-controller="AltarAdmin" asp-action="EditarEquipo" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+
+                @if (Model.TieneEvaluacion)
+                {
+                    <div class="altar-hint" style="border-color:var(--altar-amber); color:var(--altar-amber); margin-bottom:14px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        El equipo ya tiene una evaluaci&oacute;n registrada. Puedes corregir la ficha, pero el snapshot de esa evaluaci&oacute;n (nombres, difunto) no se reescribe.
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.OrganizadorNombre))
+                {
+                    <div class="altar-label" style="margin-top:0;">Organizador</div>
+                    <p style="margin:0 0 14px;">@Model.OrganizadorNombre</p>
+                }
+
+                <div class="altar-label">Altar</div>
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Nombre del grupo</label>
+                        <input asp-for="Nombre" class="altar-input" />
+                        <span asp-validation-for="Nombre" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Nombre del altar</label>
+                        <input asp-for="NombreAltar" class="altar-input" />
+                        <span asp-validation-for="NombreAltar" class="altar-error"></span>
+                    </div>
+                </div>
+
+                <div class="altar-label">Difunto homenajeado</div>
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Nombre</label>
+                        <input asp-for="DifuntoNombre" class="altar-input" />
+                        <span asp-validation-for="DifuntoNombre" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Fecha de defunci&oacute;n</label>
+                        <input asp-for="DifuntoFechaDefuncion" type="date" class="altar-input" />
+                        <span asp-validation-for="DifuntoFechaDefuncion" class="altar-error"></span>
+                    </div>
+                </div>
+
+                <div class="altar-label">Programa y ubicaci&oacute;n</div>
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Programa educativo</label>
+                        <select asp-for="CarreraId" class="altar-select">
+                            @foreach (var c in Model.Carreras)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CarreraId" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Lugar de exposici&oacute;n</label>
+                        <input asp-for="UbicacionAltar" class="altar-input" />
+                    </div>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Matr&iacute;cula del maestro encargado</label>
+                    <input asp-for="MaestroEncargadoIdentificador" class="altar-input" inputmode="numeric" maxlength="5" />
+                    <span asp-validation-for="MaestroEncargadoIdentificador" class="altar-error"></span>
+                    @if (Model.MaestroEncargadoPendiente)
+                    {
+                        <p class="altar-slider-hint" style="color:var(--altar-amber);"><i class="fa-solid fa-hourglass-half"></i> Pendiente: a&uacute;n no se registra nadie con esta matr&iacute;cula.</p>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.MaestroEncargadoNombre))
+                    {
+                        <p class="altar-slider-hint" style="color:var(--altar-primary);"><i class="fa-solid fa-circle-check"></i> @Model.MaestroEncargadoNombre</p>
+                    }
+                </div>
+
+                <div class="altar-flex" style="justify-content:space-between; margin:18px 0;">
+                    <div>
+                        <div class="altar-label" style="margin-bottom:2px;">&iquest;El equipo har&aacute; Catrina?</div>
+                        <p class="altar-slider-hint" style="margin:0;">Categor&iacute;a de evaluaci&oacute;n independiente y opcional.</p>
+                    </div>
+                    <label class="altar-toggle">
+                        <input type="checkbox" asp-for="HaceCatrina" value="true" />
+                        <span class="altar-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar ficha</button>
+            </form>
+        </div>
+
+        <div class="altar-card">
+            <div class="altar-card-title">Integrantes</div>
+            <p class="altar-card-subtitle">@Model.Integrantes.Count integrante(s). El organizador no puede quitarse desde aqu&iacute;.</p>
+
+            @if (Model.MaestroEncargadoPendiente || !string.IsNullOrEmpty(Model.MaestroEncargadoNombre))
+            {
+                <div class="altar-flex altar-gap-sm" style="padding:10px 0; border-top:1px solid var(--altar-border); @(Model.MaestroEncargadoPendiente ? "opacity:0.5;" : "")">
+                    <div class="altar-avatar" style="width:28px; height:28px; font-size:11px; background:var(--altar-surface-alt); color:var(--altar-text-muted);"><i class="fa-solid fa-chalkboard-user"></i></div>
+                    <div style="flex:1;">
+                        @(Model.MaestroEncargadoNombre ?? "Maestro encargado")
+                        <span class="altar-text-muted" style="font-size:12px;">&middot; @(Model.MaestroEncargadoPendiente ? "pendiente de registro" : "maestro encargado")</span>
+                    </div>
+                    <span class="altar-badge altar-badge-muted">Maestro encargado</span>
+                </div>
+            }
+
+            @foreach (var integrante in Model.Integrantes)
+            {
+                var esOrganizador = integrante.RegistranteId == Model.CreadoPorRegistranteId;
+                <div class="altar-flex altar-gap-sm" style="padding:10px 0; border-top:1px solid var(--altar-border);">
+                    <div class="altar-avatar" style="width:28px; height:28px; font-size:11px;">@integrante.Registrante.NombreCompleto.Substring(0, 1)</div>
+                    <div style="flex:1;">
+                        @integrante.Registrante.NombreCompleto
+                        <span class="altar-text-muted" style="font-size:12px;">&middot; @integrante.Registrante.Identificador</span>
+                        @if (esOrganizador)
+                        {
+                            <span class="altar-text-muted" style="font-size:12px;">&middot; organizador</span>
+                        }
+                    </div>
+
+                    <a asp-controller="AltarAdmin" asp-action="EditarRegistrante" asp-route-id="@integrante.RegistranteId" class="altar-btn altar-btn-sm altar-btn-outline" title="Editar registrante"><i class="fa-solid fa-pen"></i></a>
+
+                    @if (integrante.Rol == RolEquipo.Narrador)
+                    {
+                        <span class="altar-badge altar-badge-purple">Narrador</span>
+                    }
+                    else if (Model.PuedeEditarIntegrantes)
+                    {
+                        <form asp-controller="AltarAdmin" asp-action="DesignarNarradorEquipo" method="post" style="display:inline;">
+                            <input type="hidden" name="equipoId" value="@Model.Id" />
+                            <input type="hidden" name="registranteId" value="@integrante.RegistranteId" />
+                            <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline">Hacer narrador</button>
+                        </form>
+                    }
+
+                    @if (Model.PuedeEditarIntegrantes && !esOrganizador)
+                    {
+                        <form asp-controller="AltarAdmin" asp-action="QuitarIntegranteEquipo" method="post" style="display:inline;" onsubmit="return confirm('¿Quitar a este integrante del equipo?');">
+                            <input type="hidden" name="equipoId" value="@Model.Id" />
+                            <input type="hidden" name="registranteId" value="@integrante.RegistranteId" />
+                            <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline" style="color:var(--altar-danger);" title="Quitar del equipo"><i class="fa-solid fa-user-minus"></i></button>
+                        </form>
+                    }
+                </div>
+            }
+
+            @if (Model.PuedeEditarIntegrantes)
+            {
+                <form asp-controller="AltarAdmin" asp-action="AgregarIntegranteEquipo" method="post" class="altar-flex altar-gap-sm" style="margin-top:16px;">
+                    <input type="hidden" name="equipoId" value="@Model.Id" />
+                    <input type="text" name="identificador" class="altar-input" placeholder="Identificador del nuevo integrante" style="flex:1;" required />
+                    <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
+                </form>
+            }
+            else
+            {
+                <div class="altar-hint" style="margin-top:14px;"><i class="fa-solid fa-lock"></i> El equipo ya fue evaluado: la lista de integrantes y el narrador est&aacute;n cerrados para que coincidan con lo que el juez calific&oacute;.</div>
+            }
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

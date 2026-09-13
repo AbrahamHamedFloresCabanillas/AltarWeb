@@ -1,0 +1,102 @@
+@model AltarWeb.ViewModels.Altar.EditarRegistranteViewModel
+@using AltarWeb.Models.Registro
+@{
+    ViewData["Title"] = "Editar registrante";
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main" style="max-width:720px;">
+        <a asp-controller="AltarAdmin" asp-action="RegistrantesYEquipos" asp-route-tab="registrantes" class="altar-text-muted" style="display:inline-block; margin-bottom:16px;"><i class="fa-solid fa-arrow-left"></i> Volver a registrantes</a>
+        <div class="altar-page-title">Editar registrante</div>
+        <div class="altar-page-subtitle" style="margin-bottom:20px;">
+            Registrado el @Model.CreadoEn.ToString("d MMM yyyy") &middot; @(Model.ProveedorAuth == "Local" ? "cuenta local" : "cuenta de Google")
+            @if (!Model.Activo)
+            {
+                <span class="altar-badge altar-badge-danger" style="margin-left:6px;">Inactivo</span>
+            }
+            @if (!string.IsNullOrEmpty(Model.EquipoActual))
+            {
+                <span class="altar-badge altar-badge-muted" style="margin-left:6px;"><i class="fa-solid fa-people-group"></i> @Model.EquipoActual</span>
+            }
+        </div>
+
+        <div class="altar-card">
+            <form asp-controller="AltarAdmin" asp-action="EditarRegistrante" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Nombre completo</label>
+                    <input asp-for="NombreCompleto" class="altar-input" />
+                    <span asp-validation-for="NombreCompleto" class="altar-error"></span>
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Tipo</label>
+                        <select asp-for="Tipo" class="altar-select">
+                            <option value="@TipoRegistrante.Alumno">Alumno</option>
+                            <option value="@TipoRegistrante.Maestro">Maestro</option>
+                            <option value="@TipoRegistrante.Administrativo">Administrativo</option>
+                        </select>
+                        <span asp-validation-for="Tipo" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Identificador</label>
+                        <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" />
+                        <p class="altar-slider-hint">7 d&iacute;gitos para alumno; 5 para maestro o administrativo.</p>
+                        <span asp-validation-for="Identificador" class="altar-error"></span>
+                    </div>
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">Correo institucional</label>
+                        <input asp-for="CorreoInstitucional" type="email" class="altar-input" />
+                        <span asp-validation-for="CorreoInstitucional" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Tel&eacute;fono</label>
+                        <input asp-for="Telefono" class="altar-input" />
+                    </div>
+                </div>
+
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label">G&eacute;nero</label>
+                        <select asp-for="CatalogoGeneroId" class="altar-select">
+                            <option value="">Sin especificar</option>
+                            @foreach (var g in Model.Generos)
+                            {
+                                <option value="@g.Id">@g.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label">Programa educativo</label>
+                        <select asp-for="CatalogoCarreraId" class="altar-select">
+                            <option value="">Sin especificar</option>
+                            @foreach (var c in Model.Carreras)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="altar-field">
+                    <label class="altar-label">Autodescripci&oacute;n cultural <span class="altar-text-muted">(opcional)</span></label>
+                    <textarea asp-for="AutodescripcionCultural" class="altar-textarea" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

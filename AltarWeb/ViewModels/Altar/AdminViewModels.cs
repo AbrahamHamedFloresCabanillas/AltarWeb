@@ -27,7 +27,15 @@ namespace AltarWeb.ViewModels.Altar
         public string? MaestroEncargado { get; set; }
         public string? UbicacionAltar { get; set; }
         public bool Evaluado { get; set; }
+
+        // Estado de la Ficha de Registro. Son datos distintos a proposito:
+        // FichaCompleta   -> los datos requeridos estan capturados (EquipoValidacionHelper).
+        // FichaValidada   -> un administrador la reviso y la acepto para seguimiento.
+        // FichaFaltantes  -> que falta exactamente, para poder decirlo en vez de solo "pendiente".
         public bool FichaCompleta { get; set; }
+        public bool FichaValidada { get; set; }
+        public DateTime? FichaValidadaEn { get; set; }
+        public IReadOnlyList<string> FichaFaltantes { get; set; } = new List<string>();
     }
 
     // SEC-12: CrearJuez bindeaba la entidad Juez completa (over-posting: Id, IsDeleted, FechaEliminado,
@@ -45,6 +53,120 @@ namespace AltarWeb.ViewModels.Altar
         public string Password { get; set; } = string.Empty;
 
         public string Rol { get; set; } = "Juez";
+    }
+
+    // Edicion de un Juez/Admin desde el backoffice. Mismo criterio que CrearJuezViewModel: solo los
+    // campos capturables; Id/IsDeleted/Pendiente/ProveedorAuth se leen y fijan en el controlador.
+    public class EditarJuezViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        public string NombreCompleto { get; set; } = string.Empty;
+
+        // Solo aplica a cuentas locales; las de Google inician sesion con CorreoInstitucional.
+        public string? Usuario { get; set; }
+
+        public string Rol { get; set; } = "Juez";
+
+        // Vacia = no se cambia. Si se captura, la cuenta queda con DebeCambiarPassword=true para
+        // que la contrasena fijada por el admin sea de un solo uso.
+        [DataType(DataType.Password)]
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres.")]
+        public string? NuevaPassword { get; set; }
+
+        // Solo lectura en la vista.
+        public string ProveedorAuth { get; set; } = "Local";
+        public string? CorreoInstitucional { get; set; }
+        public bool EsCuentaLocal => ProveedorAuth == "Local";
+        public bool EsLaPropiaCuenta { get; set; }
+        public bool Pendiente { get; set; }
+        public bool Inactivo { get; set; }
+    }
+
+    public class EditarRegistranteViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        public string NombreCompleto { get; set; } = string.Empty;
+
+        // A diferencia del signup, aqui el admin SI elige el tipo (puede corregir un Administrativo
+        // que se registro como Maestro); la longitud del identificador se valida contra ese tipo
+        // con la misma regla del modelo (Registrante.Validate).
+        public TipoRegistrante Tipo { get; set; }
+
+        [Required(ErrorMessage = "Ingresa el identificador.")]
+        public string Identificador { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa el correo institucional.")]
+        [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
+        public string CorreoInstitucional { get; set; } = string.Empty;
+
+        public string? Telefono { get; set; }
+        public int? CatalogoGeneroId { get; set; }
+        public int? CatalogoCarreraId { get; set; }
+        public string? AutodescripcionCultural { get; set; }
+
+        // Solo lectura en la vista.
+        public string ProveedorAuth { get; set; } = "Local";
+        public bool Activo { get; set; }
+        public DateTime CreadoEn { get; set; }
+        public string? EquipoActual { get; set; }
+
+        public List<CatalogoGenero> Generos { get; set; } = new();
+        public List<CatalogoCarrera> Carreras { get; set; } = new();
+    }
+
+    // Ficha de Registro editada por el administrador (vision.md 6.2). Comparte los campos de
+    // FichaViewModel, pero no sus candados: el admin ignora las fechas limite y puede corregir la
+    // ficha aun con evaluacion registrada (la lista de integrantes no, ver PuedeEditarIntegrantes).
+    public class EditarEquipoViewModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Ingresa el nombre del grupo.")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa el nombre del altar.")]
+        public string NombreAltar { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa el nombre del difunto.")]
+        public string DifuntoNombre { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Ingresa la fecha de defunción.")]
+        [DataType(DataType.Date)]
+        public DateOnly DifuntoFechaDefuncion { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddYears(-1));
+
+        [Required(ErrorMessage = "Selecciona la carrera del altar.")]
+        public int CarreraId { get; set; }
+
+        [Required(ErrorMessage = "Ingresa la matrícula del maestro encargado.")]
+        public string MaestroEncargadoIdentificador { get; set; } = string.Empty;
+
+        public string? UbicacionAltar { get; set; }
+        public bool HaceCatrina { get; set; }
+
+        // Solo lectura en la vista.
+        public string Periodo { get; set; } = string.Empty;
+        public DateTime CreadoEn { get; set; }
+        public string? OrganizadorNombre { get; set; }
+        public int? CreadoPorRegistranteId { get; set; }
+        public string? MaestroEncargadoNombre { get; set; }
+        public bool MaestroEncargadoPendiente { get; set; }
+        public bool TieneEvaluacion { get; set; }
+        public string? EstadoEvaluacion { get; set; }
+        // Con evaluacion registrada la lista queda cerrada: EvaluacionIntegrante y las constancias
+        // salen de ella. Los datos de la ficha si se pueden corregir (con aviso en la vista).
+        public bool PuedeEditarIntegrantes => !TieneEvaluacion;
+
+        public bool FichaValidada { get; set; }
+        public DateTime? FichaValidadaEn { get; set; }
+        public IReadOnlyList<string> FichaFaltantes { get; set; } = new List<string>();
+        public bool TieneNarrador { get; set; }
+
+        public List<CatalogoCarrera> Carreras { get; set; } = new();
+        public List<RegistranteEquipo> Integrantes { get; set; } = new();
     }
 
     public class ConfiguracionPeriodoAdminViewModel

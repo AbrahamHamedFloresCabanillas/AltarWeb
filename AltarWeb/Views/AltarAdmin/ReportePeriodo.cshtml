@@ -117,10 +117,10 @@
             <div class="altar-card-title">Promedio por componente</div>
             <div class="altar-grid-3">
                 <div><span class="altar-label">Objetivo Cultural</span>@(Model.ResultadosEvaluacion.PromedioObjetivoCultural?.ToString("0.00") ?? "—")</div>
-                <div><span class="altar-label">Esencia y Personalidad</span>@(Model.ResultadosEvaluacion.PromedioEsenciaPersonalidad?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Creatividad</span>@(Model.ResultadosEvaluacion.PromedioEsenciaPersonalidad?.ToString("0.00") ?? "—")</div>
                 <div><span class="altar-label">Valoración General</span>@(Model.ResultadosEvaluacion.PromedioValoracionGeneral?.ToString("0.00") ?? "—")</div>
                 <div><span class="altar-label">Distribución por Niveles</span>@(Model.ResultadosEvaluacion.PromedioDistribucionNiveles?.ToString("0.00") ?? "—")</div>
-                <div><span class="altar-label">Narrador</span>@(Model.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—")</div>
+                <div><span class="altar-label">Explicación oral</span>@(Model.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—")</div>
                 <div><span class="altar-label">Nota de Catrina</span>@(Model.ResultadosEvaluacion.PromedioNotaCatrina?.ToString("0.00") ?? "—") <span class="altar-text-muted" style="font-size:12px;">(@Model.ResultadosEvaluacion.EquiposConNotaCatrina equipos)</span></div>
             </div>
         </div>
@@ -173,12 +173,12 @@
         </div>
         <div class="altar-grid-2" style="margin-bottom:20px;">
             <div class="altar-card">
-                <div class="altar-card-title">Elementos con más &quot;No presente&quot;</div>
-                <p>@(Model.ResultadosEvaluacion.TopNoPresente.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopNoPresente.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
+                <div class="altar-card-title">Elementos con más &quot;No lo tiene&quot;</div>
+                <p>@(Model.ResultadosEvaluacion.TopNoLoTiene.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopNoLoTiene.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
             </div>
             <div class="altar-card">
-                <div class="altar-card-title">Elementos con más &quot;Muy satisfactorio&quot;</div>
-                <p>@(Model.ResultadosEvaluacion.TopMuySatisfactorio.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopMuySatisfactorio.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
+                <div class="altar-card-title">Elementos con más &quot;Bueno&quot;</div>
+                <p>@(Model.ResultadosEvaluacion.TopBueno.Any() ? string.Join(", ", Model.ResultadosEvaluacion.TopBueno.Select(e => $"{e.Elemento} ({e.Conteo})")) : "—")</p>
             </div>
         </div>
 

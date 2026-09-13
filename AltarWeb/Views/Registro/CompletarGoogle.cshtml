@@ -28,6 +28,7 @@
             <p class="altar-card-subtitle">Bienvenido, <strong>@Model.NombreCompleto</strong> &middot; @Model.CorreoInstitucional</p>
 
             <form asp-controller="Registro" asp-action="CompletarGoogle" method="post">
+                <p class="altar-required-note"><span class="altar-required" aria-hidden="true">*</span>Campos obligatorios.</p>
                 <div asp-validation-summary="ModelOnly" class="altar-error"></div>
                 <input type="hidden" asp-for="NombreCompleto" />
                 <input type="hidden" asp-for="CorreoInstitucional" />
@@ -38,7 +39,7 @@
                 </div>
 
                 <div class="altar-field">
-                    <label class="altar-label">Identificador</label>
+                    <label class="altar-label">Identificador<span class="altar-required" aria-hidden="true">*</span></label>
                     <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="7 dígitos (alumno) o 5 dígitos (maestro/administrativo)" />
                     <span asp-validation-for="Identificador" class="altar-error"></span>
                 </div>

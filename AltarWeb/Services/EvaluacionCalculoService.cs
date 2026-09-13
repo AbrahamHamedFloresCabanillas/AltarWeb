@@ -30,7 +30,7 @@ namespace AltarWeb.Services
                 var valor = ValorDeSatisfaccion(ee.Satisfaccion, config);
 
                 sumaPonderada += valor * peso;
-                sumaMaxima += peso * config.ValorSatisfaccionMuySatisfactorio;
+                sumaMaxima += peso * config.ValorSatisfaccionBueno;
             }
 
             if (sumaMaxima == 0) return 0;
@@ -39,15 +39,14 @@ namespace AltarWeb.Services
 
         public static decimal ValorDeSatisfaccion(Satisfaccion satisfaccion, ConfiguracionPeriodo config) => satisfaccion switch
         {
-            Satisfaccion.NoPresente => config.ValorSatisfaccionNoPresente,
-            Satisfaccion.Poco => config.ValorSatisfaccionPoco,
-            Satisfaccion.Satisfactorio => config.ValorSatisfaccionSatisfactorio,
-            Satisfaccion.MuySatisfactorio => config.ValorSatisfaccionMuySatisfactorio,
+            Satisfaccion.NoLoTiene => config.ValorSatisfaccionNoLoTiene,
+            Satisfaccion.Regular => config.ValorSatisfaccionRegular,
+            Satisfaccion.Bueno => config.ValorSatisfaccionBueno,
             _ => 0
         };
 
         // Bonus tematico (equivalente al BonusTematicos del sistema anterior): cada elemento
-        // marcado "tiene personalizacion" suma BonusPorElementoTematizado a EsenciaPersonalidad,
+        // marcado "tematizado" suma BonusPorElementoTematizado a EsenciaPersonalidad (etiqueta "Creatividad" en la UI),
         // tope 10. Se calcula aparte de EsenciaPersonalidad (nota cruda del juez) para que no se
         // acumule de mas si la evaluacion se guarda varias veces en Preliminar.
         public decimal CalcularEsenciaPersonalidadFinal(decimal esenciaPersonalidadJuez, int cantidadTematizados, ConfiguracionPeriodo config)

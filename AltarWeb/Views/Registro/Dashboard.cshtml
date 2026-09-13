@@ -70,6 +70,23 @@
                         </span>
                     </div>
 
+                    @* Un badge "pendiente" sin decir que falta obliga a abrir la ficha y adivinar. *@
+                    @if (Model.FichaFaltantes.Any())
+                    {
+                        <div class="altar-hint" style="border-color:var(--altar-amber); color:var(--altar-amber);">
+                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                            Falta capturar en la Ficha de Registro: <strong>@string.Join(", ", Model.FichaFaltantes)</strong>.
+                            @if (Model.EsOrganizador && !Model.EdicionBloqueada)
+                            {
+                                <a asp-controller="Registro" asp-action="Ficha">Completar ahora</a>
+                            }
+                            else if (!Model.EsOrganizador)
+                            {
+                                <text>Solo el organizador del equipo puede completarla.</text>
+                            }
+                        </div>
+                    }
+
                     <div class="altar-card-title" style="color:var(--altar-primary);">@Model.Equipo.Nombre</div>
                     <div class="altar-card-subtitle" style="font-style:italic;">Altar &quot;@Model.Equipo.NombreAltar&quot;</div>
 

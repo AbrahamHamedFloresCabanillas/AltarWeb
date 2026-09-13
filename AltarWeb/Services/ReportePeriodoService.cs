@@ -80,19 +80,10 @@ namespace AltarWeb.Services
             return vm;
         }
 
-        private static bool EsFichaCompleta(Equipo equipo)
-        {
-            return !string.IsNullOrWhiteSpace(equipo.NombreAltar)
-                && !string.IsNullOrWhiteSpace(equipo.UbicacionAltar)
-                && equipo.Difunto != null
-                && !string.IsNullOrWhiteSpace(equipo.Difunto.Nombre)
-                && equipo.MaestroEncargadoId != null;
-        }
-
         private static ParticipacionGeneralViewModel ConstruirParticipacionGeneral(
             List<Equipo> equipos, List<Evaluacion> evaluaciones, List<Registrante> registrantesEnPeriodo)
         {
-            var completas = equipos.Count(EsFichaCompleta);
+            var completas = equipos.Count(EquipoValidacionHelper.EsFichaCompleta);
 
             return new ParticipacionGeneralViewModel
             {
@@ -222,8 +213,8 @@ namespace AltarWeb.Services
                         NombreAltar = e.SnapshotNombreAltar,
                         Nota = e.EvaluacionCatrina.NotaCatrina
                     }).ToList(),
-                TopNoPresente = TopPorSatisfaccion(Satisfaccion.NoPresente),
-                TopMuySatisfactorio = TopPorSatisfaccion(Satisfaccion.MuySatisfactorio)
+                TopNoLoTiene = TopPorSatisfaccion(Satisfaccion.NoLoTiene),
+                TopBueno = TopPorSatisfaccion(Satisfaccion.Bueno)
             };
         }
 
@@ -377,10 +368,10 @@ namespace AltarWeb.Services
                             AddRow(t, "Nota Final · máximo", r.ResultadosEvaluacion.NotaFinalGeneral.Maximo?.ToString("0.00") ?? "—");
                             AddRow(t, "Nota Final · mínimo", r.ResultadosEvaluacion.NotaFinalGeneral.Minimo?.ToString("0.00") ?? "—");
                             AddRow(t, "Objetivo Cultural · promedio", r.ResultadosEvaluacion.PromedioObjetivoCultural?.ToString("0.00") ?? "—");
-                            AddRow(t, "Esencia y Personalidad · promedio", r.ResultadosEvaluacion.PromedioEsenciaPersonalidad?.ToString("0.00") ?? "—");
+                            AddRow(t, "Creatividad · promedio", r.ResultadosEvaluacion.PromedioEsenciaPersonalidad?.ToString("0.00") ?? "—");
                             AddRow(t, "Valoración General · promedio", r.ResultadosEvaluacion.PromedioValoracionGeneral?.ToString("0.00") ?? "—");
                             AddRow(t, "Distribución por Niveles · promedio", r.ResultadosEvaluacion.PromedioDistribucionNiveles?.ToString("0.00") ?? "—");
-                            AddRow(t, "Narrador · promedio", r.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—");
+                            AddRow(t, "Explicación oral · promedio", r.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—");
                             AddRow(t, "Nota de Catrina · promedio", r.ResultadosEvaluacion.PromedioNotaCatrina?.ToString("0.00") ?? "— (sin evaluaciones de Catrina)");
                         });
 
@@ -417,10 +408,10 @@ namespace AltarWeb.Services
                             }
                         });
 
-                        col.Item().Text("Elementos con más \"No presente\"").Bold().FontSize(10);
-                        col.Item().Text(string.Join(", ", r.ResultadosEvaluacion.TopNoPresente.Select(e => $"{e.Elemento} ({e.Conteo})")));
-                        col.Item().Text("Elementos con más \"Muy satisfactorio\"").Bold().FontSize(10);
-                        col.Item().Text(string.Join(", ", r.ResultadosEvaluacion.TopMuySatisfactorio.Select(e => $"{e.Elemento} ({e.Conteo})")));
+                        col.Item().Text("Elementos con más \"No lo tiene\"").Bold().FontSize(10);
+                        col.Item().Text(string.Join(", ", r.ResultadosEvaluacion.TopNoLoTiene.Select(e => $"{e.Elemento} ({e.Conteo})")));
+                        col.Item().Text("Elementos con más \"Bueno\"").Bold().FontSize(10);
+                        col.Item().Text(string.Join(", ", r.ResultadosEvaluacion.TopBueno.Select(e => $"{e.Elemento} ({e.Conteo})")));
 
                         col.Item().Component(new SeccionTitulo("4. Participación de jueces y maestros"));
                         col.Item().Table(t =>
