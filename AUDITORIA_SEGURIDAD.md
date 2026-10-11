@@ -16,9 +16,14 @@
 > conserva intacto**; cada hallazgo lleva ahora una línea `**Estado (2026-09-02)**` con lo que
 > realmente se hizo y dónde verificarlo en el código.
 
-**Los 7 hallazgos que bloqueaban producción están cerrados.** En total: **16 corregidos en código**,
-1 cerrado por configuración de despliegue (CFG-01), **4 cerrados como decisión** (riesgo aceptado,
-paridad o diferido) y 1 informativo (E) implementado con validaciones pero con una deuda residual.
+**Los 7 hallazgos que bloqueaban producción están cerrados.** La tabla tiene **22 entradas** — todas
+las que tienen sección propia en el cuerpo (incluidas PRIV-04 y la informativa E). El resumen
+ejecutivo original habla de "19 hallazgos"; se conserva tal cual, pero esa cifra no coincide con las
+secciones del cuerpo. En total: **16 corregidos en código**, 1 cerrado por configuración de
+despliegue (CFG-01), **4 cerrados como decisión** (riesgo aceptado, paridad o diferido) y 1
+informativo (E) implementado con validaciones pero con una deuda residual.
+
+La severidad de cada fila es la que figura en la sección del hallazgo.
 
 | Hallazgo | Severidad | Estado |
 |---|---|---|
@@ -28,14 +33,14 @@ paridad o diferido) y 1 informativo (E) implementado con validaciones pero con u
 | SEC-05 Cookie sin `Secure` | 🟠 Alta | ✅ Corregido — `Secure`/`HttpOnly`/`SameSite` + cabeceras (CSP con deuda) |
 | PRIV-01 Umbral anulable a 0 | 🟠 Alta | ✅ Corregido — validación + piso mínimo no anulable |
 | CFG-01 Entorno `Development` | 🟠 Alta | ✅ Cerrado — checklist de despliegue en README |
-| CFG-02 HTTPS/HSTS/forwarded headers | 🟠 Alta | ✅ Corregido — `ForwardedHeaders` + HSTS |
+| CFG-02 HTTPS/HSTS/forwarded headers | 🟡 Media | ✅ Corregido — `ForwardedHeaders` + HSTS |
 | SEC-10 CSRF | 🟡 Media | ✅ Corregido — `AutoValidateAntiforgeryToken` global |
 | SEC-04 Sin rate limiting en login | 🟡 Media | ✅ Corregido — 10/min por IP (⚠️ vigilar NAT institucional) |
 | LOG-01 Sin logging de auth | 🟡 Media | ✅ Corregido — logins fallidos y accesos denegados |
 | PRIV-05 Correo sin verificar | 🟡 Media | ⏸️ Riesgo aceptado por el propietario (2026-07-04) |
 | SEC-11 TOCTOU de membresía | 🟡 Media | ✅ Corregido — índice único en BD + transacción |
 | SEC-08 Autorización manual | 🟡 Media | ⏸️ Diferido — sin hueco activo, es robustez |
-| PRIV-02 PDF sin marca confidencial | 🟡 Media | ✅ Corregido — marca de agua + leyenda por página |
+| PRIV-02 PDF sin marca confidencial | 🔵 Baja | ✅ Corregido — marca de agua + leyenda por página |
 | PRIV-03 Reporte sin rate-limit propio | 🔵 Baja | ⏸️ Cerrado por paridad con el resto del backoffice |
 | SEC-12 Over-posting en `CrearJuez` | 🔵 Baja | ✅ Corregido — ViewModel dedicado |
 | SEC-13 Narrador no forzado en Final | 🔵 Baja | ✅ Corregido — `EquipoValidacionHelper` |

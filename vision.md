@@ -200,7 +200,7 @@ capturados aquí son los que **se precargan automáticamente al momento de la ev
   requisitos del equipo**: la ficha, la lista de integrantes y la designación del Narrador.
 - Mientras el equipo no tenga evaluación, el organizador puede seguir editando su Ficha de
   Registro (incluida `UbicacionAltar`); el administrador también puede editarla/corregirla
-  desde `/Admin/EditarEquipo/{id}`.
+  desde `/AltarAdmin/EditarEquipo/{id}`.
 
 ### 6.3 Validación administrativa de la Ficha de Registro
 
@@ -232,14 +232,15 @@ capturar X" — en vez de ocultar el faltante.
 
 ### 6.2 Administración de equipos
 - Los participantes crean/administran sus equipos y su Ficha de Registro asociada, dentro del periodo actual.
-- El administrador gestiona equipos activos (`/Admin/Equipos`), históricos (`/Admin/EquiposHistorico`) y la edición de la ficha completa (nombre, altar, difunto, integrantes, maestro, ubicación) desde `/Admin/EditarEquipo/{id}`, así como el listado de registrantes (`/Admin/Registrantes`: alta, búsqueda, soft delete y reactivación).
+- El administrador gestiona los equipos del periodo actual (`/AltarAdmin/RegistrantesYEquipos?tab=equipos`) y la edición de la ficha completa (nombre, altar, difunto, integrantes, maestro, ubicación) desde `/AltarAdmin/EditarEquipo/{id}`, así como el listado de registrantes (`/AltarAdmin/RegistrantesYEquipos?tab=registrantes`: edición en `/AltarAdmin/EditarRegistrante/{id}`, soft delete y reactivación).
+  > **Aún no implementado:** listado de equipos de periodos históricos, alta manual de registrantes desde el admin y búsqueda en el listado de registrantes.
 - Validaciones: pertenencia única por periodo, narrador designado, maestro encargado asignado, ficha de registro completa antes de la fecha límite.
 
 ---
 
 ## 7. Proceso de evaluación
 
-Acceso desde `Evaluacion/Crear`. El juez busca el equipo por carrera (búsqueda en tiempo
+Acceso desde `/AltarEvaluacion/NuevaEvaluacion`. El juez busca el equipo por carrera (búsqueda en tiempo
 real). Al seleccionarlo, la vista precarga en **solo lectura** todos los datos capturados
 en su **Ficha de Registro** (sección 6.1): integrantes, nombre del altar, nombre y fecha
 de defunción del difunto, programa educativo/carrera, lugar de exposición, y datos de

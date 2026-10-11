@@ -1,9 +1,7 @@
 ﻿# AltarWeb - Estado Actual del Proyecto
 
-> Actualizado: 2026-09-11 · Commit de referencia: `07ead92` (`master`, sincronizado con `origin/master`)
-> más cambios locales sin commitear (corrección del callback de Google, marcado de campos
-> obligatorios, la escala de satisfacción de tres niveles + renombres de `vision.md` v2.6, y la
-> ronda de UX / validación administrativa de ficha / auditoría de fechas límite).
+> Actualizado: 2026-10-10 · Commit de referencia: `c615f9a` (`master`, sincronizado con `origin/master`,
+> sin cambios locales pendientes).
 
 Este documento describe el **estado técnico interno** del sistema (qué existe hoy en el código).
 Los otros documentos del repo cubren lo demás:
@@ -13,7 +11,7 @@ Los otros documentos del repo cubren lo demás:
 | [`vision.md`](vision.md) (v2.6) | **Qué** debe construirse — especificación funcional, fuente de verdad del comité. |
 | [`README.md`](README.md) | **Cómo** se usa, se configura y se despliega. |
 | [`DESPLIEGUE.md`](DESPLIEGUE.md) | Guía paso a paso de despliegue en hosting gratuito (MonsterASP / Azure). |
-| [`AUDITORIA_SEGURIDAD.md`](AUDITORIA_SEGURIDAD.md) | Auditoría de seguridad (19 hallazgos) y **estado de remediación** de cada uno. |
+| [`AUDITORIA_SEGURIDAD.md`](AUDITORIA_SEGURIDAD.md) | Auditoría de seguridad (22 hallazgos) y **estado de remediación** de cada uno. |
 | Este archivo | Estado técnico: arquitectura, modelo de datos, deuda técnica, historial. |
 
 ---
@@ -123,7 +121,7 @@ históricos, deuda de esquema y no superficie de ataque.
 **Administración**
 - [x] Gestión de jueces: alta manual, **edición** (`/AltarAdmin/EditarJuez/{id}`: nombre, usuario, rol Juez↔Admin, contraseña nueva opcional que fuerza cambio en el siguiente login; las cuentas Google no exponen usuario ni contraseña; un admin no puede quitarse su propio rol), aprobación de pendientes, soft delete y reactivación.
 - [x] Gestión de registrantes: listado, **edición** (`/AltarAdmin/EditarRegistrante/{id}`: nombre, tipo, identificador, correo, teléfono, género, carrera, autodescripción; sin contraseña; unicidad contra activos e inactivos; vincula equipos que esperaban ese identificador como maestro encargado, igual que el signup; no permite pasar a Alumno a quien ya es maestro encargado), soft delete y reactivación.
-- [x] Gestión de equipos: listado del periodo y **edición completa de la Ficha** (`/AltarAdmin/EditarEquipo/{id}`, la ruta `/Admin/EditarEquipo` de `vision.md` §6.2): nombre, altar, difunto, carrera, maestro encargado, lugar, Catrina, más agregar/quitar integrantes y designar Narrador. El admin **no está sujeto a las fechas límite**; con evaluación registrada puede corregir la ficha (el snapshot de la evaluación no se reescribe) pero la lista de integrantes y el narrador quedan cerrados. El organizador no puede quitarse desde ahí.
+- [x] Gestión de equipos: listado del periodo y **edición completa de la Ficha** (`/AltarAdmin/EditarEquipo/{id}`, `vision.md` §6.2): nombre, altar, difunto, carrera, maestro encargado, lugar, Catrina, más agregar/quitar integrantes y designar Narrador. El admin **no está sujeto a las fechas límite**; con evaluación registrada puede corregir la ficha (el snapshot de la evaluación no se reescribe) pero la lista de integrantes y el narrador quedan cerrados. El organizador no puede quitarse desde ahí.
 - [x] Validación administrativa de la Ficha de Registro (`vision.md` §6.3), desde el listado de equipos y desde Nueva Evaluación.
 - [x] Configuración por periodo: fechas límite, subida del recorrido PDF, pesos de nota final y de Catrina, umbral demográfico.
 - [x] Reporte de Cierre de Periodo (`vision.md` §12) con umbral de agrupación demográfica y exportación a PDF marcado como confidencial.
@@ -206,5 +204,6 @@ la ficha y los integrantes cerrados, para que coincidan con lo que el juez evalu
 | 2026-09-02 | Claude | Actualización de este documento y anotación del estado de remediación en `AUDITORIA_SEGURIDAD.md`; guía `DESPLIEGUE.md` y scripts de datos de demostración. |
 | 2026-09-05 | Claude | Corrección del callback de Google (ruta propia `/Registro/google-listo` y lectura del ticket desde el esquema de cookie), marcado de campos obligatorios en los formularios de registro y revisión de documentación. |
 | 2026-09-11 | Opus 5 | Escala de satisfacción de 4 a 3 niveles (*No lo tiene / Regular / Bueno*) con migración de datos `EscalaSatisfaccionTresNiveles`; renombres de UI *Personalizado*→*Tematizado*, *Esencia y Personalidad*→*Creatividad*, *Narrador*→*Explicación oral* (el rol de equipo sigue siendo *Narrador*); `vision.md` a v2.6 con tres pendientes nuevos. |
-| 2026-09-13 | Opus 5 | Edición administrativa de jueces, registrantes y equipos (`EditarJuez`, `EditarRegistrante`, `EditarEquipo` + `AgregarIntegranteEquipo` / `QuitarIntegranteEquipo` / `DesignarNarradorEquipo`), botones de edición en los tres listados y extracción de `MaestroEncargadoHelper`. Sin migraciones. |
 | 2026-09-11 | Opus 5 | Ronda de UX y lógica administrativa: datepicker rehecho y movido a `wwwroot/js/altar-datepicker.js`; arreglo de contraste del toggle en tema claro; validación administrativa de la Ficha de Registro (migración `ValidacionAdminDeFichaDeRegistro`); auditoría de fechas límite (huecos server-side en integrantes/narrador y comparación dependiente de la zona horaria del servidor); unificación de `EsFichaCompleta`, que tenía una copia divergente en el panel admin. |
+| 2026-09-13 | Opus 5 | Edición administrativa de jueces, registrantes y equipos (`EditarJuez`, `EditarRegistrante`, `EditarEquipo` + `AgregarIntegranteEquipo` / `QuitarIntegranteEquipo` / `DesignarNarradorEquipo`), botones de edición en los tres listados y extracción de `MaestroEncargadoHelper`. Sin migraciones. Commit `c615f9a`. |
+| 2026-10-10 | Opus 5.5 | Alineación de documentación con el código: rutas reales en `vision.md`, número de migraciones en `DESPLIEGUE.md`, conteos de la auditoría y orden de este historial. Sin cambios de código. |

@@ -194,7 +194,7 @@ reales. **No ejecutes ninguno de los dos contra una base con datos del concurso 
 
 ### Seguridad — estado real del sistema (actualizado tras auditoría de seguridad, 2026-07-04)
 
-`AUDITORIA_SEGURIDAD.md` documenta la auditoría completa (19 hallazgos) y el detalle de cada corrección.
+`AUDITORIA_SEGURIDAD.md` documenta la auditoría completa (22 hallazgos) y el detalle de cada corrección.
 Resumen del estado actual:
 
 - **Contraseñas:** PBKDF2 (`Microsoft.AspNetCore.Identity.PasswordHasher`) para `Registrante` y `Juez`,

@@ -35,7 +35,14 @@ MonsterASP (~3 USD/mes).
 ## Lo que ya está preparado
 
 En `C:\Users\Abram\Desktop\Programa Altar\AltarWeb-publish.zip` está la aplicación **ya
-compilada en Release** y lista para subir. Se genera con:
+compilada en Release** y lista para subir.
+
+> ⚠️ **El ZIP actual se generó el 2026-09-02 desde `07ead92`** y no incluye los cambios de
+> `c615f9a` (escala de 3 niveles, validación de ficha, edición administrativa). Antes de
+> subirlo hay que regenerarlo con el comando de abajo y volver a aplicar los ajustes de la
+> tabla siguiente.
+
+Se genera con:
 
 ```bash
 dotnet publish AltarWeb/AltarWeb/AltarWeb.csproj -c Release -r win-x86 --self-contained false -o <carpeta>
@@ -149,7 +156,7 @@ carpeta, no dentro de una subcarpeta).
 Abre `https://altaruabc.runasp.net`.
 
 La primera petición tarda (arranque en frío). Al iniciar, la aplicación **crea el esquema
-sola**: `SeedData.Initialize` ejecuta `Database.Migrate()`, aplica las 21 migraciones,
+sola**: `SeedData.Initialize` ejecuta `Database.Migrate()`, aplica todas las migraciones pendientes (23 al commit `c615f9a`),
 carga los catálogos (13 carreras, géneros, 24 elementos) y crea el admin semilla con la
 contraseña que pusiste en el `web.config`.
 
