@@ -14,6 +14,7 @@ namespace AltarWeb.Controllers
 
         // Ambito del contador de intentos por cuenta (SEC-04): cuentas de backoffice.
         private const string AmbitoLimite = "juez";
+        private const string AmbitoCuentaResuelta = "juez-id";
 
         public AccesoController(AltarDbContext context, ILogger<AccesoController> logger, LimitadorIntentosLogin limitador)
         {
@@ -39,14 +40,27 @@ namespace AltarWeb.Controllers
                     _limitador.NormalizarCuenta(entrada), HttpContext.Connection.RemoteIpAddress, (int)Math.Ceiling(espera.TotalSeconds));
                 return new ResultadoLimiteExcedido(espera);
             }
+
             var juez = await _context.Jueces
                 .FirstOrDefaultAsync(j => j.Usuario == entrada || j.CorreoInstitucional == entrada.ToLower());
+
+            // Una misma cuenta de juez se puede intentar por usuario o por correo: ademas del texto
+            // intentado, el contador se lleva por la cuenta resuelta para que alternar entre ambos no
+            // duplique los intentos permitidos.
+            var cuentaResuelta = juez?.Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (cuentaResuelta != null && _limitador.EstaBloqueada(AmbitoCuentaResuelta, cuentaResuelta, out espera))
+            {
+                _logger.LogWarning("Login de Juez/Admin rechazado por limite de cuenta. JuezId: {JuezId}, IP: {IP}, reintentar en {Segundos}s",
+                    juez!.Id, HttpContext.Connection.RemoteIpAddress, (int)Math.Ceiling(espera.TotalSeconds));
+                return new ResultadoLimiteExcedido(espera);
+            }
 
             password ??= string.Empty;
             var (esValido, requiereRehash) = PasswordHashService.Verificar(password, juez?.Password);
             if (juez == null || !esValido)
             {
                 _limitador.RegistrarFallo(AmbitoLimite, entrada);
+                if (cuentaResuelta != null) _limitador.RegistrarFallo(AmbitoCuentaResuelta, cuentaResuelta);
                 // LOG-01: registra el intento fallido (usuario intentado + IP), nunca la contraseña.
                 _logger.LogWarning("Login fallido de Juez/Admin. Usuario intentado: '{Usuario}', IP: {IP}",
                     entrada, HttpContext.Connection.RemoteIpAddress);
@@ -54,6 +68,7 @@ namespace AltarWeb.Controllers
             }
 
             _limitador.Reiniciar(AmbitoLimite, entrada);
+            _limitador.Reiniciar(AmbitoCuentaResuelta, cuentaResuelta);
 
             if (juez.Pendiente)
             {

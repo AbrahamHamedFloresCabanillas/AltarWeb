@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Concurso.Core.Seguridad
 {
@@ -57,17 +58,13 @@ namespace Concurso.Core.Seguridad
         // UseHttpsRedirection/UseStaticFiles.
         public static WebApplication UseConcursoSeguridad(this WebApplication app, string rutaManejadorErrores)
         {
-            // CFG-02: en Azure App Service / IIS el TLS puede terminarse en un proxy; sin esto,
-            // Request.IsHttps es false detras del proxy, lo que rompe cookies Secure, UseHttpsRedirection
-            // y las URLs absolutas del callback de Google. KnownIPNetworks/KnownProxies se vacian porque
-            // el hosting no expone un proxy identificable de antemano.
-            var forwardedHeadersOptions = new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-            };
-            forwardedHeadersOptions.KnownIPNetworks.Clear();
-            forwardedHeadersOptions.KnownProxies.Clear();
-            app.UseForwardedHeaders(forwardedHeadersOptions);
+            // CFG-02 (revision 2026-10-17): X-Forwarded-For/Proto solo se aceptan de proxies conocidos
+            // (ProxiesConfiablesOptions). Por defecto, solo loopback, el default de ASP.NET Core: cubre
+            // desarrollo local, IIS in-process (no hay proxy: IIS entrega la IP y el esquema reales) e IIS
+            // out-of-process (ANCM reenvia desde localhost). Antes se vaciaban KnownProxies/KnownNetworks,
+            // lo que permitia a cualquier cliente falsificar RemoteIpAddress con X-Forwarded-For y evadir
+            // el techo de rate limiting por IP.
+            app.UseForwardedHeaders(ProxiesConfiables.CrearOpciones(app.Configuration, app.Logger));
 
             if (!app.Environment.IsDevelopment())
             {

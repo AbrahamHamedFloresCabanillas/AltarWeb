@@ -1,8 +1,13 @@
+using System.Collections.Concurrent;
+using System.Net;
 using AltarWeb.Models;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Altares.Tests.Integracion;
 
@@ -31,9 +36,37 @@ public class AltarWebFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("SEED_ADMIN_PASSWORD", AdminPassword);
     }
 
+    // IP del cliente que ve la app cuando la prueba no indica otra (TEST-NET-3, RFC 5737).
+    public const string IpPorDefecto = "203.0.113.250";
+
+    // Cabecera SOLO de pruebas: simula la IP de la conexion TCP (lo que en produccion fija el servidor y
+    // no puede falsificar un cliente). X-Forwarded-For, en cambio, si lo envia cualquiera.
+    public const string CabeceraIpRemota = "X-Test-Remote-IP";
+
+    // Todo lo que la app escribe al log durante las pruebas, para verificar que no se filtran secretos.
+    public ConcurrentQueue<string> Logs { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Production");
+        builder.ConfigureServices(services => services.AddSingleton<IStartupFilter, IpRemotaDePruebaStartupFilter>());
+        builder.ConfigureLogging(logging => logging.AddProvider(new ProveedorLogsCapturados(Logs)));
+    }
+
+    // Crea un juez activo con contraseña conocida directamente en la base de pruebas.
+    public async Task CrearJuezAsync(string usuario, string password, string? correo = null)
+    {
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AltarDbContext>();
+        context.Jueces.Add(new Juez
+        {
+            Usuario = usuario,
+            CorreoInstitucional = correo,
+            Password = Concurso.Core.Seguridad.PasswordHashService.HashPassword(password),
+            Rol = "Juez",
+            NombreCompleto = usuario
+        });
+        await context.SaveChangesAsync();
     }
 
     public HttpClient CrearCliente() => CreateClient(new WebApplicationFactoryClientOptions
@@ -66,4 +99,47 @@ public class AltarWebFactory : WebApplicationFactory<Program>
 public class AppCollection : ICollectionFixture<AltarWebFactory>
 {
     public const string Nombre = "App";
+}
+
+// Corre antes de todo el pipeline de la app (incluido ForwardedHeaders), igual que el servidor real.
+public class IpRemotaDePruebaStartupFilter : IStartupFilter
+{
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+    {
+        app.Use(async (context, siguiente) =>
+        {
+            var ip = context.Request.Headers[AltarWebFactory.CabeceraIpRemota].FirstOrDefault();
+            context.Connection.RemoteIpAddress = IPAddress.Parse(string.IsNullOrEmpty(ip) ? AltarWebFactory.IpPorDefecto : ip);
+            await siguiente();
+        });
+        next(app);
+    };
+}
+
+public sealed class ProveedorLogsCapturados : ILoggerProvider
+{
+    private readonly ConcurrentQueue<string> _destino;
+
+    public ProveedorLogsCapturados(ConcurrentQueue<string> destino) => _destino = destino;
+
+    public ILogger CreateLogger(string categoryName) => new Capturador(_destino);
+
+    public void Dispose() { }
+
+    private sealed class Capturador : ILogger
+    {
+        private readonly ConcurrentQueue<string> _destino;
+        public Capturador(ConcurrentQueue<string> destino) => _destino = destino;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            _destino.Enqueue(formatter(state, exception));
+            if (state is IEnumerable<KeyValuePair<string, object?>> valores)
+            {
+                foreach (var valor in valores) _destino.Enqueue($"{valor.Key}={valor.Value}");
+            }
+        }
+    }
 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Equipo = AltarWeb.Models.Registro.Equipo;
 
 namespace AltarWeb.Controllers
@@ -17,15 +18,18 @@ namespace AltarWeb.Controllers
         private readonly AltarDbContext _context;
         private readonly ILogger<RegistroController> _logger;
         private readonly LimitadorIntentosLogin _limitador;
+        private readonly IOptions<ValidacionGoogleOptions> _validacionGoogle;
 
         // Ambito del contador de intentos por cuenta (SEC-04): participantes del Portal de Registro.
         private const string AmbitoLimite = "registrante";
 
-        public RegistroController(AltarDbContext context, ILogger<RegistroController> logger, LimitadorIntentosLogin limitador)
+        public RegistroController(AltarDbContext context, ILogger<RegistroController> logger, LimitadorIntentosLogin limitador,
+            IOptions<ValidacionGoogleOptions> validacionGoogle)
         {
             _context = context;
             _logger = logger;
             _limitador = limitador;
+            _validacionGoogle = validacionGoogle;
         }
 
         public IActionResult Login(string? error = null, string? tab = null)
@@ -248,14 +252,23 @@ namespace AltarWeb.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             var intent = (result.Properties?.Items.TryGetValue("intent", out var i) == true ? i : "registrante") ?? "registrante";
-            var email = result.Principal.FindFirstValue(ClaimTypes.Email)?.Trim().ToLowerInvariant();
-            var nombre = result.Principal.FindFirstValue(ClaimTypes.Name) ?? email ?? "Participante";
             var tabError = intent == "juez" ? "acceso" : "registro";
 
-            if (string.IsNullOrWhiteSpace(email) || !DominioInstitucional.EsCorreoInstitucional(email))
+            // SEC-01 (endurecimiento 2026-10-17): correo institucional + email_verified + claim "hd" de la
+            // organizacion de Google Workspace, todo desde el ticket de Google (Concurso.Core).
+            var identidad = ValidacionIdentidadGoogle.Validar(result.Principal, _validacionGoogle.Value);
+            if (!identidad.Valida)
             {
-                return RedirectToAction("Login", new { tab = tabError, error = "Debes usar tu correo institucional @uabc.edu.mx." });
+                _logger.LogWarning("Identidad de Google rechazada. Motivo: {Motivo}, IP: {IP}",
+                    identidad.Motivo, HttpContext.Connection.RemoteIpAddress);
+                var mensaje = identidad.Motivo == MotivoRechazoGoogle.CorreoNoVerificado
+                    ? "Tu correo de Google no está verificado. Usa tu cuenta institucional @uabc.edu.mx."
+                    : "Debes usar tu correo institucional @uabc.edu.mx.";
+                return RedirectToAction("Login", new { tab = tabError, error = mensaje });
             }
+
+            var email = identidad.Email;
+            var nombre = identidad.Nombre;
 
             if (intent == "juez")
             {

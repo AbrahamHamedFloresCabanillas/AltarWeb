@@ -90,6 +90,32 @@ public class LimitadorIntentosLoginTests
         Assert.False(limitador.EstaBloqueada("juez", "victima", out _));
     }
 
+    // Concurrencia: muchos fallos simultaneos sobre la misma cuenta se cuentan exactamente.
+    [Fact]
+    public async Task FallosConcurrentes_SeCuentanSinPerderse()
+    {
+        var (limitador, _) = Crear(maxFallidos: 1000);
+
+        await Task.WhenAll(Enumerable.Range(0, 999).Select(_ => Task.Run(() => limitador.RegistrarFallo("juez", "concurrente"))));
+        Assert.False(limitador.EstaBloqueada("juez", "concurrente", out _));
+
+        limitador.RegistrarFallo("juez", "concurrente");
+        Assert.True(limitador.EstaBloqueada("juez", "concurrente", out _));
+    }
+
+    // Crecimiento acotado: un aluvion de cuentas inventadas no supera MaxCuentasRastreadas.
+    [Fact]
+    public void AluvionDeCuentasDistintas_NoSuperaElMaximoRastreado()
+    {
+        var reloj = new RelojManual();
+        var opciones = new LimitesLoginOptions { MaxCuentasRastreadas = 100 };
+        using var limitador = new LimitadorIntentosLogin(new OpcionesFijas(opciones), reloj);
+
+        for (var i = 0; i < 5_000; i++) limitador.RegistrarFallo("juez", $"inventada-{i}-{new string('x', 500)}");
+
+        Assert.InRange(limitador.CuentasRastreadas, 1, 100);
+    }
+
     [Fact]
     public void LoginExitoso_ReiniciaElContador()
     {

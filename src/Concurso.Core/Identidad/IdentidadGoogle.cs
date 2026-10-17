@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -19,8 +20,12 @@ namespace Concurso.Core.Identidad
         // debe ser distinta (p. ej. /Registro/google-listo), o el middleware intentaria procesarla otra vez.
         public const string CallbackPathPorDefecto = "/Registro/google-callback";
 
+        public const string ClaimEmailVerificado = "email_verified";
+        public const string ClaimDominioWorkspace = "hd";
+
         public static AuthenticationBuilder AddGoogleInstitucional(this AuthenticationBuilder builder, IConfiguration configuration)
         {
+            builder.Services.Configure<ValidacionGoogleOptions>(configuration.GetSection(ValidacionGoogleOptions.Seccion));
             return builder.AddGoogle("Google", options =>
             {
                 options.ClientId = configuration["GoogleAuth:ClientId"] ?? string.Empty;
@@ -28,7 +33,70 @@ namespace Concurso.Core.Identidad
                 options.CallbackPath = CallbackPathPorDefecto;
                 options.Scope.Add("email");
                 options.Scope.Add("profile");
+
+                // SEC-01 (endurecimiento 2026-10-17): el handler de Google solo mapea por defecto sub,
+                // nombre y correo. Se agregan "email_verified" y "hd" de la respuesta de userinfo para que
+                // ValidacionIdentidadGoogle pueda exigirlos server-side.
+                options.ClaimActions.MapJsonKey(ClaimEmailVerificado, ClaimEmailVerificado);
+                options.ClaimActions.MapJsonKey(ClaimDominioWorkspace, ClaimDominioWorkspace);
             });
+        }
+    }
+
+    // Seccion "GoogleAuth" (ademas de ClientId/ClientSecret).
+    public class ValidacionGoogleOptions
+    {
+        public const string Seccion = "GoogleAuth";
+
+        // Exige que la cuenta pertenezca a la organizacion de Google Workspace de la UABC (claim "hd").
+        // Google indica que el dominio del correo NO basta para identificar cuentas de una organizacion;
+        // el claim "hd" del token es la fuente confiable. Se puede desactivar por configuracion solo si en
+        // la verificacion de F4 resulta que cuentas UABC legitimas no traen "hd".
+        public bool ExigirDominioWorkspace { get; set; } = true;
+
+        public string DominioWorkspace { get; set; } = DominioInstitucional.Sufijo.TrimStart('@');
+    }
+
+    public enum MotivoRechazoGoogle
+    {
+        Ninguno,
+        SinCorreo,
+        DominioNoInstitucional,
+        CorreoNoVerificado,
+        DominioWorkspaceInvalido
+    }
+
+    public sealed record ResultadoIdentidadGoogle(bool Valida, string Email, string Nombre, MotivoRechazoGoogle Motivo);
+
+    // Validacion server-side de la identidad que entrega Google, antes de usarla para iniciar sesion o
+    // para guardar la identidad verificada de un solo uso. Solo usa claims del ticket emitido tras el
+    // intercambio de codigo con Google (nunca valores del cliente).
+    public static class ValidacionIdentidadGoogle
+    {
+        public static ResultadoIdentidadGoogle Validar(ClaimsPrincipal principal, ValidacionGoogleOptions opciones)
+        {
+            var email = principal.FindFirstValue(ClaimTypes.Email)?.Trim().ToLowerInvariant() ?? string.Empty;
+            var nombre = principal.FindFirstValue(ClaimTypes.Name)?.Trim();
+            if (string.IsNullOrEmpty(nombre)) nombre = string.IsNullOrEmpty(email) ? "Participante" : email;
+
+            if (email.Length == 0) return Rechazo(MotivoRechazoGoogle.SinCorreo);
+            if (!DominioInstitucional.EsCorreoInstitucional(email)) return Rechazo(MotivoRechazoGoogle.DominioNoInstitucional);
+
+            var verificado = principal.FindFirstValue(GoogleInstitucionalExtensions.ClaimEmailVerificado)?.Trim();
+            if (!string.Equals(verificado, "true", StringComparison.OrdinalIgnoreCase)) return Rechazo(MotivoRechazoGoogle.CorreoNoVerificado);
+
+            if (opciones.ExigirDominioWorkspace)
+            {
+                var hd = principal.FindFirstValue(GoogleInstitucionalExtensions.ClaimDominioWorkspace)?.Trim();
+                if (!string.Equals(hd, opciones.DominioWorkspace.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return Rechazo(MotivoRechazoGoogle.DominioWorkspaceInvalido);
+                }
+            }
+
+            return new ResultadoIdentidadGoogle(true, email, nombre, MotivoRechazoGoogle.Ninguno);
+
+            static ResultadoIdentidadGoogle Rechazo(MotivoRechazoGoogle motivo) => new(false, string.Empty, string.Empty, motivo);
         }
     }
 

@@ -128,6 +128,9 @@ namespace Concurso.Core.Seguridad
             }
         }
 
+        // Diagnostico: entradas en memoria (acotado por MaxCuentasRastreadas).
+        public long CuentasRastreadas => _cache.Count;
+
         private string Clave(string ambito, string? cuenta) => $"{ambito}|{NormalizarCuenta(cuenta)}";
 
         public void Dispose() => _cache.Dispose();
