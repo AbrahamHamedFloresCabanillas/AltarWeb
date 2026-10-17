@@ -538,11 +538,19 @@ o sigue fallando, se pasa al plan B (Azure B1).
   - **Corregido en Catrinas:** los filtros `SoloJurado`, `SoloAdmin` y `SoloParticipante` revalidan la
     cuenta (activa, no pendiente y rol) contra la BD en cada petición y limpian la sesión si ya no es válida.
     Lo cubre la prueba `CuentaDesactivada_PierdeSuSesionAbierta`.
-  - **[PEND] Altares** conserva el comportamiento anterior: el rol vive en la sesión y una cuenta
-    desactivada sigue operando hasta que expira. Se corrige con la migración de SEC-08.
+  - **Corregido también en Altares (F4, 2026-10-17)** con el mismo patrón: un filtro global
+    (`RevalidarSesionFilter`) limpia la sesión de jueces dados de baja o pendientes y de participantes
+    desactivados, y refresca el rol en cada petición. No es un refactor de autenticación: los chequeos
+    manuales de SEC-08 siguen igual. Pruebas: `RevalidarSesionTests`.
 - **M1: el responsable puede agregar a cualquier persona por su identificador, sin su consentimiento.**
   Esa persona queda atada a la inscripción durante el periodo y el mensaje revela su nombre.
-  - **[PEND] Decisión de producto:** flujo de invitación con aceptación, o al menos permitir que un
-    integrante salga de la inscripción.
+  - **Riesgo aceptado temporalmente por el propietario (2026-10-17) para el concurso de noviembre.**
+    Se mantiene el alta por identificador, sin flujo de invitaciones.
+  - **Mitigación mínima en Catrinas**, sin estados nuevos:
+    - un mismo mensaje para todo rechazo (no distingue "no existe" de "ya está en otra inscripción");
+    - la confirmación no repite el nombre;
+    - el navegador pide confirmación explícita al responsable;
+    - no se registra PII en los logs.
   - Altares tiene el mismo patrón.
+  - **Pendiente de revisión post-concurso:** invitación con aceptación, o permitir que un integrante salga.
 

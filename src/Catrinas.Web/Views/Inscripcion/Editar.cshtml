@@ -60,11 +60,11 @@
             </table>
             @if (bloqueo == null)
             {
-                <form asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:12px;">
+                <form asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:12px;" onsubmit="return confirm('¿Agregar a la persona con identificador ' + this.identificador.value + '? Quedará vinculada a esta inscripción durante el periodo; confirma que aceptó participar.');">
                     <input type="text" name="identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="Identificador del integrante" />
                     <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
                 </form>
-                <p class="altar-text-muted" style="font-size:12px;">La persona debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.</p>
+                <p class="altar-text-muted" style="font-size:12px;">Agrega solo a personas que aceptaron participar contigo. Deben tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.</p>
             }
         </div>
     </div>

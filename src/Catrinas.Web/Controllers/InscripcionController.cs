@@ -142,16 +142,16 @@ namespace Catrinas.Web.Controllers
             if (inscripcion == null) return RedirectToAction("Panel", "Registro");
             if (await RechazarSiBloqueadaAsync(inscripcion) is { } rechazo) return rechazo;
 
+            // M1 (riesgo aceptado temporalmente, ADR §13): el alta sigue siendo por identificador, sin flujo
+            // de invitacion. Para no convertir el formulario en un buscador de personas, todos los rechazos
+            // usan el mismo mensaje (no distingue "no existe" de "ya esta en otra inscripcion") y la
+            // confirmacion no repite el nombre.
+            const string rechazoGenerico = "No se pudo agregar a esa persona. Verifica el identificador: debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.";
             var id = (identificador ?? string.Empty).Trim();
             var registrante = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == id && r.Activo);
-            if (registrante == null)
+            if (registrante == null || await _context.Miembros.AnyAsync(m => m.RegistranteId == registrante.Id && m.Periodo == inscripcion.Periodo))
             {
-                TempData["Error"] = "No hay ninguna cuenta activa en Catrinas con ese identificador. La persona debe registrarse primero.";
-                return RedirectToAction(nameof(Editar));
-            }
-            if (await _context.Miembros.AnyAsync(m => m.RegistranteId == registrante.Id && m.Periodo == inscripcion.Periodo))
-            {
-                TempData["Error"] = "Esa persona ya pertenece a una inscripción de Catrina en este periodo.";
+                TempData["Error"] = rechazoGenerico;
                 return RedirectToAction(nameof(Editar));
             }
 
@@ -159,11 +159,11 @@ namespace Catrinas.Web.Controllers
             try
             {
                 await _context.SaveChangesAsync();
-                TempData["Mensaje"] = $"{registrante.NombreCompleto} se agregó a la inscripción.";
+                TempData["Mensaje"] = "Integrante agregado a la inscripción.";
             }
             catch (DbUpdateException)
             {
-                TempData["Error"] = "Esa persona ya pertenece a una inscripción de Catrina en este periodo.";
+                TempData["Error"] = rechazoGenerico;
             }
             return RedirectToAction(nameof(Editar));
         }

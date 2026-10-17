@@ -33,7 +33,12 @@ builder.Services.AddSingleton(sp => new ServicioCorreoSmtp(sp.GetRequiredService
 builder.Services.AddConcursoLimitesLogin(builder.Configuration);
 
 // SEC-10 (antiforgery global) y SEC-03 (cambio de password obligatorio), desde Concurso.Core.
-builder.Services.AddControllersWithViews(options => options.AgregarFiltrosSeguridad());
+builder.Services.AddControllersWithViews(options =>
+{
+    // M2 (revision de seguridad F3): una cuenta dada de baja o desactivada pierde su sesion abierta.
+    options.Filters.Add<RevalidarSesionFilter>();
+    options.AgregarFiltrosSeguridad();
+});
 
 var app = builder.Build();
 
