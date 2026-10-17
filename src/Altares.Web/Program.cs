@@ -1,10 +1,7 @@
 using System.Threading.RateLimiting;
-using AltarWeb.Filters;
 using AltarWeb.Models;
 using AltarWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,34 +12,22 @@ builder.Services.AddDbContext<AltarDbContext>(options =>
         builder.Configuration.GetConnectionString("AltarContext")
         ?? builder.Configuration.GetConnectionString("AltarWebContext")));
 
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(60);
-    // SEC-05: la cookie de sesion es el portador real de identidad (JuezId/JuezRol/RegistranteId);
-    // sin Secure viaja en claro ante un downgrade HTTP y puede ser secuestrada.
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.IsEssential = true;
-});
+// Controles transversales de Concurso.Core (SEC-05 cookie de sesion, Data Protection).
+builder.Services.AddConcursoSesion(builder.Configuration);
+builder.Services.AddConcursoDataProtection(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     })
     .AddCookie()
-    .AddGoogle("Google", options =>
-    {
-        options.ClientId = builder.Configuration["GoogleAuth:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["GoogleAuth:ClientSecret"] ?? string.Empty;
-        options.CallbackPath = "/Registro/google-callback";
-        options.Scope.Add("email");
-        options.Scope.Add("profile");
-    });
+    .AddGoogleInstitucional(builder.Configuration);
 
 builder.Services.AddScoped<ConstanciaService>();
 builder.Services.AddScoped<EvaluacionCalculoService>();
 builder.Services.AddScoped<ReportePeriodoService>();
+builder.Services.AddScoped<IVerificadorCambioPassword, VerificadorCambioPasswordJuez>();
+builder.Services.AddSingleton(sp => new ServicioCorreoSmtp(sp.GetRequiredService<IConfiguration>(), "Concurso Altares FIM"));
 
 // SEC-04: throttling por IP de las rutas de login (Acceso/Login, Registro/Login, GoogleCallback).
 // No sustituye PBKDF2/rehash-on-login (SEC-02); es una capa adicional contra fuerza bruta online.
@@ -65,15 +50,9 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 });
-builder.Services.AddControllersWithViews(options =>
-{
-    // SEC-10: valida el antiforgery token en todos los POST/PUT/DELETE. Todas las vistas del proyecto
-    // usan tag helpers asp-action (emiten el token automaticamente) y no hay POSTs disparados por JS,
-    // asi que no requiere tocar ninguna vista.
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-    // SEC-03: fuerza el cambio de password de cuentas marcadas (semilla u otras) antes de cualquier accion.
-    options.Filters.Add<ForzarCambioPasswordFilter>();
-});
+
+// SEC-10 (antiforgery global) y SEC-03 (cambio de password obligatorio), desde Concurso.Core.
+builder.Services.AddControllersWithViews(options => options.AgregarFiltrosSeguridad());
 
 var app = builder.Build();
 
@@ -113,43 +92,9 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// CFG-02: en Azure App Service el TLS se termina en el proxy de la plataforma; sin esto,
-// Request.IsHttps es false detras del proxy, lo que rompe cookies Secure, UseHttpsRedirection y las
-// URLs absolutas del callback de Google. KnownIPNetworks/KnownProxies se vacian porque App Service no
-// expone la app detras de un proxy publico adicional identificable de antemano.
-var forwardedHeadersOptions = new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-};
-forwardedHeadersOptions.KnownIPNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
-app.UseForwardedHeaders(forwardedHeadersOptions);
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Registro/Login");
-    app.UseHsts();
-}
-
-// SEC-05: cabeceras de seguridad basicas (defensa en profundidad; complementan SameSite=Lax y HttpOnly).
-// DEUDA TECNICA (registrada 2026-07-04, no bloqueante): script-src usa 'unsafe-inline' porque
-// _LayoutAltar.cshtml y varias vistas tienen <script> inline (tema, sidebar, datepicker). Esto reduce
-// bastante el valor de la CSP contra XSS (un script inyectado inline no seria bloqueado). Para cerrarlo
-// habria que mover esos scripts a archivos estaticos o usar nonces por request; queda pendiente, no se
-// resolvio en esta sesion.
-app.Use(async (context, next) =>
-{
-    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    context.Response.Headers["Content-Security-Policy"] =
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
-        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
-        "img-src 'self' data:; " +
-        "connect-src 'self';";
-    await next();
-});
+// CFG-02 (ForwardedHeaders), CFG-01 (manejo de errores + HSTS fuera de Development) y cabeceras de
+// seguridad de SEC-05, desde Concurso.Core.
+app.UseConcursoSeguridad("/Registro/Login");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

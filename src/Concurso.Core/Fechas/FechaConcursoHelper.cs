@@ -1,4 +1,4 @@
-namespace AltarWeb.Services
+namespace Concurso.Core.Fechas
 {
     // Fuente unica de "hoy" para todo lo que depende del calendario del concurso.
     //

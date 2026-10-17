@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using AltarWeb.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -27,12 +25,7 @@ namespace AltarWeb.Models
                     return;
                 }
 
-                var usuario = Environment.GetEnvironmentVariable("SEED_ADMIN_USUARIO");
-                usuario = string.IsNullOrWhiteSpace(usuario) ? "abram" : usuario.Trim();
-
-                var passwordEnv = Environment.GetEnvironmentVariable("SEED_ADMIN_PASSWORD");
-                var passwordGenerada = string.IsNullOrWhiteSpace(passwordEnv);
-                var passwordPlano = passwordGenerada ? GenerarPasswordAleatoria() : passwordEnv!;
+                var (usuario, passwordPlano, passwordGenerada) = CredencialesSemilla.Obtener(usuarioPorDefecto: "abram");
 
                 context.Jueces.Add(new Juez
                 {
@@ -54,12 +47,6 @@ namespace AltarWeb.Models
                         usuario, passwordPlano);
                 }
             }
-        }
-
-        private static string GenerarPasswordAleatoria()
-        {
-            const string alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-            return RandomNumberGenerator.GetString(alfabeto, 20);
         }
     }
 }

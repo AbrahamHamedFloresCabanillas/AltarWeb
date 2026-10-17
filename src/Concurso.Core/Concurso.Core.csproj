@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Concurso.Core: infraestructura TRANSVERSAL compartida por Altares.Web y Catrinas.Web
+    (docs/01-decision-arquitectura.md §2.2). Regla: NO puede contener reglas de negocio de
+    ningun concurso (equipos, evaluaciones, rankings, requisitos, constancias, catalogos propios).
+    Solo seguridad, OAuth base, privacidad, fechas/periodos, correo y componentes reutilizables.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 
-namespace AltarWeb.Services
+namespace Concurso.Core.Seguridad
 {
     // SEC-02: reemplaza el SHA-256 sin salt usado antes para Registrante y Juez por PBKDF2
     // (Microsoft.AspNetCore.Identity.PasswordHasher<T>, ya incluido en el framework compartido de

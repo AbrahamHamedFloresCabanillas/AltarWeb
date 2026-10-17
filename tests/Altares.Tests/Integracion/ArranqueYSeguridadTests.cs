@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altares.Tests.Integracion;
 
@@ -61,6 +62,28 @@ public class ArranqueYSeguridadTests
             new FormUrlEncodedContent(new Dictionary<string, string> { ["Identificador"] = "90007" }));
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+    }
+
+    // SEC-01: con token antiforgery valido pero SIN haber pasado por Google, CompletarGoogle no crea
+    // cuenta ni sesion: la identidad solo se acepta desde la fuente server-side (IdentidadGoogleVerificada).
+    [Fact]
+    public async Task CompletarGoogle_SinIdentidadVerificada_NoCreaCuenta()
+    {
+        var cliente = _factory.CrearCliente();
+        var token = await ObtenerTokenAsync(cliente, "/Registro/Login");
+
+        var respuesta = await cliente.PostAsync("/Registro/CompletarGoogle", Formulario(token,
+            ("NombreCompleto", "Intruso"), ("CorreoInstitucional", "intruso@uabc.edu.mx"),
+            ("Identificador", "90007"), ("Tipo", "Maestro")));
+
+        Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
+        Assert.Contains("error=", respuesta.Headers.Location!.ToString());
+        var dashboard = await cliente.GetAsync("/Registro/Dashboard");
+        Assert.Equal(HttpStatusCode.Redirect, dashboard.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AltarWeb.Models.AltarDbContext>();
+        Assert.False(context.Registrantes.Any(r => r.CorreoInstitucional == "intruso@uabc.edu.mx"));
     }
 
     // Google OAuth: el challenge sale hacia Google con el callback HTTPS esperado (CFG-02).

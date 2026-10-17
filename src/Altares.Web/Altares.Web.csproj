@@ -15,7 +15,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.13" />
     <PackageReference Include="QuestPDF" Version="2025.7.4" />
     <!--
       Fija la version parcheada de una dependencia transitiva de runtime:
@@ -25,6 +24,19 @@
       dependa de una version corregida.
     -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Concurso.Core\Concurso.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Namespaces de Concurso.Core disponibles en todo el proyecto (los .cshtml usan _ViewImports). -->
+  <ItemGroup>
+    <Using Include="Concurso.Core.Seguridad" />
+    <Using Include="Concurso.Core.Identidad" />
+    <Using Include="Concurso.Core.Privacidad" />
+    <Using Include="Concurso.Core.Fechas" />
+    <Using Include="Concurso.Core.Correo" />
   </ItemGroup>
 
   <!--

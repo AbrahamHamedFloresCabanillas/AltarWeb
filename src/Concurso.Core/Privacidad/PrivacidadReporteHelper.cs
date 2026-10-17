@@ -1,4 +1,4 @@
-namespace AltarWeb.Services
+namespace Concurso.Core.Privacidad
 {
     // Regla de proteccion de datos sensibles del Reporte de Cierre de Periodo
     // (vision.md seccion 12.2). Se usa exclusivamente en reporteria agregada
