@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Estado | **Aprobado conceptualmente** (2026-10-17). Autorizadas solo F0A y F0B. **F3 (Catrinas.Web) bloqueada** hasta definir el modelo de Catrinas (§7.1) |
+| Estado | **Aprobado conceptualmente** (2026-10-17). Autorizadas solo F0A y F0B. Modelo de Catrinas definido (§7.1); **la implementación de F1–F3 requiere autorización explícita** |
 | Fecha | 2026-10-17 |
 | Commit base auditado | `6c800ae` (tag de rollback `pre-separacion`) |
 | Rama de trabajo | `separacion-altares-catrinas` |
@@ -197,7 +197,7 @@ un identificador público estable más un snapshot.
 - Las tablas y columnas de Catrina se dejan sin uso; se eliminan en una migración posterior, ya
   verificado.
 
-**Catrinas (antes de noviembre):** **alcance pendiente de §7.1.** La capacidad esperada (registro,
+**Catrinas (antes de noviembre):** modelo definido en §7.1 (2026-10-17). La capacidad esperada (registro,
 inscripciones, backoffice, evaluación `Preliminar`/`Final`, ranking por carrera, constancias) se
 concretará en entidades y pantallas **solo después** de resolver esas preguntas. No se copia el
 modelo `Equipo` de Altares.
@@ -279,6 +279,33 @@ Antes de diseñar entidades o migraciones de `Catrinas.Web` hay que definir con 
 
 Mientras no se resuelvan, no se copia el modelo `Equipo` de Altares ni se escribe código de
 dominio de Catrinas.
+
+**Respuestas del propietario (2026-10-17).** Desbloquean el *diseño* de F3; la implementación
+sigue requiriendo autorización explícita.
+
+| # | Pregunta | Decisión |
+|---|---|---|
+| 1 | Qué es una inscripción | Igual que la inscripción del altar: una inscripción por periodo con nombre, carrera y, opcionalmente, `AltarExternalId` + `AltarNombreSnapshot` (§2.6) |
+| 2 | Persona o equipo | Igual que en Altares: concursa un **equipo**. La participación individual es un equipo de una persona |
+| 3 | Quién personifica | **Exactamente un** integrante con rol *Personificador(a)* (análogo al Narrador de Altares) |
+| 4 | Integrantes o colaboradores | Sí, con rol *Integrante* |
+| 5 | Responsable | Quien crea la inscripción; no puede quitarse a sí mismo |
+| 6 | Ranking | Nombre de la inscripción, nombre de quien personifica y carrera; por carrera |
+| 7 | Quién recibe constancia | Todos los integrantes, el juez y el maestro encargado si existe |
+| 8 | Tipos de constancia | Igual que en Altares: grupal, individual (indica Personificador o Integrante), maestro y juez, mostrando el lugar (1.º–3.º) cuando aplique. Sin documento de reconocimiento aparte |
+| 9 | Maestro encargado | **Opcional**; si existe, recibe constancia |
+| 10 | Datos personales | Los mismos que en Altares (nombre, matrícula, correo, teléfono, género, carrera, autodescripción cultural). Aplican el umbral de privacidad y la marca CONFIDENCIAL |
+| 11 | Fechas límite | Igual que en Altares: inscripción y requisitos, con la misma semántica de `FechaConcursoHelper` |
+
+**Consecuencia de diseño:**
+- Catrinas tendrá entidades **propias**, con la misma forma conceptual que Altares (registrante,
+  inscripción, membresía con rol, evaluación con snapshot, configuración por periodo), pero
+  definidas dentro de `Catrinas.Web`.
+- No se comparten entidades vía Core (§2.2). Que la forma se parezca no autoriza a subir reglas a
+  Core.
+- **Pendiente para F3:** qué datos exige la "ficha completa" de Catrina para poder cerrar `Final`
+  (propuesta: nombre de la inscripción, carrera y Personificador designado; el maestro no, por ser
+  opcional).
 
 ### 7.2 Otras decisiones (no bloquean el arranque)
 
@@ -383,7 +410,7 @@ documentación, y **commit independiente**.
 | **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | Autorizada; 2–6 |
 | F1 | Monorepo + extracción de `Concurso.Core` **sin cambio de comportamiento** | 10–20 |
 | F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | 6–10 |
-| **F3** | Catrinas.Web | **Bloqueada por §7.1**; 30–55, a re-estimar |
+| **F3** | Catrinas.Web con el modelo de §7.1 | Diseño desbloqueado; **implementación pendiente de autorización**; 30–55 |
 | F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | 10–18 |
 | Docs | `docs/00–09`, actualización de README, current_state y DESPLIEGUE | 6–10 |
 
