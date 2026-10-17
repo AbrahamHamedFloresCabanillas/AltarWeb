@@ -17,22 +17,47 @@ namespace Concurso.Core.Seguridad
 
         public static string HashPassword(string password) => Hasher.HashPassword(new object(), password);
 
-        // Usado solo por el fixup de arranque para distinguir "plaintext residual" (ninguno de los dos
-        // formatos conocidos) de un hash ya migrado, sin volver a rehashear lo que ya esta bien.
+        // Usado solo por el fixup de arranque para distinguir "plaintext residual" (ninguno de los formatos
+        // conocidos) de un hash ya migrado, sin volver a rehashear lo que ya esta bien.
+        //
+        // Se valida la ESTRUCTURA del valor, no basta con que PasswordHasher no lance excepcion: un texto
+        // plano que tambien es Base64 valido (p. ej. "1234") hacia que VerifyHashedPassword devolviera
+        // Failed sin lanzar FormatException, y se tomaba por hash (defecto encontrado el 2026-10-17).
         public static bool EsFormatoReconocido(string valor)
         {
             if (string.IsNullOrEmpty(valor)) return false;
-            if (valor.Length == LongitudHashLegadoSha256) return true;
 
+            byte[] bytes;
             try
             {
-                Hasher.VerifyHashedPassword(new object(), valor, string.Empty);
-                return true;
+                bytes = Convert.FromBase64String(valor);
             }
             catch (FormatException)
             {
                 return false;
             }
+
+            // SHA-256 legado: 44 caracteres Base64 = exactamente 32 bytes.
+            if (valor.Length == LongitudHashLegadoSha256) return bytes.Length == 32;
+
+            return EsFormatoIdentityV2(bytes) || EsFormatoIdentityV3(bytes);
+        }
+
+        // Identity V2: 0x00 | salt (16 bytes) | subkey (32 bytes).
+        private static bool EsFormatoIdentityV2(byte[] bytes) => bytes.Length == 49 && bytes[0] == 0x00;
+
+        // Identity V3: 0x01 | prf (uint32) | iteraciones (uint32) | longitud del salt (uint32) | salt | subkey.
+        // Mismos minimos que valida PasswordHasher al decodificar: salt y subkey de al menos 128 bits.
+        private static bool EsFormatoIdentityV3(byte[] bytes)
+        {
+            const int encabezado = 13;
+            if (bytes.Length < encabezado || bytes[0] != 0x01) return false;
+
+            var longitudSalt = (bytes[9] << 24) | (bytes[10] << 16) | (bytes[11] << 8) | bytes[12];
+            if (longitudSalt < 16) return false;
+
+            var longitudSubkey = bytes.Length - encabezado - longitudSalt;
+            return longitudSubkey >= 16;
         }
 
         public static (bool EsValido, bool RequiereRehash) Verificar(string password, string? hashAlmacenado)

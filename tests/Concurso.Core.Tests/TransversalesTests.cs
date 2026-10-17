@@ -77,13 +77,42 @@ public class PasswordHashServiceTests
         Assert.True(PasswordHashService.EsFormatoReconocido(PasswordHashService.HashPassword("x")));
     }
 
-    // Defecto encontrado al crear esta suite (2026-10-17), no corregido en F0A: un texto plano que
-    // ademas es Base64 valido (p. ej. "1234") hace que PasswordHasher devuelva Failed en vez de lanzar
-    // FormatException, asi que EsFormatoReconocido lo da por hash y el fixup de arranque de Program.cs
-    // no lo re-hashea. Solo afecta a Jueces legados con contrasena en texto plano.
-    [Fact(Skip = "Defecto conocido de EsFormatoReconocido; ver comentario. Pendiente de decision.")]
-    public void TextoPlanoBase64_NoEsFormatoReconocido()
+    // Regresion del defecto encontrado en F0A (2026-10-17): un texto plano que ademas es Base64 valido
+    // (p. ej. "1234", "abcd", 8 o 12 caracteres alfanumericos) hacia que PasswordHasher devolviera
+    // Failed en vez de lanzar FormatException, asi que EsFormatoReconocido lo daba por hash y el fixup de
+    // arranque de Program.cs no lo re-hasheaba: la contrasena quedaba en texto plano en la BD.
+    [Theory]
+    [InlineData("1234")]
+    [InlineData("abcd")]
+    [InlineData("password")]
+    [InlineData("admin2026abc")]
+    public void TextoPlanoQueEsBase64Valido_NoEsFormatoReconocido(string textoPlano)
     {
-        Assert.False(PasswordHashService.EsFormatoReconocido("1234"));
+        Assert.False(PasswordHashService.EsFormatoReconocido(textoPlano));
+    }
+
+    // Un texto plano de 44 caracteres que no decodifica a 32 bytes tampoco es un SHA-256 legado.
+    [Fact]
+    public void TextoPlanoDe44Caracteres_NoEsHashLegado()
+    {
+        Assert.False(PasswordHashService.EsFormatoReconocido(new string('x', 43) + "!"));
+    }
+
+    // Los formatos reales siguen reconocidos: si el fix los rechazara, el fixup de arranque
+    // re-hashearia un hash como si fuera texto plano y romperia esas cuentas.
+    [Fact]
+    public void FormatosRealesSiguenReconocidos()
+    {
+        var v3 = PasswordHashService.HashPassword("x");
+        var v2 = new Microsoft.AspNetCore.Identity.PasswordHasher<object>(
+            Microsoft.Extensions.Options.Options.Create(new Microsoft.AspNetCore.Identity.PasswordHasherOptions
+            {
+                CompatibilityMode = Microsoft.AspNetCore.Identity.PasswordHasherCompatibilityMode.IdentityV2
+            })).HashPassword(new object(), "x");
+        var sha256Legado = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData("x"u8.ToArray()));
+
+        Assert.True(PasswordHashService.EsFormatoReconocido(v3));
+        Assert.True(PasswordHashService.EsFormatoReconocido(v2));
+        Assert.True(PasswordHashService.EsFormatoReconocido(sha256Legado));
     }
 }
