@@ -292,6 +292,8 @@ El sistema puede **sugerir** un valor inicial de *Objetivo Cultural* a partir de
 - **Temática/Hobbies (0–10)**: qué tan bien refleja los gustos/personalidad del difunto y la creatividad del planteamiento. Se apoya en la semblanza capturada (4.3) y en los objetos personales.
 
 ### 7.5 Catrina (categoría de evaluación aparte)
+
+> ⚠️ **Desde F2 (2026-10-17)** el Concurso de Catrinas se separa en su propia plataforma (`Catrinas.Web`, `docs/01-decision-arquitectura.md`). Altares ya no muestra, evalúa, configura ni rankea Catrina; el esquema histórico (`Equipo.HaceCatrina`, `Evaluacion.IncluyeCatrina`, tabla `EvaluacionesCatrina`, `ConfiguracionPeriodo.PesoCatrina*`) se conserva sin uso hasta después del concurso. El modelo del concurso de Catrinas está en `docs/01-decision-arquitectura.md` §7.1.
 Si el equipo decide hacer **Catrina**, se habilita una sección aparte (`IncluyeCatrina = true`).
 **Confirmado: la Catrina es una categoría independiente** — no suma a `NotaFinal` del altar.
 Se evalúa, rankea y premia por separado (p. ej. "Mejor Catrina" por carrera o general).

@@ -134,11 +134,11 @@ Las plataformas **no se llaman entre sí en runtime** ni leen la base de la otra
 No hay FK, ni base compartida, ni comunicación runtime. Catrinas **no** guarda solo un nombre: guarda
 un identificador público estable más un snapshot.
 
-**En Altares (cambio pequeño, fase F2):**
+**En Altares (implementado en F2, 2026-10-17):**
 - Cada equipo recibe un `CodigoPublico` al crearse, con formato **`ALT-{Periodo}-{NNNN}`**
   (ej. `ALT-2026-2-0042`). `NNNN` es un consecutivo por periodo.
 - **Inmutable**: no cambia aunque el equipo se renombre, cambie de carrera o se desactive.
-- **Único**: índice único en BD; la asignación concurrente se protege con ese índice y reintento.
+- **Único**: índice único en BD. El consecutivo sale de `ContadoresCodigoPublico`: un `MERGE ... WITH (HOLDLOCK) ... OUTPUT` incrementa atómicamente la fila del periodo dentro de la misma transacción que inserta el equipo. No se usa `COUNT + 1`: las altas simultáneas se serializan en el bloqueo y un rollback no deja huecos. El índice único es el respaldo final.
 - **No revela información sensible**: no contiene nombres, matrículas, carrera ni el `Id` interno.
 - **Visible** para el organizador en su panel y en la Ficha de Registro, y para el admin en el
   listado de equipos.
@@ -414,7 +414,7 @@ documentación, y **commit independiente**.
 | **F0A** | Rama, tag `pre-separacion`, suite mínima de tests, baseline en .NET 8 | **Hecha** — commit `9173f4c` |
 | **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | **Hecha** — commit `2713d15` (.NET 10.0.13, Pkcs fijado a 10.0.13 por GHSA-846f-f764-76mx) |
 | F1 | Monorepo + extracción de `Concurso.Core` sin cambio funcional + SEC-04 por cuenta + endurecimiento de SEC-01 y CFG-02 | **Hecha** (pendiente de autorización para F2) |
-| F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | 6–10 |
+| F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | **Hecha** (pendiente de autorización para F3). Esquema de Catrina conservado como legado; sin migraciones destructivas |
 | **F3** | Catrinas.Web con el modelo de §7.1 | Diseño desbloqueado; **implementación pendiente de autorización**; 30–55 |
 | F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | 10–18 |
 | Docs | `docs/00–09`, actualización de README, current_state y DESPLIEGUE | 6–10 |

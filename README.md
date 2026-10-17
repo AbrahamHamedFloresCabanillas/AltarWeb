@@ -40,7 +40,8 @@ El landing (`/Registro/Login`) tiene dos pestañas: **Jueces/Admin** y **Registr
 
 ## 👥 Equipos y Ficha de Registro del Altar
 
-- Un registrante crea su equipo (`/Registro/CrearEquipo`) y completa la **Ficha de Registro del Altar** (`/Registro/Ficha`): nombre del grupo, nombre del altar, difunto (nombre y fecha de defunción), programa educativo, lugar de exposición, maestro encargado (por matrícula; si aún no está registrado queda pendiente hasta que él mismo se registre) y si el equipo **hará Catrina o no**.
+- Un registrante crea su equipo (`/Registro/CrearEquipo`) y completa la **Ficha de Registro del Altar** (`/Registro/Ficha`): nombre del grupo, nombre del altar, difunto (nombre y fecha de defunción), programa educativo, lugar de exposición y maestro encargado (por matrícula; si aún no está registrado queda pendiente hasta que él mismo se registre).
+- Cada equipo recibe un **código público** inmutable `ALT-{periodo}-{consecutivo}` (p. ej. `ALT-2026-2-0042`), visible en el panel y la Ficha, que sirve para referenciarlo desde la plataforma de Catrinas. No cambia aunque se edite el equipo.
 - La ficha es editable mientras el equipo **no tenga ninguna evaluación registrada** (ni `Preliminar` ni `Final`) **y** no haya pasado la fecha límite de requisitos. En cuanto existe una calificación —aunque sea preliminar— la ficha e integrantes quedan cerrados, para que el equipo no cambie respecto a lo que el juez ya evaluó. (La descarga de constancia sí sigue atada al estado `Final`.)
 - El organizador administra integrantes y designa un narrador; en cuanto el equipo tiene una evaluación (preliminar o final), la lista de integrantes queda cerrada para conservar la consistencia con lo evaluado y las constancias.
 - **Validación administrativa de la ficha:** un administrador puede marcar la ficha de un equipo como *validada* para que deje de listarse como pendiente, desde `/AltarAdmin/RegistrantesYEquipos?tab=equipos` o desde Nueva Evaluación. Es un estado de **seguimiento** y es reversible: **no** rellena datos faltantes ni habilita el cierre como `Final`, que sigue exigiendo ficha completa y Narrador designado. Cuando se valida una ficha a la que aún le faltan datos, la interfaz muestra las dos cosas. Un Juez ve el estado pero no puede cambiarlo.
@@ -61,7 +62,8 @@ Desde `/AltarEvaluacion/NuevaEvaluacion` el juez busca el equipo por carrera (ti
 - **Checklist de 24 elementos** (catálogo documentado en `vision.md` §8) con **escala de satisfacción de tres niveles** por elemento (**No lo tiene / Regular / Bueno**, valores `0 / 0.5 / 1.0` configurables por periodo) en vez de check binario, más un marcador de **"¿Tematizado?"** que otorga un bono configurable a Creatividad. Cada elemento tiene un ícono **(i)** con su mini-manual (significado y colocación).
 - **Categorías de calificación** (0–10 cada una): **Objetivo Cultural** (sugerido automáticamente a partir del Puntaje de Elementos), **Creatividad**, **Valoración General**, **Distribución por Niveles** y **Explicación oral**.
   > *Explicación oral* es el **componente calificable**; el **rol de equipo** que el organizador designa en la Ficha se sigue llamando **Narrador** (es la persona). Son dos cosas distintas.
-- **Catrina:** el equipo declara en su Ficha de Registro si hará Catrina o no; la pestaña de evaluación de Catrina solo aparece si el equipo lo declaró. Es una **categoría independiente** con su propio ranking por carrera — no suma a la Nota Final del altar. Se califica con 5 criterios ponderados (Vestuario 25%, Maquillaje 20%, Accesorios 10%, Originalidad y Creatividad 20%, Apego a las Tradiciones 25%), **configurables por periodo** desde `/AltarAdmin/Configuracion`.
+- ~~**Catrina:** el equipo declara en su Ficha de Registro si hará Catrina o no; la pestaña de evaluación de Catrina solo aparece si el equipo lo declaró. Es una **categoría independiente** con su propio ranking por carrera — no suma a la Nota Final del altar. Se califica con 5 criterios ponderados (Vestuario 25%, Maquillaje 20%, Accesorios 10%, Originalidad y Creatividad 20%, Apego a las Tradiciones 25%), **configurables por periodo** desde `/AltarAdmin/Configuracion`.~~
+  > **Desde F2 (2026-10-17)** el Concurso de Catrinas se separa en su propia plataforma (`Catrinas.Web`, `docs/01-decision-arquitectura.md`). Altares ya no muestra, evalúa, configura ni rankea Catrina; el esquema histórico (`Equipo.HaceCatrina`, `Evaluacion.IncluyeCatrina`, tabla `EvaluacionesCatrina`, `ConfiguracionPeriodo.PesoCatrina*`) se conserva sin uso hasta después del concurso.
 - **Estados:** `Preliminar` (editable las veces que se necesite) y `Final` (requiere confirmación explícita; solo las evaluaciones `Final` cuentan para ranking, constancias y reportería).
 
 ### Fórmula de la Nota Final
@@ -75,7 +77,7 @@ NotaFinal = ObjetivoCultural·30% + Creatividad·30% + ValoracionGeneral·20%
 
 El **Puntaje de Elementos** alimenta como sugerencia al Objetivo Cultural, en vez de sumar aparte. El lugar (1°/2°/3°) se calcula por carrera al cerrar una evaluación como `Final`.
 
-La **Nota de Catrina** es independiente y tiene su propio bloque de pesos en la misma pantalla (también deben sumar 100%):
+~~La **Nota de Catrina** es independiente y tiene su propio bloque de pesos en la misma pantalla~~ — ya no aplica en Altares (ver nota de Catrina arriba). Fórmula histórica:
 
 ```
 NotaCatrina = Vestuario·25% + Maquillaje·20% + Accesorios·10%
@@ -90,11 +92,11 @@ NotaCatrina = Vestuario·25% + Maquillaje·20% + Accesorios·10%
 
 `ConstanciaService` centraliza la generación (QuestPDF, carta horizontal, logos UABC/FIM/APFI, fecha dinámica en español de México, firmas oficiales) y el envío por correo. Se generan **para todos los participantes, sin importar la nota**, una vez que la evaluación del equipo está en estado `Final`:
 
-- **Grupal** (`/Constancia/DescargarGrupal/{evaluacionId}`): a nombre del equipo.
-- **Individuales** (`/Constancia/DescargarIndividuales/{evaluacionId}`): ZIP con un PDF por integrante.
-- **Maestro encargado** (`/Constancia/DescargarMaestro/{evaluacionId}`).
-- **Juez** (`/Constancia/DescargarJuez/{evaluacionId}`).
-- **Envío manual por correo** (`/Constancia/EnviarTodas/{evaluacionId}`) desde el detalle de la evaluación.
+- **Grupal** (`/Constancia/DescargarGrupal?evaluacionId={id}`): a nombre del equipo.
+- **Individuales** (`/Constancia/DescargarIndividuales?evaluacionId={id}`): ZIP con un PDF por integrante.
+- **Maestro encargado** (`/Constancia/DescargarMaestro?evaluacionId={id}`).
+- **Juez** (`/Constancia/DescargarJuez?evaluacionId={id}`).
+- **Envío manual por correo** (`POST /Constancia/EnviarTodas`, campo `evaluacionId`) desde el detalle de la evaluación.
 - El propio participante descarga la suya desde su dashboard (`/Constancia/DescargarMia`).
 
 Las constancias muestran el lugar/posición del equipo cuando aplica.
@@ -188,7 +190,7 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
 ### Datos de demostración (opcional)
 
 Para llenar una base ya migrada con contenido de ejemplo (18 registrantes, 4 equipos con Ficha
-completa, 3 evaluaciones y 1 Catrina del periodo `2026-2`), ejecuta `datos-demo.sql` con `sqlcmd` o
+completa, 3 evaluaciones y 1 Catrina —esta última solo como dato legado que Altares ya no usa— del periodo `2026-2`; los equipos reciben su código público con el mismo contador que la app), ejecuta `datos-demo.sql` con `sqlcmd` o
 desde SSMS. Las notas del script se calculan con las mismas fórmulas de `EvaluacionCalculoService`,
 no se escriben a mano.
 

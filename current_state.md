@@ -1,4 +1,4 @@
-﻿# AltarWeb - Estado Actual del Proyecto
+# AltarWeb - Estado Actual del Proyecto
 
 > ⚠️ **En transición (2026-10-17):** el repo se está separando en Altares y Catrinas (rama
 > `separacion-altares-catrinas`, `docs/01-decision-arquitectura.md`). En esa rama el código vive en
@@ -67,7 +67,7 @@ No existen `JuecesController` ni `AlumnoController`: las rutas legadas se elimin
 ### Servicios y filtros
 
 - `ConstanciaService` — generación (QuestPDF) y envío por correo de todas las constancias.
-- `EvaluacionCalculoService` — puntaje de elementos, nota final, nota de Catrina y cálculo de lugar por carrera.
+- `EvaluacionCalculoService` — puntaje de elementos, nota final y cálculo de lugar por carrera (la nota y el ranking de Catrina se retiraron en F2, 2026-10-17).
 - `ReportePeriodoService` — Reporte de Cierre de Periodo (vista y PDF, con marca de confidencialidad).
 - `PrivacidadReporteHelper` — regla de umbral de agrupación demográfica (`vision.md` §12.2), con piso mínimo no anulable.
 - `PasswordHashService` — PBKDF2 + reconocimiento y migración de hashes SHA-256 legados (rehash-on-login).
@@ -86,13 +86,14 @@ No existen `JuecesController` ni `AlumnoController`: las rutas legadas se elimin
 | Entidad | Notas |
 |---|---|
 | `Registrante` | Alumno (7 dígitos) / Maestro / Administrativo (5 dígitos); correo institucional, teléfono, género, carrera, autodescripción cultural, soft delete. |
-| `Equipo` | Nombre del grupo y del altar, carrera del altar, periodo, organizador, maestro encargado (o identificador pendiente), ubicación, `HaceCatrina`, y la validación administrativa de la ficha (`FichaValidadaPorAdminEn`, `FichaValidadaPorJuezId`). |
+| `Equipo` | Nombre del grupo y del altar, carrera del altar, periodo, organizador, maestro encargado (o identificador pendiente), ubicación, `CodigoPublico` inmutable (`ALT-{periodo}-{NNNN}`, F2), `HaceCatrina` (**legado sin uso desde F2**), y la validación administrativa de la ficha (`FichaValidadaPorAdminEn`, `FichaValidadaPorJuezId`). |
 | `RegistranteEquipo` | Membresía con `Rol` (Integrante \| Narrador) y `Periodo` denormalizado para el índice único. |
 | `Difunto` | Nombre, fecha de defunción, semblanza/temática, tipo de altar (Tradicional \| Niños). |
 | `Elemento` / `ElementoEvaluado` | Catálogo maestro de 24 elementos (mini-manual: significado y colocación) y su escala de satisfacción por evaluación (**No lo tiene / Regular / Bueno**, persistida como texto). |
 | `Evaluacion` / `EvaluacionIntegrante` | Estado `Preliminar` \| `Final`, componentes 0–10, nota final, lugar, snapshots de equipo/integrantes/difunto. |
-| `EvaluacionCatrina` | Categoría independiente con sus 5 criterios ponderados y ranking propio. |
-| `ConfiguracionPeriodo` | Fechas límite, recorrido PDF, pesos de nota final y de Catrina, escala de satisfacción (3 valores), pesos ritual/decorativo, bonus temático, umbral demográfico. |
+| `EvaluacionCatrina` | **Legado sin uso desde F2 (2026-10-17):** tabla histórica que se conserva hasta después del concurso; Altares ya no la lee ni la escribe. |
+| `ContadorCodigoPublico` | Último consecutivo de `CodigoPublico` por periodo (F2); solo lo incrementa `CodigoPublicoEquipo` dentro de la transacción del equipo. |
+| `ConfiguracionPeriodo` | Fechas límite, recorrido PDF, pesos de nota final (los de Catrina quedan como columnas legadas sin uso desde F2), escala de satisfacción (3 valores), pesos ritual/decorativo, bonus temático, umbral demográfico. |
 | `CatalogoGenero` / `CatalogoCarrera` | Catálogos editables desde el admin (13 carreras FIM). |
 
 ### Legado durmiente
@@ -119,16 +120,16 @@ históricos, deuda de esquema y no superficie de ataque.
 - [x] Búsqueda de equipo por carrera en tiempo real y precarga en solo lectura de la Ficha.
 - [x] Checklist de 24 elementos agrupado por nivel (3 o 7), con escala de satisfacción de 3 niveles, marcador de tematizado, mini-manual (i) y acumulado en vivo.
 - [x] Categorías 0–10: Objetivo Cultural (sugerido desde el puntaje de elementos), Creatividad, Valoración General, Distribución por Niveles, Explicación oral.
-- [x] Catrina como categoría independiente y opcional, con ranking propio por carrera.
+- [~] ~~Catrina como categoría independiente y opcional, con ranking propio por carrera.~~ Retirada de Altares en F2 (2026-10-17); pasa a `Catrinas.Web`.
 - [x] Estados `Preliminar` (reeditable) y `Final` (confirmación explícita; exige narrador y ficha completa).
 - [x] Historial por periodo, avance por carrera (Final / En preliminar / Sin calificar) y recorrido en PDF embebido.
 
 **Administración**
 - [x] Gestión de jueces: alta manual, **edición** (`/AltarAdmin/EditarJuez/{id}`: nombre, usuario, rol Juez↔Admin, contraseña nueva opcional que fuerza cambio en el siguiente login; las cuentas Google no exponen usuario ni contraseña; un admin no puede quitarse su propio rol), aprobación de pendientes, soft delete y reactivación.
 - [x] Gestión de registrantes: listado, **edición** (`/AltarAdmin/EditarRegistrante/{id}`: nombre, tipo, identificador, correo, teléfono, género, carrera, autodescripción; sin contraseña; unicidad contra activos e inactivos; vincula equipos que esperaban ese identificador como maestro encargado, igual que el signup; no permite pasar a Alumno a quien ya es maestro encargado), soft delete y reactivación.
-- [x] Gestión de equipos: listado del periodo y **edición completa de la Ficha** (`/AltarAdmin/EditarEquipo/{id}`, `vision.md` §6.2): nombre, altar, difunto, carrera, maestro encargado, lugar, Catrina, más agregar/quitar integrantes y designar Narrador. El admin **no está sujeto a las fechas límite**; con evaluación registrada puede corregir la ficha (el snapshot de la evaluación no se reescribe) pero la lista de integrantes y el narrador quedan cerrados. El organizador no puede quitarse desde ahí.
+- [x] Gestión de equipos: listado del periodo y **edición completa de la Ficha** (`/AltarAdmin/EditarEquipo/{id}`, `vision.md` §6.2): nombre, altar, difunto, carrera, maestro encargado, lugar (Catrina retirada en F2), más agregar/quitar integrantes y designar Narrador. El admin **no está sujeto a las fechas límite**; con evaluación registrada puede corregir la ficha (el snapshot de la evaluación no se reescribe) pero la lista de integrantes y el narrador quedan cerrados. El organizador no puede quitarse desde ahí.
 - [x] Validación administrativa de la Ficha de Registro (`vision.md` §6.3), desde el listado de equipos y desde Nueva Evaluación.
-- [x] Configuración por periodo: fechas límite, subida del recorrido PDF, pesos de nota final y de Catrina, umbral demográfico.
+- [x] Configuración por periodo: fechas límite, subida del recorrido PDF, pesos de nota final, umbral demográfico (pesos de Catrina retirados en F2).
 - [x] Reporte de Cierre de Periodo (`vision.md` §12) con umbral de agrupación demográfica y exportación a PDF marcado como confidencial.
 
 **Constancias**
