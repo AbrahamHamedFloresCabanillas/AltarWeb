@@ -1,0 +1,56 @@
+@model SolicitudJuradoViewModel
+@{
+    ViewData["Title"] = "Completa tu solicitud al jurado";
+    var desdeGoogle = Model.DesdeGoogle;
+}
+
+<div style="max-width:640px; margin:0 auto; padding:28px 24px;">
+    <a asp-action="Login" asp-route-tab="jurado" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <h2 style="font-weight:800; margin-top:12px;">Solicitar acceso al jurado</h2>
+    <p class="altar-card-subtitle">La administración del Concurso de Catrinas debe aprobar tu solicitud antes de que puedas evaluar.</p>
+    <div class="altar-card">
+        <form asp-action="@(desdeGoogle ? "CompletarGoogleJurado" : "SolicitarJurado")" method="post">
+            <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+            <div class="altar-field">
+                <label class="altar-label" asp-for="NombreCompleto">Nombre completo</label>
+                <input asp-for="NombreCompleto" class="altar-input" />
+                <span asp-validation-for="NombreCompleto" class="altar-error"></span>
+            </div>
+            @if (desdeGoogle)
+            {
+                <p class="altar-text-muted">Correo verificado por Google: <strong>@Model.CorreoInstitucional</strong></p>
+            }
+            else
+            {
+                <div class="altar-field">
+                    <label class="altar-label" asp-for="CorreoInstitucional">Correo institucional</label>
+                    <input asp-for="CorreoInstitucional" class="altar-input" />
+                    <span asp-validation-for="CorreoInstitucional" class="altar-error"></span>
+                </div>
+            }
+            <div class="altar-field">
+                <label class="altar-label" asp-for="Identificador">Número de empleado o matrícula</label>
+                <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" />
+                <span asp-validation-for="Identificador" class="altar-error"></span>
+            </div>
+            @if (!desdeGoogle)
+            {
+                <div class="altar-grid-2">
+                    <div class="altar-field">
+                        <label class="altar-label" asp-for="Password">Contraseña</label>
+                        <input asp-for="Password" type="password" class="altar-input" />
+                        <span asp-validation-for="Password" class="altar-error"></span>
+                    </div>
+                    <div class="altar-field">
+                        <label class="altar-label" asp-for="ConfirmarPassword">Confirmar contraseña</label>
+                        <input asp-for="ConfirmarPassword" type="password" class="altar-input" />
+                        <span asp-validation-for="ConfirmarPassword" class="altar-error"></span>
+                    </div>
+                </div>
+            }
+            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Enviar solicitud</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

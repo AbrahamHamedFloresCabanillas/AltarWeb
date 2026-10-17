@@ -1,0 +1,38 @@
+@model ConfiguracionViewModel
+@{
+    ViewData["Title"] = "Configuración";
+}
+<div class="altar-app">
+    <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
+    <main class="altar-main">
+        <div class="altar-page-title">Configuración del periodo @Model.Periodo</div>
+        <div class="altar-page-subtitle">Los pesos se aplican a las evaluaciones que se guarden después; las ya guardadas conservan los suyos.</div>
+        <partial name="_Mensajes" />
+        <form asp-action="Configuracion" method="post">
+            <div asp-validation-summary="All" class="altar-error"></div>
+            <div class="altar-card">
+                <div class="altar-card-title">Fechas límite</div>
+                <div class="altar-grid-2">
+                    <div class="altar-field"><label class="altar-label" asp-for="FechaLimiteInscripcion">Inscripción (crear inscripciones)</label><input asp-for="FechaLimiteInscripcion" type="date" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="FechaLimiteRequisitos">Requisitos (editar inscripción e integrantes)</label><input asp-for="FechaLimiteRequisitos" type="date" class="altar-input" /></div>
+                </div>
+                <p class="altar-text-muted" style="font-size:12px;">El día indicado cuenta completo (calendario de Mexicali). Vacío = sin límite.</p>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Pesos de los criterios (deben sumar 100%)</div>
+                <div class="altar-grid-3">
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoVestuarioPct">Vestuario (%)</label><input asp-for="PesoVestuarioPct" type="number" step="1" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoMaquillajePct">Maquillaje (%)</label><input asp-for="PesoMaquillajePct" type="number" step="1" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoAccesoriosPct">Accesorios (%)</label><input asp-for="PesoAccesoriosPct" type="number" step="1" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoOriginalidadCreatividadPct">Originalidad y creatividad (%)</label><input asp-for="PesoOriginalidadCreatividadPct" type="number" step="1" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoApegoTradicionesPct">Apego a las tradiciones (%)</label><input asp-for="PesoApegoTradicionesPct" type="number" step="1" class="altar-input" /></div>
+                </div>
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Privacidad de la reportería</div>
+                <div class="altar-field" style="max-width:240px;"><label class="altar-label" asp-for="UmbralAgrupacionDemografica">Umbral de agrupación (mínimo 3)</label><input asp-for="UmbralAgrupacionDemografica" type="number" class="altar-input" /></div>
+            </div>
+            <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar configuración</button>
+        </form>
+    </main>
+</div>

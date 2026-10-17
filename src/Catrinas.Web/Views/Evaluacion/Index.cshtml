@@ -1,0 +1,78 @@
+@model List<FilaInscripcionViewModel>
+@{
+    ViewData["Title"] = "Inscripciones";
+    var carreras = (List<CatalogoCarrera>)ViewBag.Carreras;
+    var carreraId = ViewBag.CarreraId as int?;
+}
+
+<div class="altar-app">
+    <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
+    <main class="altar-main">
+        <div class="altar-flex" style="justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <div class="altar-page-title">Inscripciones de Catrina</div>
+                <div class="altar-page-subtitle">Periodo @ViewBag.Periodo · @Model.Count inscripciones · @Model.Count(f => f.Estado == EstadoEvaluacion.Final) evaluadas como Final</div>
+            </div>
+            <form method="get" asp-action="Index" class="altar-flex altar-gap-sm">
+                <select name="carreraId" class="altar-input" onchange="this.form.submit()">
+                    <option value="">Todas las carreras</option>
+                    @foreach (var c in carreras)
+                    {
+                        <option value="@c.Id" selected="@(carreraId == c.Id)">@c.Nombre</option>
+                    }
+                </select>
+            </form>
+        </div>
+
+        <partial name="_Mensajes" />
+
+        <div class="altar-card">
+            @if (Model.Count == 0)
+            {
+                <p class="altar-text-muted">No hay inscripciones en este periodo.</p>
+            }
+            else
+            {
+                <table class="altar-table">
+                    <thead><tr><th>Inscripción</th><th>Carrera</th><th>Personifica</th><th>Estado</th><th>Nota</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var f in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@f.Nombre</strong>
+                                    <div class="altar-text-muted" style="font-size:12px;">@f.Integrantes integrante(s)@(f.AltarExternalId != null ? $" · Altares: {f.AltarExternalId}" : "")</div>
+                                    @if (f.Faltantes.Count > 0)
+                                    {
+                                        <div class="altar-error" style="font-size:12px;">Falta: @string.Join(", ", f.Faltantes)</div>
+                                    }
+                                </td>
+                                <td>@f.Carrera</td>
+                                <td>@(f.Personificador ?? "—")</td>
+                                <td>
+                                    @switch (f.Estado)
+                                    {
+                                        case EstadoEvaluacion.Final: <span class="altar-badge altar-badge-success">Final@(f.Lugar != null ? $" · {f.Lugar}.º lugar" : "")</span> break;
+                                        case EstadoEvaluacion.Preliminar: <span class="altar-badge altar-badge-purple">Preliminar</span> break;
+                                        default: <span class="altar-badge altar-badge-muted">Sin evaluar</span> break;
+                                    }
+                                </td>
+                                <td>@(f.Nota?.ToString("0.00") ?? "—")</td>
+                                <td>
+                                    @if (f.Estado == EstadoEvaluacion.Final)
+                                    {
+                                        <a asp-action="Detalle" asp-route-id="@f.EvaluacionId" class="altar-btn altar-btn-sm altar-btn-outline">Ver</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Evaluar" asp-route-inscripcionId="@f.InscripcionId" class="altar-btn altar-btn-sm altar-btn-primary">Evaluar</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </main>
+</div>

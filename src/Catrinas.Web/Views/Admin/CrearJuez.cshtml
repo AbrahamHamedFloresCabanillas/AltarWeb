@@ -1,0 +1,22 @@
+@model CrearJuezViewModel
+@{
+    ViewData["Title"] = "Nueva cuenta del jurado";
+}
+<div class="altar-app">
+    <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
+    <main class="altar-main">
+        <a asp-action="Jurado" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Jurado</a>
+        <div class="altar-page-title" style="margin-top:8px;">Nueva cuenta</div>
+        <div class="altar-card" style="max-width:560px;">
+            <form asp-action="CrearJuez" method="post">
+                <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+                <div class="altar-field"><label class="altar-label" asp-for="NombreCompleto">Nombre completo</label><input asp-for="NombreCompleto" class="altar-input" /><span asp-validation-for="NombreCompleto" class="altar-error"></span></div>
+                <div class="altar-field"><label class="altar-label" asp-for="Usuario">Usuario</label><input asp-for="Usuario" class="altar-input" /><span asp-validation-for="Usuario" class="altar-error"></span></div>
+                <div class="altar-field"><label class="altar-label" asp-for="Password">Contraseña temporal</label><input asp-for="Password" type="password" class="altar-input" /><span asp-validation-for="Password" class="altar-error"></span></div>
+                <label class="altar-flex altar-gap-sm" style="margin-bottom:16px;"><input asp-for="EsAdmin" /> Es administrador</label>
+                <button type="submit" class="altar-btn altar-btn-primary">Crear cuenta</button>
+            </form>
+        </div>
+    </main>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

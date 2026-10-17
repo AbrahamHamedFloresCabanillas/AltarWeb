@@ -1,0 +1,18 @@
+@model CompletarGoogleViewModel
+@{
+    ViewData["Title"] = "Completa tu registro";
+}
+
+<div style="max-width:720px; margin:0 auto; padding:28px 24px;">
+    <h2 style="font-weight:800;">Completa tu registro</h2>
+    <p class="altar-card-subtitle">Google confirmó tu correo <strong>@Model.CorreoInstitucional</strong>. Solo faltan los datos que Google no proporciona.</p>
+    <div class="altar-card">
+        <form asp-action="CompletarGoogle" method="post">
+            <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+            <partial name="_DatosPersonales" model="Model" />
+            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Entrar al portal</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

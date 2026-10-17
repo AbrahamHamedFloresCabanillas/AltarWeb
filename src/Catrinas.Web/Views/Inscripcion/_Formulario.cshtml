@@ -1,0 +1,47 @@
+@model InscripcionFormViewModel
+@{
+    var soloLectura = ViewData["SoloLectura"] as bool? == true;
+}
+<div asp-validation-summary="ModelOnly" class="altar-error"></div>
+<fieldset @(soloLectura ? "disabled" : null) style="border:none; padding:0; margin:0;">
+    <div class="altar-field">
+        <label class="altar-label" asp-for="Nombre">Nombre de la inscripción *</label>
+        <input asp-for="Nombre" class="altar-input" maxlength="150" />
+        <span asp-validation-for="Nombre" class="altar-error"></span>
+    </div>
+    <div class="altar-grid-2">
+        <div class="altar-field">
+            <label class="altar-label" asp-for="CarreraId">Carrera con la que concursa *</label>
+            <select asp-for="CarreraId" class="altar-input">
+                <option value="0">Selecciona…</option>
+                @foreach (var c in Model.Carreras)
+                {
+                    <option value="@c.Id">@c.Nombre</option>
+                }
+            </select>
+            <span asp-validation-for="CarreraId" class="altar-error"></span>
+        </div>
+        <div class="altar-field">
+            <label class="altar-label" asp-for="MaestroEncargadoIdentificador">Maestro encargado (opcional)</label>
+            <input asp-for="MaestroEncargadoIdentificador" class="altar-input" inputmode="numeric" maxlength="5" placeholder="Número de 5 dígitos" />
+            <span asp-validation-for="MaestroEncargadoIdentificador" class="altar-error"></span>
+            <div class="altar-text-muted" style="font-size:12px;">Debe tener cuenta en el Concurso de Catrinas.</div>
+        </div>
+    </div>
+    <div class="altar-card" style="background:var(--altar-surface-alt);">
+        <div class="altar-card-title" style="font-size:14px;">¿Tu equipo también participa en el Concurso de Altares? (opcional)</div>
+        <p class="altar-text-muted" style="font-size:12px;">Captura el código público de tu equipo de Altares tal como aparece en su panel. Es solo una referencia: no se consulta ni se valida contra el sistema de Altares.</p>
+        <div class="altar-grid-2">
+            <div class="altar-field">
+                <label class="altar-label" asp-for="AltarExternalId">Código del equipo de Altares</label>
+                <input asp-for="AltarExternalId" class="altar-input" maxlength="32" placeholder="ALT-2026-2-0042" />
+                <span asp-validation-for="AltarExternalId" class="altar-error"></span>
+            </div>
+            <div class="altar-field">
+                <label class="altar-label" asp-for="AltarNombreSnapshot">Nombre del equipo de Altares</label>
+                <input asp-for="AltarNombreSnapshot" class="altar-input" maxlength="150" />
+                <span asp-validation-for="AltarNombreSnapshot" class="altar-error"></span>
+            </div>
+        </div>
+    </div>
+</fieldset>

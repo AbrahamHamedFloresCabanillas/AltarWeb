@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Concurso de Catrinas</title>
+    <script>
+        (function () {
+            try {
+                var pref = localStorage.getItem('catrinas-theme') || 'system';
+                var oscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.dataset.theme = pref === 'system' ? (oscuro ? 'dark' : 'light') : pref;
+                document.documentElement.dataset.themePref = pref;
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="~/css/altar-design.css" asp-append-version="true" />
+</head>
+<body class="altar-root">
+    @RenderBody()
+
+    <script>
+        var CatrinasTema = (function () {
+            var mq = null;
+            function aplicar(pref) {
+                document.documentElement.dataset.theme = pref === 'system' ? ((mq && mq.matches) ? 'dark' : 'light') : pref;
+                document.documentElement.dataset.themePref = pref;
+                document.querySelectorAll('[data-theme-option]').forEach(function (b) { b.classList.toggle('active', b.dataset.themeOption === pref); });
+            }
+            function set(pref) { try { localStorage.setItem('catrinas-theme', pref); } catch (e) {} aplicar(pref); }
+            document.addEventListener('DOMContentLoaded', function () {
+                var pref = 'system';
+                try { mq = window.matchMedia('(prefers-color-scheme: dark)'); pref = localStorage.getItem('catrinas-theme') || 'system'; } catch (e) {}
+                aplicar(pref);
+            });
+            return { set: set };
+        })();
+        var CatrinasMenu = {
+            toggle: function () {
+                document.getElementById('altar-sidebar').classList.toggle('open');
+                document.getElementById('altar-sidebar-overlay').classList.toggle('open');
+            }
+        };
+    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,8 @@
+@if (TempData["Mensaje"] != null)
+{
+    <div class="altar-hint" style="border-color:var(--altar-primary); color:var(--altar-primary);">@TempData["Mensaje"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+}

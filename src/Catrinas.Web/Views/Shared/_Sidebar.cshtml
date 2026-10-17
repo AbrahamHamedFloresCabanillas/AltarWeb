@@ -1,0 +1,33 @@
+@model NavContext
+<button type="button" class="altar-sidebar-toggle-btn" aria-label="Abrir menú" onclick="CatrinasMenu.toggle()"><i class="fa-solid fa-bars"></i></button>
+<div class="altar-sidebar-overlay" id="altar-sidebar-overlay" onclick="CatrinasMenu.toggle()"></div>
+<aside class="altar-sidebar" id="altar-sidebar">
+    <div>
+        <a asp-controller="Evaluacion" asp-action="Index" class="altar-flex altar-gap-sm" style="color:var(--altar-text); margin-bottom:8px;">
+            <span class="altar-brand-badge" style="background:var(--altar-primary-soft-bg); width:32px; height:32px; font-size:14px;"><i class="fa-solid fa-hat-wizard"></i></span>
+            <span>
+                <div style="font-weight:800; font-size:15px;">Concurso de Catrinas</div>
+                <div class="altar-text-muted" style="font-size:11px;">FIM · UABC</div>
+            </span>
+        </a>
+        <div class="altar-sidebar-menu-label">Jurado</div>
+        <a asp-controller="Evaluacion" asp-action="Index" class="altar-sidebar-nav-item @(Model.Activo == "Inscripciones" ? "active" : "")"><i class="fa-solid fa-list-check"></i> Inscripciones</a>
+        <a asp-controller="Evaluacion" asp-action="Ranking" class="altar-sidebar-nav-item @(Model.Activo == "Ranking" ? "active" : "")"><i class="fa-solid fa-ranking-star"></i> Ranking por carrera</a>
+        @if (Model.EsAdmin)
+        {
+            <div class="altar-sidebar-menu-label">Administración</div>
+            <a asp-controller="Admin" asp-action="Jurado" class="altar-sidebar-nav-item @(Model.Activo == "Jurado" ? "active" : "")"><i class="fa-solid fa-user-shield"></i> Jurado</a>
+            <a asp-controller="Admin" asp-action="Participantes" class="altar-sidebar-nav-item @(Model.Activo == "Participantes" ? "active" : "")"><i class="fa-solid fa-users"></i> Participantes</a>
+            <a asp-controller="Admin" asp-action="Configuracion" class="altar-sidebar-nav-item @(Model.Activo == "Configuracion" ? "active" : "")"><i class="fa-solid fa-gear"></i> Configuración</a>
+        }
+    </div>
+    <div class="altar-flex" style="justify-content:center; margin-bottom:12px;"><partial name="_TemaPartial" /></div>
+    <div class="altar-sidebar-user">
+        <div class="altar-avatar">@Model.Iniciales</div>
+        <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">@Model.NombreCompleto</div>
+            <div class="altar-text-muted" style="font-size:11px;">@Model.Rol</div>
+        </div>
+        <a asp-controller="Acceso" asp-action="Salir" title="Salir" style="color:var(--altar-text-muted);"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+    </div>
+</aside>

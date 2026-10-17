@@ -1,0 +1,55 @@
+@model DatosPersonalesViewModel
+
+<div class="altar-field">
+    <label class="altar-label" asp-for="NombreCompleto">Nombre completo *</label>
+    <input asp-for="NombreCompleto" class="altar-input" />
+    <span asp-validation-for="NombreCompleto" class="altar-error"></span>
+</div>
+<div class="altar-grid-2">
+    <div class="altar-field">
+        <label class="altar-label" asp-for="Identificador">Matrícula o número de empleado *</label>
+        <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" />
+        <span asp-validation-for="Identificador" class="altar-error"></span>
+        <div class="altar-text-muted" style="font-size:12px;">7 dígitos (alumno) · 5 dígitos (maestro o administrativo)</div>
+    </div>
+    <div class="altar-field">
+        <label class="altar-label" asp-for="TipoPersonal">Si tu número es de 5 dígitos</label>
+        <select asp-for="TipoPersonal" class="altar-input">
+            <option value="Maestro">Maestro</option>
+            <option value="Administrativo">Administrativo</option>
+        </select>
+    </div>
+</div>
+<div class="altar-grid-2">
+    <div class="altar-field">
+        <label class="altar-label" asp-for="Telefono">Teléfono</label>
+        <input asp-for="Telefono" class="altar-input" inputmode="tel" />
+    </div>
+    <div class="altar-field">
+        <label class="altar-label" asp-for="CatalogoCarreraId">Carrera</label>
+        <select asp-for="CatalogoCarreraId" class="altar-input">
+            <option value="">—</option>
+            @foreach (var c in Model.Carreras)
+            {
+                <option value="@c.Id">@c.Nombre</option>
+            }
+        </select>
+    </div>
+</div>
+<div class="altar-grid-2">
+    <div class="altar-field">
+        <label class="altar-label" asp-for="CatalogoGeneroId">Género</label>
+        <select asp-for="CatalogoGeneroId" class="altar-input">
+            <option value="">—</option>
+            @foreach (var g in Model.Generos)
+            {
+                <option value="@g.Id">@g.Nombre</option>
+            }
+        </select>
+    </div>
+    <div class="altar-field">
+        <label class="altar-label" asp-for="AutodescripcionCultural">Autodescripción cultural (opcional)</label>
+        <input asp-for="AutodescripcionCultural" class="altar-input" />
+        <div class="altar-text-muted" style="font-size:12px;">Dato sensible: solo se usa en estadísticas agregadas que protegen tu identidad.</div>
+    </div>
+</div>

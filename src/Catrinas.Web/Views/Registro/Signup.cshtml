@@ -1,0 +1,37 @@
+@model SignupViewModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<div style="max-width:720px; margin:0 auto; padding:28px 24px;">
+    <a asp-action="Login" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver</a>
+    <h2 style="font-weight:800; margin-top:12px;">Crea tu cuenta del Concurso de Catrinas</h2>
+    <p class="altar-card-subtitle">Usa tu correo institucional @@uabc.edu.mx. Los campos con * son obligatorios.</p>
+
+    <div class="altar-card">
+        <form asp-action="Signup" method="post">
+            <div asp-validation-summary="ModelOnly" class="altar-error"></div>
+            <partial name="_DatosPersonales" model="Model" />
+            <div class="altar-field">
+                <label class="altar-label" asp-for="CorreoInstitucional">Correo institucional *</label>
+                <input asp-for="CorreoInstitucional" class="altar-input" placeholder="nombre.apellido@uabc.edu.mx" />
+                <span asp-validation-for="CorreoInstitucional" class="altar-error"></span>
+            </div>
+            <div class="altar-grid-2">
+                <div class="altar-field">
+                    <label class="altar-label" asp-for="Password">Contraseña *</label>
+                    <input asp-for="Password" type="password" class="altar-input" />
+                    <span asp-validation-for="Password" class="altar-error"></span>
+                </div>
+                <div class="altar-field">
+                    <label class="altar-label" asp-for="ConfirmarPassword">Confirmar contraseña *</label>
+                    <input asp-for="ConfirmarPassword" type="password" class="altar-input" />
+                    <span asp-validation-for="ConfirmarPassword" class="altar-error"></span>
+                </div>
+            </div>
+            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Crear cuenta</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

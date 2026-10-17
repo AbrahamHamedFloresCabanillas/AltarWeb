@@ -1,0 +1,60 @@
+@model List<Juez>
+@{
+    ViewData["Title"] = "Jurado";
+}
+<div class="altar-app">
+    <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
+    <main class="altar-main">
+        <div class="altar-flex" style="justify-content:space-between; margin-bottom:20px;">
+            <div>
+                <div class="altar-page-title">Jurado y administración</div>
+                <div class="altar-page-subtitle">Cuentas del Concurso de Catrinas. Las solicitudes nuevas quedan pendientes hasta aprobarlas.</div>
+            </div>
+            <a asp-action="CrearJuez" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Nueva cuenta</a>
+        </div>
+        <partial name="_Mensajes" />
+        <div class="altar-card">
+            <table class="altar-table">
+                <thead><tr><th>Nombre</th><th>Usuario / correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var j in Model)
+                    {
+                        <tr>
+                            <td>@j.NombreCompleto</td>
+                            <td>@(j.Usuario ?? j.CorreoInstitucional)</td>
+                            <td>@(j.Rol == RolesJuez.Admin ? "Administración" : "Jurado")</td>
+                            <td>
+                                @if (!j.Activo)
+                                {
+                                    <span class="altar-badge altar-badge-muted">Inactivo</span>
+                                }
+                                else if (j.Pendiente)
+                                {
+                                    <span class="altar-badge altar-badge-purple">Pendiente</span>
+                                }
+                                else
+                                {
+                                    <span class="altar-badge altar-badge-success">Activo</span>
+                                }
+                            </td>
+                            <td class="altar-flex altar-gap-sm">
+                                @if (j.Pendiente && j.Activo)
+                                {
+                                    <form asp-action="AprobarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-primary" type="submit">Aprobar</button></form>
+                                }
+                                @if (j.Activo)
+                                {
+                                    <form asp-action="DesactivarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-outline altar-btn-danger" type="submit">Desactivar</button></form>
+                                }
+                                else
+                                {
+                                    <form asp-action="ReactivarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-outline" type="submit">Reactivar</button></form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>

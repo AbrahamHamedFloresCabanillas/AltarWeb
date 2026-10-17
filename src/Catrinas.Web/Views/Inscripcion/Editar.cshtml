@@ -1,0 +1,73 @@
+@model InscripcionFormViewModel
+@{
+    ViewData["Title"] = "Mi inscripción";
+    var inscripcion = (Inscripcion)ViewBag.Inscripcion;
+    var bloqueo = ViewBag.MotivoBloqueo as string;
+    var faltantes = (IReadOnlyList<string>)ViewBag.Faltantes;
+    ViewData["SoloLectura"] = bloqueo != null;
+}
+
+<div style="max-width:960px; margin:0 auto; padding:28px 24px;">
+    <a asp-controller="Registro" asp-action="Panel" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Mi portal</a>
+    <h2 style="font-weight:800; margin-top:12px;">Inscripción: @inscripcion.Nombre</h2>
+    <p class="altar-card-subtitle">Periodo @inscripcion.Periodo · eres responsable de esta inscripción.</p>
+
+    <partial name="_Mensajes" />
+    @if (bloqueo != null)
+    {
+        <div class="altar-hint">@bloqueo</div>
+    }
+    @if (faltantes.Count > 0)
+    {
+        <div class="altar-error" style="margin-bottom:12px;">Para que el jurado pueda cerrar tu evaluación falta: @string.Join(", ", faltantes).</div>
+    }
+
+    <div class="altar-grid-2">
+        <div class="altar-card">
+            <div class="altar-card-title">Datos de la inscripción</div>
+            <form asp-action="Editar" method="post">
+                <partial name="_Formulario" model="Model" view-data="ViewData" />
+                @if (bloqueo == null)
+                {
+                    <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                }
+            </form>
+        </div>
+
+        <div class="altar-card">
+            <div class="altar-card-title">Integrantes</div>
+            <table class="altar-table">
+                <thead><tr><th>Nombre</th><th>Rol</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var m in inscripcion.Miembros.OrderBy(x => x.Registrante.NombreCompleto))
+                    {
+                        <tr>
+                            <td>@m.Registrante.NombreCompleto <span class="altar-text-muted" style="font-size:12px;">@m.Registrante.Identificador</span></td>
+                            <td>@(m.Rol == RolInscripcion.Personificador ? "Personifica a la Catrina" : "Integrante")</td>
+                            <td class="altar-flex altar-gap-sm">
+                                @if (bloqueo == null && m.Rol != RolInscripcion.Personificador)
+                                {
+                                    <form asp-action="DesignarPersonificador" method="post"><input type="hidden" name="registranteId" value="@m.RegistranteId" /><button class="altar-btn altar-btn-sm altar-btn-outline" type="submit">Personificará</button></form>
+                                }
+                                @if (bloqueo == null && m.RegistranteId != inscripcion.ResponsableId)
+                                {
+                                    <form asp-action="QuitarIntegrante" method="post"><input type="hidden" name="registranteId" value="@m.RegistranteId" /><button class="altar-btn altar-btn-sm altar-btn-outline altar-btn-danger" type="submit">Quitar</button></form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (bloqueo == null)
+            {
+                <form asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:12px;">
+                    <input type="text" name="identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="Identificador del integrante" />
+                    <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
+                </form>
+                <p class="altar-text-muted" style="font-size:12px;">La persona debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

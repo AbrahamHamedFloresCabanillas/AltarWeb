@@ -18,9 +18,10 @@ namespace Concurso.Core.Seguridad
         // sin Secure viaja en claro ante un downgrade HTTP y puede ser secuestrada.
         // "Seguridad:CookieSesion" permite darle un nombre distinto por app (Altares y Catrinas pueden
         // compartir dominio padre); sin valor se conserva el nombre por defecto de ASP.NET Core.
-        public static IServiceCollection AddConcursoSesion(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddConcursoSesion(this IServiceCollection services, IConfiguration configuration,
+            string? nombreCookiePorDefecto = null)
         {
-            var nombreCookie = configuration["Seguridad:CookieSesion"];
+            var nombreCookie = configuration["Seguridad:CookieSesion"] ?? nombreCookiePorDefecto;
             return services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(60);
@@ -36,10 +37,11 @@ namespace Concurso.Core.Seguridad
         // configuracion se conserva el comportamiento por defecto de ASP.NET Core. En hosting (IIS sin
         // perfil de usuario) conviene fijar "Seguridad:DataProtection:KeysPath" fuera de wwwroot para
         // que las sesiones sobrevivan a un reciclaje, y un ApplicationName distinto por app.
-        public static IServiceCollection AddConcursoDataProtection(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddConcursoDataProtection(this IServiceCollection services, IConfiguration configuration,
+            string? applicationNamePorDefecto = null)
         {
             var builder = services.AddDataProtection();
-            var nombreApp = configuration["Seguridad:DataProtection:ApplicationName"];
+            var nombreApp = configuration["Seguridad:DataProtection:ApplicationName"] ?? applicationNamePorDefecto;
             var rutaLlaves = configuration["Seguridad:DataProtection:KeysPath"];
             if (!string.IsNullOrWhiteSpace(nombreApp)) builder.SetApplicationName(nombreApp);
             if (!string.IsNullOrWhiteSpace(rutaLlaves)) builder.PersistKeysToFileSystem(new DirectoryInfo(rutaLlaves));

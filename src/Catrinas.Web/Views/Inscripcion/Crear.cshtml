@@ -1,0 +1,18 @@
+@model InscripcionFormViewModel
+@{
+    ViewData["Title"] = "Crear inscripción";
+}
+
+<div style="max-width:760px; margin:0 auto; padding:28px 24px;">
+    <a asp-controller="Registro" asp-action="Panel" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Mi portal</a>
+    <h2 style="font-weight:800; margin-top:12px;">Crear inscripción de Catrina</h2>
+    <p class="altar-card-subtitle">Quedarás como responsable. Después podrás agregar integrantes y designar a quien personificará a la Catrina.</p>
+    <div class="altar-card">
+        <form asp-action="Crear" method="post">
+            <partial name="_Formulario" model="Model" />
+            <button type="submit" class="altar-btn altar-btn-primary altar-btn-block"><i class="fa-solid fa-plus"></i> Crear inscripción</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

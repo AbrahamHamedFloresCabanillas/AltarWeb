@@ -1,0 +1,36 @@
+@model List<Registrante>
+@{
+    ViewData["Title"] = "Participantes";
+}
+<div class="altar-app">
+    <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
+    <main class="altar-main">
+        <div class="altar-page-title">Participantes</div>
+        <div class="altar-page-subtitle">Cuentas registradas en el Concurso de Catrinas.</div>
+        <partial name="_Mensajes" />
+        <div class="altar-card">
+            <table class="altar-table">
+                <thead><tr><th>Nombre</th><th>Tipo</th><th>Identificador</th><th>Correo</th><th>Carrera</th><th>Género</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>@r.NombreCompleto @(r.Activo ? "" : "(inactivo)")</td>
+                            <td>@r.Tipo</td>
+                            <td>@r.Identificador</td>
+                            <td>@r.CorreoInstitucional</td>
+                            <td>@(r.CatalogoCarrera?.Nombre ?? "—")</td>
+                            <td>@(r.CatalogoGenero?.Nombre ?? "—")</td>
+                            <td>
+                                <form asp-action="@(r.Activo ? "DesactivarParticipante" : "ReactivarParticipante")" method="post">
+                                    <input type="hidden" name="id" value="@r.Id" />
+                                    <button class="altar-btn altar-btn-sm altar-btn-outline" type="submit">@(r.Activo ? "Desactivar" : "Reactivar")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>

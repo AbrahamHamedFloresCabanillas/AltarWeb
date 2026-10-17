@@ -1,0 +1,98 @@
+@model PanelParticipanteViewModel
+@{
+    ViewData["Title"] = "Mi portal";
+    var r = Model.Registrante;
+    var i = Model.Inscripcion;
+    var personificador = i?.Miembros.FirstOrDefault(m => m.Rol == RolInscripcion.Personificador);
+}
+
+<div style="max-width:1100px; margin:0 auto; padding:28px 24px;">
+    <div class="altar-flex" style="justify-content:space-between; margin-bottom:28px;">
+        <div class="altar-flex altar-gap-sm">
+            <div class="altar-brand-badge" style="width:36px; height:36px; background:var(--altar-primary-soft-bg); font-size:16px;"><i class="fa-solid fa-hat-wizard"></i></div>
+            <div>
+                <div style="font-weight:800;">Concurso de Catrinas</div>
+                <div class="altar-text-muted" style="font-size:12px;">Portal de participantes · FIM UABC</div>
+            </div>
+        </div>
+        <div class="altar-flex altar-gap-md">
+            <partial name="_TemaPartial" />
+            <div>
+                <div style="font-weight:700; font-size:13px;">@r.NombreCompleto</div>
+                <div class="altar-text-muted" style="font-size:12px;">@r.Tipo · @r.Identificador</div>
+            </div>
+            <a asp-action="Logout" title="Salir" style="color:var(--altar-text-muted);"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+        </div>
+    </div>
+
+    <partial name="_Mensajes" />
+
+    <h2 style="font-weight:800;">¡Hola, @(r.NombreCompleto.Split(' ').FirstOrDefault())!</h2>
+    <p class="altar-text-muted" style="margin-bottom:24px;">Periodo <strong>@Model.Periodo</strong>@(r.CatalogoCarrera != null ? $" · {r.CatalogoCarrera.Nombre}" : "")</p>
+
+    @if (i == null)
+    {
+        <div class="altar-card">
+            <div class="altar-card-title">Aún no estás en ninguna inscripción</div>
+            @if (Model.PuedeCrear)
+            {
+                <p class="altar-card-subtitle">Crea la inscripción de tu equipo (puede ser de una sola persona) o pide al responsable de otra inscripción que te agregue con tu identificador <strong>@r.Identificador</strong>.</p>
+                <a asp-controller="Inscripcion" asp-action="Crear" class="altar-btn altar-btn-primary"><i class="fa-solid fa-plus"></i> Crear inscripción</a>
+            }
+            else
+            {
+                <p class="altar-card-subtitle">@Model.MotivoNoPuedeCrear</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="altar-grid-2">
+            <div class="altar-card">
+                <div class="altar-card-title" style="color:var(--altar-primary);">@i.Nombre</div>
+                <div class="altar-card-subtitle">@i.Carrera.Nombre</div>
+                <p><i class="fa-solid fa-masks-theater"></i> Personifica: <strong>@(personificador?.Registrante.NombreCompleto ?? "sin designar")</strong></p>
+                <p><i class="fa-solid fa-chalkboard-user"></i> Maestro encargado: @(i.MaestroEncargado?.NombreCompleto ?? "ninguno (opcional)")</p>
+                @if (i.AltarExternalId != null)
+                {
+                    <p class="altar-text-muted" style="font-size:13px;"><i class="fa-solid fa-link"></i> Equipo de Altares asociado: <strong>@i.AltarExternalId</strong>@(i.AltarNombreSnapshot != null ? $" · {i.AltarNombreSnapshot}" : "")</p>
+                }
+                <div class="altar-card-subtitle" style="margin-top:12px;">Integrantes</div>
+                <ul>
+                    @foreach (var m in i.Miembros.OrderBy(x => x.Registrante.NombreCompleto))
+                    {
+                        <li>@m.Registrante.NombreCompleto @(m.Rol == RolInscripcion.Personificador ? "(personifica)" : "")</li>
+                    }
+                </ul>
+                @if (Model.EsResponsable)
+                {
+                    <a asp-controller="Inscripcion" asp-action="Editar" class="altar-btn altar-btn-outline"><i class="fa-solid fa-pen"></i> Administrar inscripción</a>
+                }
+            </div>
+            <div class="altar-card">
+                <div class="altar-card-title">Estado</div>
+                @if (Model.Faltantes.Count > 0)
+                {
+                    <div class="altar-error">Falta: @string.Join(", ", Model.Faltantes)</div>
+                }
+                else
+                {
+                    <span class="altar-badge altar-badge-success">Inscripción completa</span>
+                }
+                @if (Model.MotivoBloqueo != null)
+                {
+                    <p class="altar-text-muted" style="margin-top:12px;">@Model.MotivoBloqueo</p>
+                }
+                @if (i.Evaluacion?.Estado == EstadoEvaluacion.Final)
+                {
+                    <p style="margin-top:12px;">Evaluación cerrada. @(i.Evaluacion.Lugar != null ? $"Lugar {i.Evaluacion.Lugar} en {i.Carrera.Nombre}." : "")</p>
+                    <a asp-controller="Constancia" asp-action="Mia" class="altar-btn altar-btn-primary"><i class="fa-solid fa-file-pdf"></i> Descargar mi constancia</a>
+                }
+                else
+                {
+                    <p class="altar-text-muted" style="margin-top:12px;">Tu constancia estará disponible cuando el jurado cierre la evaluación.</p>
+                }
+            </div>
+        </div>
+    }
+</div>
