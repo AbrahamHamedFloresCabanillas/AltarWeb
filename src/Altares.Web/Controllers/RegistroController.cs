@@ -543,8 +543,10 @@ namespace AltarWeb.Controllers
             // Sin ella, una race que viole el indice unico (RegistranteId, Periodo) en el ultimo insert
             // dejaba el Equipo (y su Difunto) huerfanos y persistidos aunque el organizador nunca quedara
             // vinculado — confirmado con una prueba real de dos requests concurrentes en la misma sesion.
+            // La misma transaccion cubre el consecutivo del CodigoPublico (si se revierte, no deja hueco).
             using var transaction = await _context.Database.BeginTransactionAsync();
 
+            equipo.CodigoPublico = await CodigoPublicoEquipo.SiguienteAsync(_context, periodo);
             _context.EquiposConcurso.Add(equipo);
             await _context.SaveChangesAsync();
 
@@ -826,6 +828,7 @@ namespace AltarWeb.Controllers
         {
             var vm = model ?? new FichaViewModel
             {
+                CodigoPublico = equipo.CodigoPublico,
                 Nombre = equipo.Nombre,
                 NombreAltar = equipo.NombreAltar,
                 DifuntoNombre = equipo.Difunto?.Nombre ?? string.Empty,
@@ -834,6 +837,7 @@ namespace AltarWeb.Controllers
                 MaestroEncargadoIdentificador = equipo.MaestroEncargado?.Identificador ?? equipo.MaestroEncargadoIdentificadorPendiente ?? string.Empty,
                 UbicacionAltar = equipo.UbicacionAltar
             };
+            vm.CodigoPublico = equipo.CodigoPublico;
 
             vm.EquipoId = equipo.Id;
             vm.CreadoPorRegistranteId = equipo.CreadoPorRegistranteId;

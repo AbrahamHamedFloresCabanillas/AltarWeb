@@ -54,7 +54,7 @@ public class AltarWebFactory : WebApplicationFactory<Program>
     }
 
     // Crea un juez activo con contraseña conocida directamente en la base de pruebas.
-    public async Task CrearJuezAsync(string usuario, string password, string? correo = null)
+    public async Task CrearJuezAsync(string usuario, string password, string? correo = null, string rol = "Juez")
     {
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AltarDbContext>();
@@ -63,7 +63,7 @@ public class AltarWebFactory : WebApplicationFactory<Program>
             Usuario = usuario,
             CorreoInstitucional = correo,
             Password = Concurso.Core.Seguridad.PasswordHashService.HashPassword(password),
-            Rol = "Juez",
+            Rol = rol,
             NombreCompleto = usuario
         });
         await context.SaveChangesAsync();

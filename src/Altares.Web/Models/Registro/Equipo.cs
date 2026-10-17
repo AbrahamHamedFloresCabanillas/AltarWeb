@@ -12,6 +12,12 @@ namespace AltarWeb.Models.Registro
         [Required]
         public string NombreAltar { get; set; } = string.Empty;
 
+        // Identificador publico, estable e inmutable del equipo (p. ej. "ALT-2026-2-0042"), pensado para
+        // referenciarlo desde fuera de Altares (Catrinas lo guarda como AltarExternalId, ADR §2.6). No
+        // depende del nombre ni de datos personales. Lo asigna CodigoPublicoEquipo al crear el equipo y EF
+        // rechaza cualquier modificacion posterior (ver EquipoConfiguration).
+        public string CodigoPublico { get; set; } = string.Empty;
+
         public int CarreraId { get; set; }
         public virtual CatalogoCarrera Carrera { get; set; } = null!;
 

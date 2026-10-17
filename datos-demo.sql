@@ -143,18 +143,28 @@ INSERT INTO @eq VALUES
 
 DECLARE @eqMap TABLE (En int, Id int);
 
+-- CodigoPublico (desde F2, 2026-10-17): mismo consecutivo por periodo que usa la app
+-- (ContadoresCodigoPublico), bloqueado durante la transaccion para no chocar con altas en paralelo.
+IF NOT EXISTS (SELECT 1 FROM ContadoresCodigoPublico WITH (UPDLOCK, HOLDLOCK) WHERE Periodo = @periodo)
+    INSERT INTO ContadoresCodigoPublico (Periodo, Ultimo) VALUES (@periodo, 0);
+DECLARE @baseCodigo int = (SELECT Ultimo FROM ContadoresCodigoPublico WITH (UPDLOCK, HOLDLOCK) WHERE Periodo = @periodo);
+
 MERGE EquiposConcurso AS destino
-USING (SELECT e.En, e.Nombre, e.Altar, e.CarrId, o.Id AS OrgId, m.Id AS MtroId, e.Ubicacion, e.Catrina
+USING (SELECT e.En, e.Nombre, e.Altar, e.CarrId, o.Id AS OrgId, m.Id AS MtroId, e.Ubicacion, e.Catrina,
+              @baseCodigo + ROW_NUMBER() OVER (ORDER BY e.En) AS NumCodigo
        FROM @eq e
        JOIN @regMap o ON o.Rn = e.OrgRn
        JOIN @regMap m ON m.Rn = e.MtroRn) AS origen
     ON destino.Nombre = origen.Nombre AND destino.Periodo = @periodo
 WHEN NOT MATCHED THEN
     INSERT (Nombre, NombreAltar, CarreraId, Periodo, CreadoPorRegistranteId, MaestroEncargadoId,
-            UbicacionAltar, Activo, CreadoEn, MaestroEncargadoIdentificadorPendiente, HaceCatrina)
+            UbicacionAltar, Activo, CreadoEn, MaestroEncargadoIdentificadorPendiente, HaceCatrina, CodigoPublico)
     VALUES (origen.Nombre, origen.Altar, origen.CarrId, @periodo, origen.OrgId, origen.MtroId,
-            origen.Ubicacion, 1, @hoy, NULL, origen.Catrina)
+            origen.Ubicacion, 1, @hoy, NULL, origen.Catrina,
+            'ALT-' + @periodo + '-' + RIGHT('0000' + CAST(origen.NumCodigo AS varchar(10)), 4))
 OUTPUT origen.En, inserted.Id INTO @eqMap (En, Id);
+
+UPDATE ContadoresCodigoPublico SET Ultimo = @baseCodigo + (SELECT COUNT(*) FROM @eq) WHERE Periodo = @periodo;
 
 INSERT INTO @eqMap (En, Id)
 SELECT e.En, x.Id FROM @eq e

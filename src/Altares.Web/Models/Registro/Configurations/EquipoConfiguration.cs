@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AltarWeb.Models.Registro.Configurations
@@ -10,6 +11,11 @@ namespace AltarWeb.Models.Registro.Configurations
             builder.ToTable("EquiposConcurso");
 
 builder.HasIndex(e => new { e.Nombre, e.Periodo }).IsUnique();
+
+            // CodigoPublico: unico en BD (respaldo final contra duplicados) e inmutable una vez guardado.
+            builder.Property(e => e.CodigoPublico).IsRequired().HasMaxLength(32);
+            builder.HasIndex(e => e.CodigoPublico).IsUnique();
+            builder.Property(e => e.CodigoPublico).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
 
             builder.HasQueryFilter(e => e.Activo);
 

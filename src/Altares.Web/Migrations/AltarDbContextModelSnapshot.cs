@@ -17,7 +17,7 @@ namespace AltarWeb.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.22")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -615,6 +615,20 @@ namespace AltarWeb.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AltarWeb.Models.Registro.ContadorCodigoPublico", b =>
+                {
+                    b.Property<string>("Periodo")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("Ultimo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Periodo");
+
+                    b.ToTable("ContadoresCodigoPublico", (string)null);
+                });
+
             modelBuilder.Entity("AltarWeb.Models.Registro.Difunto", b =>
                 {
                     b.Property<int>("Id")
@@ -1033,6 +1047,11 @@ namespace AltarWeb.Migrations
                     b.Property<int>("CarreraId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CodigoPublico")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
                     b.Property<DateTime>("CreadoEn")
                         .HasColumnType("datetime2");
 
@@ -1072,6 +1091,9 @@ namespace AltarWeb.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CarreraId");
+
+                    b.HasIndex("CodigoPublico")
+                        .IsUnique();
 
                     b.HasIndex("CreadoPorRegistranteId");
 

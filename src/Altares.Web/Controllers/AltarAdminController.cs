@@ -270,6 +270,7 @@ namespace AltarWeb.Controllers
                 var tarjetas = equipos.Select(e => new EquipoAdminCardViewModel
                 {
                     Id = e.Id,
+                    CodigoPublico = e.CodigoPublico,
                     Nombre = e.Nombre,
                     NombreAltar = e.NombreAltar,
                     Carrera = e.Carrera.Nombre,

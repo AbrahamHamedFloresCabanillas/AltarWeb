@@ -19,6 +19,7 @@ namespace AltarWeb.ViewModels.Altar
     public class EquipoAdminCardViewModel
     {
         public int Id { get; set; }
+        public string CodigoPublico { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
         public string NombreAltar { get; set; } = string.Empty;
         public string Carrera { get; set; } = string.Empty;

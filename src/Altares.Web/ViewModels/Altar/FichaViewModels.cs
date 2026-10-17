@@ -39,6 +39,9 @@ namespace AltarWeb.ViewModels.Altar
         public string? ResponsableTelefono { get; set; }
         public string ResponsableCorreo { get; set; } = string.Empty;
 
+        // Solo lectura: identificador publico inmutable del equipo (no se postea ni se edita).
+        public string CodigoPublico { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Ingresa el nombre del grupo.")]
         public string Nombre { get; set; } = string.Empty;
 

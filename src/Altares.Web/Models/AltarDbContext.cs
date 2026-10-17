@@ -27,6 +27,7 @@ namespace AltarWeb.Models
         // LEGADO (F2): tabla historica de Catrina, sin uso en Altares (ver EvaluacionCatrina).
         public DbSet<Registro.EvaluacionCatrina> EvaluacionesCatrina { get; set; }
         public DbSet<Registro.ConfiguracionPeriodo> ConfiguracionesPeriodo { get; set; }
+        public DbSet<Registro.ContadorCodigoPublico> ContadoresCodigoPublico { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -105,6 +106,7 @@ namespace AltarWeb.Models
             modelBuilder.ApplyConfiguration(new Registro.Configurations.ElementoEvaluadoConfiguration());
             modelBuilder.ApplyConfiguration(new Registro.Configurations.EvaluacionCatrinaConfiguration());
             modelBuilder.ApplyConfiguration(new Registro.Configurations.ConfiguracionPeriodoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.ContadorCodigoPublicoConfiguration());
         }
     }
 }
