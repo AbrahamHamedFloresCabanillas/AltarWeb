@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Equipo = AltarWeb.Models.Registro.Equipo;
 using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
 
-namespace AltarWeb.Tests.Unit;
+namespace Altares.Tests.Unit;
 
 // Formulas de vision.md 7.2, 7.5 y 7.7 con la configuracion por defecto de ConfiguracionPeriodo.
 public class EvaluacionCalculoServiceTests

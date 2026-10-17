@@ -365,8 +365,13 @@ FodyWeavers.xsd
 # Agents internal directory
 .agents/
 
-# Configuration files containing credentials
+# Configuration files containing credentials (ruta anterior y apps de src/)
 AltarWeb/appsettings.json
 AltarWeb/appsettings.Development.json
+src/*/appsettings.json
+src/*/appsettings.Development.json
 # Archivos subidos en runtime (recorridos PDF, etc.) — no son parte del codigo
 AltarWeb/wwwroot/uploads/
+src/*/wwwroot/uploads/
+# Llaves de Data Protection persistidas en disco
+src/*/keys/

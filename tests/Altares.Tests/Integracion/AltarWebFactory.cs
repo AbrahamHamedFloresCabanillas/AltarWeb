@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AltarWeb.Tests.Integracion;
+namespace Altares.Tests.Integracion;
 
 // Levanta la aplicacion real (Program.cs completo, entorno Production) contra una base LocalDB
 // desechable: SeedData aplica todas las migraciones y crea el admin semilla. La base se borra al

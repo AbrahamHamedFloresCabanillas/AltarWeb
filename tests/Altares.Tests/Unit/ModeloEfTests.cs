@@ -1,7 +1,7 @@
 using AltarWeb.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AltarWeb.Tests.Unit;
+namespace Altares.Tests.Unit;
 
 public class ModeloEfTests
 {

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace AltarWeb.Tests.Integracion;
+namespace Altares.Tests.Integracion;
 
 [Collection(AppCollection.Nombre)]
 [Trait("Category", "Integracion")]

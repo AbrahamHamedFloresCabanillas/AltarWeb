@@ -4,7 +4,7 @@ using AltarWeb.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
 
-namespace AltarWeb.Tests.Integracion;
+namespace Altares.Tests.Integracion;
 
 // QuestPDF depende de binarios nativos (Skia); esta prueba confirma que la generacion real funciona
 // en el runtime actual, con los logos de wwwroot y el reporte de cierre con datos reales de la BD.

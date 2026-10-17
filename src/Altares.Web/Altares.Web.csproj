@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- F1 (2026-10-17): el proyecto se renombro a Altares.Web pero conserva el namespace AltarWeb
+         para no reescribir cada archivo; ensamblado y ejecutable se llaman Altares.Web. -->
+    <RootNamespace>AltarWeb</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

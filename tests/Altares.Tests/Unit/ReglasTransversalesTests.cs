@@ -4,7 +4,7 @@ using AltarWeb.Models.Registro;
 using AltarWeb.Services;
 using Equipo = AltarWeb.Models.Registro.Equipo;
 
-namespace AltarWeb.Tests.Unit;
+namespace Altares.Tests.Unit;
 
 public class EquipoValidacionHelperTests
 {
