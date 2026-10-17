@@ -237,13 +237,13 @@ agrega al extraer Core (F1) y en Catrinas (F3).
 | Control (hallazgo) | Dónde vive | Prueba |
 |---|---|---|
 | PBKDF2 + rehash-on-login de SHA-256 legado (SEC-02) | Core | `PasswordHashServiceTests` |
-| Identidad de Google server-side y token de un solo uso (SEC-01) | Core | Pendiente: prueba de `CompletarGoogle` sin identidad verificada (F1) |
+| Identidad de Google server-side, token de un solo uso, `email_verified` y `hd` (SEC-01) | Core | `CompletarGoogle_SinIdentidadVerificada_NoCreaCuenta`, `ValidacionIdentidadGoogleTests`, `MapeoClaimsGoogleTests` |
 | Restricción `@uabc.edu.mx` | Core | `RegistranteValidacionTests` |
 | Antiforgery global (SEC-10) | Core | `Post_SinTokenAntiforgery_Responde400` |
 | Cookie `Secure`/`HttpOnly`/`SameSite`, nombre por app (SEC-05) | Core + config de cada app | `AdminSemilla_LoginConCambioObligatorio…` |
-| HTTPS, HSTS, ForwardedHeaders (CFG-02) | Core | `Landing_Responde200ConCabecerasDeSeguridad`, `GoogleLogin_RedirigeAGoogleConCallbackHttps` |
+| HTTPS, HSTS, ForwardedHeaders solo de proxies conocidos (CFG-02) | Core (`ProxiesConfiables`) | `Landing_Responde200…`, `GoogleLogin_RedirigeAGoogleConCallbackHttps`, `ForwardedHeadersTests`, `XForwardedForFalsificado_NoEvadeElTechoPorIp`. **Abierto hasta el gate de F4 (R6)** |
 | Cabeceras / CSP (SEC-05) | Core | `Landing_Responde200…` |
-| Rate limiting de login (SEC-04) | Core | Pendiente; ver riesgo R1 (§10) |
+| Rate limiting: por cuenta estricto + techo por IP (SEC-04) | Core (`LimitesLogin`) | `LimitadorIntentosLoginTests`, `RateLimitingPorDefectoTests`, `RateLimitingConfiguradoTests` |
 | Logging de auth sin secretos (LOG-01) | Cada app | Manual |
 | Admin semilla por variable de entorno + cambio forzado (SEC-03) | Core; variables por app | `AdminSemilla_LoginConCambioObligatorio…` |
 | `ASPNETCORE_ENVIRONMENT=Production` (CFG-01) | Checklist de despliegue | — |
@@ -255,16 +255,15 @@ agrega al extraer Core (F1) y en Catrinas (F3).
 | ViewModels sin binding de entidades (SEC-12) | Cada app | Revisión de diff |
 | Scaffolding solo en Debug (DEP-01) | Cada `.csproj` | Revisión de diff |
 | Modelo EF sin cambios pendientes | Cada app | `ElModeloNoTieneCambiosSinMigracion` |
-| Data Protection persistente (nuevo) | Core + config | Pendiente (F1) |
+| Data Protection persistente (nuevo) | Core (`AddConcursoDataProtection`) + config por app | Se configura en F4 (`Seguridad:DataProtection:*`) |
 
-**Defecto encontrado en F0A, no corregido:**
+**Defecto encontrado en F0A, corregido en F1 (commit `4539f9c`):**
 `PasswordHashService.EsFormatoReconocido` trata como hash un texto plano que es Base64 válido
 (p. ej. `"1234"`). Por eso el fixup de arranque de `Program.cs` no lo re-hashea.
 - Solo afecta a Jueces legados con contraseña en texto plano.
 - No abre un acceso: la verificación falla y el login se rechaza. Pero deja la contraseña plana en
   la BD.
-- Queda una prueba en `Skip` que lo documenta. **[PEND]** Corregirlo en F1 al mover el servicio a
-  Core.
+- La prueba que estaba en `Skip` se reemplazó por regresiones activas; hoy no hay pruebas omitidas.
 
 ## 7. Decisiones abiertas
 
@@ -322,7 +321,7 @@ sigue requiriendo autorización explícita.
 | Dominio | Necesario antes de F4 si se usa MonsterASP (§8); un `.com` con `altares.` y `catrinas.` |
 | Presupuesto | ~$35 USD el primer año con la recomendación de §8; pendiente de confirmar |
 | Sitio `altaruabc.runasp.net` / BD `db66464` (DESPLIEGUE.md) | **[PEND]** Confirmar si existe; si está abandonado, rotar o eliminar las credenciales de `AltarWeb-publish.zip` |
-| Rate limiting con NAT institucional | Ver riesgo R1 (§10) |
+| Rate limiting con NAT institucional | Resuelto en F1 (R1, §10) |
 
 ## 8. Hosting, costos y correo
 
@@ -414,7 +413,7 @@ documentación, y **commit independiente**.
 |---|---|---|
 | **F0A** | Rama, tag `pre-separacion`, suite mínima de tests, baseline en .NET 8 | **Hecha** — commit `9173f4c` |
 | **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | **Hecha** — commit `2713d15` (.NET 10.0.13, Pkcs fijado a 10.0.13 por GHSA-846f-f764-76mx) |
-| F1 | Monorepo + extracción de `Concurso.Core` **sin cambio de comportamiento** | 10–20 |
+| F1 | Monorepo + extracción de `Concurso.Core` sin cambio funcional + SEC-04 por cuenta + endurecimiento de SEC-01 y CFG-02 | **Hecha** (pendiente de autorización para F2) |
 | F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | 6–10 |
 | **F3** | Catrinas.Web con el modelo de §7.1 | Diseño desbloqueado; **implementación pendiente de autorización**; 30–55 |
 | F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | 10–18 |
@@ -430,11 +429,13 @@ separado y Catrinas opera este año con `pre-separacion`. Requiere aceptación d
 
 | Id | Riesgo | Mitigación |
 |---|---|---|
-| **R1** | **El rate limiting de login (10 por minuto por IP) bloqueará a usuarios legítimos el día del concurso.** Jueces y participantes en la red de la FIM salen por la misma IP pública (NAT), así que el 11.º login de ese minuto, de *cualquier* persona, es rechazado. La prueba de carga, que sale de una sola IP, también lo dispara. | **[PEND]** Antes de F4: volver el límite configurable y particionar por IP + cuenta (p. ej. 10/min por cuenta y 60–120/min por IP). Decisión de seguridad del propietario, porque cambia SEC-04. |
+| ~~R1~~ | ~~El rate limiting de login (10 por minuto por IP) bloquearía a usuarios legítimos detrás del NAT de la FIM.~~ | **Resuelto en F1 (2026-10-17):** límite estricto por cuenta + techo amplio por IP, configurable (`AUDITORIA_SEGURIDAD.md` §0-ter). Falta calibrar el techo por IP con la prueba de carga (§11). |
 | R2 | 512 MB de RAM y CPU no publicada para ~200 usuarios y generación de PDFs | Prueba de carga (§11); complemento de RAM o plan B |
 | R3 | Plazo de ~14 días con F3 aún sin definir | Resolver §7.1 cuanto antes; fallback de §9 |
 | R4 | DPA o ubicación de datos incompatibles con políticas de la UABC | Gate de §8.4; Azure con región elegible como alternativa |
 | R5 | Correo marcado como spam | SPF + DKIM + DMARC en F4; prueba de envío a cuentas `@uabc.edu.mx` |
+| **R6** | **`X-Forwarded-*`**: la topología de proxies de MonsterASP es desconocida. Con la configuración por defecto (solo loopback) la app no confía en cabeceras de clientes. Si el hosting tuviera un proxy no-loopback delante, `RemoteIpAddress` sería la del proxy (todo el tráfico compartiría el techo por IP) y `IsHttps` podría ser falso. | **Gate obligatorio de F4, no se cierra sin probarlo en staging o producción:** registrar `RemoteIpAddress`, `X-Forwarded-For/Proto` y `Request.IsHttps` reales; confirmar que la cookie `Secure` y el callback de Google funcionan en `https`. Solo entonces configurar `Seguridad:ForwardedHeaders:KnownProxies/KnownNetworks` con las IP verificadas. No se adivinan proxies. |
+| **R7** | Cuentas UABC legítimas sin claim `hd` de Google Workspace serían rechazadas en el login con Google. | **Gate de F4:** probar con una cuenta UABC real. Si no trae `hd`, poner `GoogleAuth:ExigirDominioWorkspace=false` (se sigue exigiendo `email_verified` y el dominio) y documentarlo. |
 
 ## 11. Prueba de carga (antes de F4, contra el hosting real con datos ficticios)
 

@@ -1,5 +1,10 @@
 ﻿# AltarWeb - Estado Actual del Proyecto
 
+> ⚠️ **En transición (2026-10-17):** el repo se está separando en Altares y Catrinas (rama
+> `separacion-altares-catrinas`, `docs/01-decision-arquitectura.md`). En esa rama el código vive en
+> `src/Altares.Web` y `src/Concurso.Core` (no en `AltarWeb/`) y las pruebas en `tests/`. El resto de este
+> documento describe la app única y se reescribirá al cerrar la separación.
+>
 > Actualizado: 2026-10-10 · Commit de referencia: `c615f9a` (`master`, sincronizado con `origin/master`,
 > sin cambios locales pendientes).
 
@@ -32,7 +37,7 @@ listada más abajo.
 
 | Capa | Tecnología |
 |---|---|
-| Framework | ASP.NET Core MVC 8.0 |
+| Framework | ASP.NET Core MVC (.NET 10, desde 2026-10-17) |
 | ORM | Entity Framework Core + SQL Server / LocalDB |
 | PDF | QuestPDF 2025.7.4 (licencia comunitaria) |
 | Frontend | Sistema de diseño propio "Noche de Altar" (CSS3) + FontAwesome 6 + JS vanilla |
@@ -142,13 +147,13 @@ históricos, deuda de esquema y no superficie de ataque.
 1. **CSP con `script-src 'unsafe-inline'`** (`Program.cs:134-152`) — el layout y varias vistas tienen `<script>` inline (tema, sidebar, datepicker). Reduce el valor de la CSP contra XSS. Cerrarlo exige mover esos scripts a archivos estáticos o usar nonces por request.
 2. **Autorización por chequeo manual de sesión** (SEC-08) — la cobertura actual es completa, pero depende de que cada acción nueva recuerde llamar `EstaAutenticado()`/`EsAdmin()`. Migrar a `[Authorize]`/`ClaimsPrincipal` es robustez, no un hueco activo.
 3. **Recorrido PDF servido como archivo estático público** — se guarda en `wwwroot/uploads/recorridos/recorrido-{periodo}.pdf` con validación de extensión, firma `%PDF` y límite de 25 MB, pero quien conozca la URL puede abrirlo sin sesión. Servirlo desde una acción autenticada (o Blob privado con SAS) sigue pendiente.
-4. **Rate limiting de login particionado por IP** — 10 intentos/minuto. En la red institucional con NAT, varios usuarios comparten IP pública; vigilar falsos positivos en producción y ajustar el umbral.
+4. ~~Rate limiting de login particionado por IP (10/min)~~ — **resuelto 2026-10-17**: límite por cuenta + techo amplio por IP (`AUDITORIA_SEGURIDAD.md` §0-ter). Falta calibrar el techo por IP con la prueba de carga.
 5. **`RegistranteEquipo` sin soft delete propio** — quitar un integrante borra la membresía. Si se requiere trazabilidad de membresías removidas, agregar `Activo` en una migración posterior.
 6. **Modelos legados en el `DbContext`** (`Alumno`, `AlumnoEquipo`, `Integrante`, `Evaluacion` antigua) — sin rutas que los expongan; conviene decidir si se archivan sus datos y se retiran del esquema.
 7. **Regla de empates no implementada** — `vision.md` §13, pendiente 11: el ranking por carrera no define criterio de desempate. No hay nada en código al respecto.
 8. **Nombres internos desalineados con la UI** — el cambio de etiquetas de 2026-09-11 se aplicó **solo a los textos visibles**. En código y BD siguen llamándose `EsenciaPersonalidad` (UI: *Creatividad*) y `Narrador`/`PesoNarrador` (UI: *Explicación oral*). Renombrarlos tocaría 17 archivos más migraciones de columnas sin ningún beneficio para el usuario, así que se decidió **no hacerlo**; quien lea el código debe tener presente el mapeo. El enum `Satisfaccion` sí se renombró (`NoLoTiene`/`Regular`/`Bueno`) porque sus valores se persisten como texto y quedaban ilegibles.
 9. **Restricción de nivel y repetición de elementos sin implementar** — `vision.md` §13, pendientes 13–15 (elementos que solo pueden ir en cierto nivel y su penalización, pregunta de "¿está presente más de una vez?", y "los niveles son elementos"). Están **bloqueados por definición del comité**, no por esfuerzo técnico: hoy `NivelSugerido3/7` es solo sugerencia y reasignar el nivel no afecta la nota.
-10. **Sin proyecto de tests** — la solución solo contiene `AltarWeb.csproj`. Las reglas de `EquipoValidacionHelper` y `FechaConcursoHelper` son funciones puras y serían el primer candidato natural a cubrir con xUnit; hoy se verifican a mano contra el ensamblado compilado.
+10. ~~Sin proyecto de tests~~ — **resuelto 2026-10-17** (`tests/Altares.Tests`, `tests/Concurso.Core.Tests`). Texto original: **Sin proyecto de tests** — la solución solo contiene `AltarWeb.csproj`. Las reglas de `EquipoValidacionHelper` y `FechaConcursoHelper` son funciones puras y serían el primer candidato natural a cubrir con xUnit; hoy se verifican a mano contra el ensamblado compilado.
 
 ---
 

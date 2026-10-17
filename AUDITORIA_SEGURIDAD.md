@@ -27,15 +27,15 @@ La severidad de cada fila es la que figura en la sección del hallazgo.
 
 | Hallazgo | Severidad | Estado |
 |---|---|---|
-| SEC-01 Bypass de Google OAuth | 🔴 Crítica | ✅ Corregido — identidad de Google server-side, token de un solo uso (10 min) |
+| SEC-01 Bypass de Google OAuth | 🔴 Crítica | ✅ Corregido — identidad de Google server-side, token de un solo uso (10 min). **Endurecido 2026-10-17:** `email_verified` + claim `hd` (ver §0-ter) |
 | SEC-02 SHA-256 sin salt | 🟠 Alta | ✅ Corregido — PBKDF2 + rehash-on-login |
 | SEC-03 Admin semilla `abram/1234` | 🟠 Alta | ✅ Corregido — env var o password aleatoria + cambio forzado |
 | SEC-05 Cookie sin `Secure` | 🟠 Alta | ✅ Corregido — `Secure`/`HttpOnly`/`SameSite` + cabeceras (CSP con deuda) |
 | PRIV-01 Umbral anulable a 0 | 🟠 Alta | ✅ Corregido — validación + piso mínimo no anulable |
 | CFG-01 Entorno `Development` | 🟠 Alta | ✅ Cerrado — checklist de despliegue en README |
-| CFG-02 HTTPS/HSTS/forwarded headers | 🟡 Media | ✅ Corregido — `ForwardedHeaders` + HSTS |
+| CFG-02 HTTPS/HSTS/forwarded headers | 🟡 Media | ⚠️ **Reabierto 2026-10-17** — se confiaba en `X-Forwarded-*` de cualquier origen; ahora solo loopback + proxies configurados. **No se cierra hasta verificar los proxies reales del hosting (gate de F4)** (ver §0-ter) |
 | SEC-10 CSRF | 🟡 Media | ✅ Corregido — `AutoValidateAntiforgeryToken` global |
-| SEC-04 Sin rate limiting en login | 🟡 Media | ✅ Corregido — 10/min por IP (⚠️ vigilar NAT institucional) |
+| SEC-04 Sin rate limiting en login | 🟡 Media | ✅ Corregido — **evolucionado 2026-10-17:** límite estricto de intentos fallidos por cuenta + techo amplio por IP (ver §0-ter) |
 | LOG-01 Sin logging de auth | 🟡 Media | ✅ Corregido — logins fallidos y accesos denegados |
 | PRIV-05 Correo sin verificar | 🟡 Media | ⏸️ Riesgo aceptado por el propietario (2026-07-04) |
 | SEC-11 TOCTOU de membresía | 🟡 Media | ✅ Corregido — índice único en BD + transacción |
@@ -56,6 +56,94 @@ La severidad de cada fila es la que figura en la sección del hallazgo.
 1. CSP con `script-src 'unsafe-inline'` por los `<script>` inline del layout (SEC-05).
 2. El recorrido PDF se sirve como archivo estático público, sin gate de sesión (E).
 3. SEC-08 (autorización por chequeo manual) y PRIV-04/PRIV-05 como decisiones diferidas.
+
+---
+
+## 0-ter. Evolución de controles durante la separación Altares/Catrinas (2026-10-17)
+
+> Cambios de la fase F1 de `docs/01-decision-arquitectura.md`, en la rama `separacion-altares-catrinas`.
+> Los controles transversales viven ahora en `src/Concurso.Core` y los usan ambas plataformas.
+
+### SEC-04 — de "10/min por IP" a "por cuenta estricto + por IP amplio"
+
+**Por qué cambió.** El límite original agrupaba los intentos por IP. En la red de la FIM cientos de
+personas salen por la misma IP pública (NAT), así que el 11.º intento de login de *cualquier* persona en
+ese minuto se rechazaba. El día del concurso eso habría bloqueado a jueces y participantes legítimos.
+Además, un límite por IP no protege a una cuenta atacada desde muchas IP.
+
+**Control nuevo.** Vive en `Concurso.Core/Seguridad/LimitesLogin.cs` y se configura en `Seguridad:RateLimiting`:
+
+| Capa | Qué limita | Valor inicial | Efecto |
+|---|---|---|---|
+| Por cuenta (principal) | Intentos **fallidos** por cuenta normalizada (trim, minúsculas, máx. 128 caracteres) y por ámbito (`juez`, `juez-id`, `registrante`) | 5 por ventana de 5 min | El 6.º intento recibe 429 aunque venga de otra IP y aunque la contraseña sea correcta. Un login correcto reinicia solo esa cuenta. |
+| Por IP (techo antiabuso) | Todos los POST de login local | 300/min | Solo frena el abuso masivo; no afecta a usuarios normales detrás del NAT. El valor final sale de la prueba de carga. |
+| Por IP en el flujo de Google | Inicio del challenge, regreso del callback y `CompletarGoogle*` | 600/min | En este flujo no hay cuenta ni "fallos" que contar: Google autentica, y `CompletarGoogle*` exige la identidad verificada de un solo uso. |
+
+**Por qué es más seguro en el escenario real.** La protección contra fuerza bruta ya no depende de la IP.
+Una cuenta atacada desde IP distintas, o con `X-Forwarded-For` falsificado, sigue limitada, y un atacante
+ya no puede gastar el cupo de toda la red institucional. El techo por IP queda solo como red de seguridad
+contra volumen masivo, alto a propósito para no castigar al NAT.
+
+**Puntos revisados:**
+- La respuesta es HTTP 429 con `Retry-After` y una página legible.
+- El log es de nivel Warning e incluye la cuenta normalizada y la IP, nunca contraseñas ni tokens (cubierto por una prueba).
+- Las variantes de mayúsculas y espacios comparten contador.
+- Un juez que alterna entre usuario y correo también suma al contador de su cuenta resuelta (`juez-id`).
+- La memoria está acotada (`MaxCuentasRastreadas`, 50,000).
+- El contador usa un lock, así que los fallos concurrentes se cuentan exactos.
+
+**Riesgos residuales aceptados:**
+- **Bloqueo deliberado.** Quien conozca un usuario puede pausar esa cuenta 5 minutos con 5 intentos fallidos. Es inherente a cualquier límite por cuenta y la pausa es corta.
+- **Ritmo de intentos.** El límite permite unos 1,440 intentos por cuenta al día. Con PBKDF2 y contraseñas razonables es aceptable.
+- **Contadores en memoria.** Se pierden al reiniciar la app y no se comparten entre instancias; hoy hay una instancia por plataforma.
+- **Saturación de la caché.** Un aluvión de cuentas inventadas puede forzar la compactación de la caché y expulsar contadores. Para lograrlo habría que superar el techo por IP desde muchas IP reales.
+
+### SEC-01 — endurecimiento: `email_verified` y claim `hd`
+
+Antes se aceptaba cualquier identidad de Google cuyo correo terminara en `@uabc.edu.mx`. Google indica que
+el dominio del correo **no** basta para identificar cuentas de una organización; lo confiable es el claim
+`hd` del token. Fuente: <https://developers.google.com/identity/openid-connect/openid-connect>, consultada
+el 2026-10-17.
+
+`ValidacionIdentidadGoogle`, en `Concurso.Core/Identidad/IdentidadGoogle.cs`, ahora exige lo siguiente.
+Todo se lee del ticket de Google, nunca del cliente:
+
+1. Un correo con el sufijo exacto `@uabc.edu.mx`, aplicando trim y sin distinguir mayúsculas.
+2. `email_verified == true`.
+3. `hd == uabc.edu.mx`. Se configura con `GoogleAuth:ExigirDominioWorkspace` y `GoogleAuth:DominioWorkspace`.
+
+El token de identidad de un solo uso (10 minutos, atado al intent) no cambió.
+
+**Gate de F4:**
+- Con una cuenta UABC real, confirmar que Google entrega `hd = uabc.edu.mx`.
+- Si las cuentas legítimas no lo traen, desactivar `ExigirDominioWorkspace` por configuración y documentarlo.
+- Aun así se seguirían exigiendo `email_verified` y el dominio del correo.
+
+### CFG-02 — `ForwardedHeaders` restringido (reabierto hasta verificarlo en el hosting)
+
+Antes se vaciaban `KnownNetworks` y `KnownProxies`. Cualquier cliente podía falsificar `RemoteIpAddress`
+enviando `X-Forwarded-For`, con lo que evadía el techo por IP y ensuciaba los logs.
+
+**Configuración actual.** Vive en `Concurso.Core/Seguridad/ProxiesConfiables.cs`, sección `Seguridad:ForwardedHeaders`:
+
+- **Por defecto solo se confía en loopback**, que es el default de ASP.NET Core. Esto cubre tres escenarios:
+  - desarrollo local;
+  - IIS in-process, donde no hay proxy porque IIS entrega la IP y el esquema reales;
+  - IIS out-of-process, donde ANCM reenvía desde localhost.
+- `ForwardLimit` vale 1.
+- `KnownProxies` y `KnownNetworks` (en notación CIDR) son parametrizables.
+- `ConfiarEnCualquierOrigen` existe solo como escape explícito, equivalente a `ASPNETCORE_FORWARDEDHEADERS_ENABLED`, y registra una advertencia al usarse.
+
+Fuente: <https://learn.microsoft.com/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-10.0>,
+consultada el 2026-10-17.
+
+**Estado: NO cerrado.** Hace falta capturar en staging o producción la topología real del hosting:
+- qué `RemoteIpAddress` ve la app;
+- si llegan cabeceras `X-Forwarded-*` y desde qué IP;
+- que `Request.IsHttps` sea `true`;
+- que el callback de Google salga en `https`.
+
+Después se configuran las IP o redes reales, si hacen falta. Esto es un gate obligatorio de F4 (ADR §10, R6).
 
 ---
 

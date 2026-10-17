@@ -1,5 +1,15 @@
 # Despliegue gratuito de AltarWeb — guía paso a paso
 
+> ⚠️ **Documento parcialmente obsoleto (2026-10-17).** Describe el despliegue de la app única anterior
+> a la separación en Altares y Catrinas. En la rama `separacion-altares-catrinas` ya cambiaron:
+> - el proyecto, que ahora es `src/Altares.Web/Altares.Web.csproj`;
+> - el ejecutable, que ahora es `Altares.Web.exe` (en `web.config`, `processPath=".\Altares.Web.exe"`);
+> - el runtime, que ahora es **.NET 10**;
+> - la configuración, que suma `Seguridad:RateLimiting` y `Seguridad:ForwardedHeaders`;
+> - Google, que ahora exige `email_verified` y `hd`.
+>
+> Lo sustituirán `docs/04-despliegue-altares.md` y `docs/05-despliegue-catrinas.md` (fase F4).
+
 > Escrito el 2026-09-02 para el commit `07ead92`. Complementa la sección
 > *Checklist de despliegue a producción* del [`README.md`](README.md).
 
@@ -45,7 +55,7 @@ compilada en Release** y lista para subir.
 Se genera con:
 
 ```bash
-dotnet publish AltarWeb/AltarWeb/AltarWeb.csproj -c Release -r win-x86 --self-contained false -o <carpeta>
+dotnet publish src/Altares.Web/Altares.Web.csproj -c Release -r win-x86 --self-contained false -o <carpeta>
 ```
 
 > **`win-x86`, no `win-x64`.** El app pool de MonsterASP corre en **32 bits**. Con un

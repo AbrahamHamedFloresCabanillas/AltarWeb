@@ -10,7 +10,7 @@ La especificación funcional completa vive en [`vision.md`](vision.md), el estad
 
 ## 🛠️ Tecnologías utilizadas
 
-- **Framework:** ASP.NET Core MVC 8.0
+- **Framework:** ASP.NET Core MVC (.NET 10)
 - **Persistencia de datos:** Entity Framework Core + SQL Server (LocalDB en desarrollo)
 - **Generación de documentos:** [QuestPDF](https://www.questpdf.com/) (licencia comunitaria)
 - **Interfaz:** HTML5, CSS3 y FontAwesome 6, con un sistema de diseño propio ("Noche de Altar") que incluye **tema claro, oscuro y automático (según el sistema operativo)**
@@ -128,7 +128,7 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
 ## 🚀 Configuración e instalación
 
 ### Requisitos previos
-- **.NET 8.0 SDK** o superior.
+- **.NET 10 SDK** o superior.
 - **SQL Server** (LocalDB incluido con la carga de trabajo de desarrollo web de Visual Studio).
 - Conexión a internet para NuGet, Google OAuth y el envío de correo SMTP.
 
@@ -140,7 +140,7 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
    cd AltarWeb
    ```
 
-2. **Configurar `AltarWeb/appsettings.json`** (no se versiona; créalo a partir de este ejemplo):
+2. **Configurar `src/Altares.Web/appsettings.json`** (no se versiona; créalo a partir de este ejemplo):
    ```json
    {
      "ConnectionStrings": {
@@ -158,6 +158,10 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
        "Password": "TU_PASSWORD_APP_AQUI",
        "FromName": "Concurso Altares FIM"
      },
+     "Seguridad": {
+       "RateLimiting": { "CuentaMaxFallidos": 5, "CuentaVentanaMinutos": 5, "IpLoginPorMinuto": 300, "IpOAuthPorMinuto": 600 },
+       "ForwardedHeaders": { "KnownProxies": [], "KnownNetworks": [], "ForwardLimit": 1 }
+     },
      "Logging": { "LogLevel": { "Default": "Information", "Microsoft.AspNetCore": "Warning" } },
      "AllowedHosts": "*"
    }
@@ -167,12 +171,12 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
 3. **Ejecutar migraciones:**
    ```bash
    dotnet tool install --global dotnet-ef   # si no lo tienes instalado
-   dotnet ef database update --project AltarWeb/AltarWeb
+   dotnet ef database update --project src/Altares.Web
    ```
 
 4. **Ejecutar la aplicación:**
    ```bash
-   dotnet run --project AltarWeb/AltarWeb --urls "http://localhost:5185"
+   dotnet run --project src/Altares.Web --urls "http://localhost:5185"
    ```
    Al iniciar por primera vez se crea un administrador semilla. La contraseña **no** es fija: se toma de
    la variable de entorno `SEED_ADMIN_PASSWORD` si está definida, o se genera aleatoria y se imprime
@@ -210,11 +214,15 @@ Resumen del estado actual:
   **Deuda técnica conocida:** la CSP usa `script-src 'self' 'unsafe-inline'` porque el layout tiene
   `<script>` inline (tema, sidebar, datepicker) — esto reduce el valor de la CSP contra XSS. Cerrarlo
   requeriría mover esos scripts a archivos estáticos o usar nonces por request; queda pendiente.
-- **Rate limiting:** 10 intentos/minuto por IP en las rutas de login (`/Acceso/Login`, `/Registro/Login`,
-  callback de Google). **Nota operativa:** el límite es por IP; en una red institucional con NAT (varios
-  alumnos compartiendo la misma IP pública, como suele pasar en la red de la FIM), esto puede afectar a
-  usuarios legítimos si hay fricción simultánea. Vigilar en producción y ajustar el umbral si se detectan
-  falsos positivos.
+- **Rate limiting (SEC-04, actualizado 2026-10-17):** límite estricto de intentos **fallidos por cuenta**
+  (5 cada 5 min por defecto; el 6.º recibe HTTP 429 con `Retry-After`, venga de la IP que venga) más un
+  **techo amplio por IP** (300/min en login local, 600/min en el flujo de Google) que no afecta a la red
+  institucional detrás de NAT. Todo configurable en `Seguridad:RateLimiting` (ver
+  `AUDITORIA_SEGURIDAD.md` §0-ter).
+- **Proxies (CFG-02):** `X-Forwarded-*` solo se acepta de loopback o de los proxies configurados en
+  `Seguridad:ForwardedHeaders`; pendiente de verificar con el hosting real (gate de F4).
+- **Google:** además del dominio `@uabc.edu.mx` se exige `email_verified` y el claim `hd` de la
+  organización (`GoogleAuth:ExigirDominioWorkspace`, `GoogleAuth:DominioWorkspace`).
 - **Logging:** intentos de login fallidos y accesos denegados por rol se registran (`ILogger`, nivel
   Warning) con usuario/correo intentado e IP — nunca contraseñas ni tokens.
 - **Concurrencia:** índice único a nivel de BD para "un registrante por equipo activo por periodo" y para
