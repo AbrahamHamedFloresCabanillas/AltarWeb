@@ -197,10 +197,16 @@ un identificador público estable más un snapshot.
 - Las tablas y columnas de Catrina se dejan sin uso; se eliminan en una migración posterior, ya
   verificado.
 
-**Catrinas (antes de noviembre):** modelo definido en §7.1 (2026-10-17). La capacidad esperada (registro,
-inscripciones, backoffice, evaluación `Preliminar`/`Final`, ranking por carrera, constancias) se
-concretará en entidades y pantallas **solo después** de resolver esas preguntas. No se copia el
-modelo `Equipo` de Altares.
+**Catrinas (antes de noviembre):** modelo definido en §7.1 (2026-10-17). Comprende:
+- portal de registro;
+- inscripciones con Personificador(a), integrantes y maestro opcional;
+- fechas límite;
+- backoffice: jueces, registrantes, inscripciones y configuración;
+- evaluación `Preliminar`/`Final` con snapshot;
+- ranking por carrera;
+- constancias grupal, individual, de maestro y de juez, con lugar.
+
+Las entidades son propias de `Catrinas.Web` y no se copian del `Equipo` de Altares.
 
 **Diferido a después del concurso:**
 - Reporte de Cierre de Catrinas.
