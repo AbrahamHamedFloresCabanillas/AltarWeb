@@ -415,7 +415,7 @@ documentación, y **commit independiente**.
 | **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | **Hecha** — commit `2713d15` (.NET 10.0.13, Pkcs fijado a 10.0.13 por GHSA-846f-f764-76mx) |
 | F1 | Monorepo + extracción de `Concurso.Core` sin cambio funcional + SEC-04 por cuenta + endurecimiento de SEC-01 y CFG-02 | **Hecha** (pendiente de autorización para F2) |
 | F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | **Hecha** (pendiente de autorización para F3). Esquema de Catrina conservado como legado; sin migraciones destructivas |
-| **F3** | Catrinas.Web con el modelo de §7.1 | Diseño desbloqueado; **implementación pendiente de autorización**; 30–55 |
+| **F3** | Catrinas.Web con el modelo de §7.1 | **Hecha** (pendiente de revisión local del propietario; F4 no autorizada). Ver `src/Catrinas.Web/README.md` y §13 |
 | F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | 10–18 |
 | Docs | `docs/00–09`, actualización de README, current_state y DESPLIEGUE | 6–10 |
 
@@ -505,3 +505,31 @@ o sigue fallando, se pasa al plan B (Azure B1).
   - respaldo de cada base antes de cada migración en producción;
   - la eliminación de columnas y tablas de Catrina en Altares va en una migración separada y
     posterior.
+
+## 13. Estado tras F3 (2026-10-17) — decisiones de implementación y deuda
+
+**Decisiones tomadas al implementar Catrinas.Web** (dentro del modelo de §7.1):
+- **Maestro encargado opcional:** si se indica, debe tener cuenta de maestro o administrativo en Catrinas.
+  No hay vínculo diferido "pendiente" como en Altares.
+- **Final:** exige exactamente un Personificador, nombre y carrera, más una confirmación explícita
+  (`confirmacion=CONFIRMO`).
+- **Evaluación:** concurrencia optimista con `rowversion`. Si dos personas del jurado guardan la misma
+  evaluación, la segunda recibe un mensaje en vez de pisar la primera.
+- **Ranking:** de competencia con empates compartidos (1, 1, 3), solo lugares 1 a 3. **Desempate pendiente del comité.**
+- **Snapshot de la evaluación:** pesos usados, nombre de la inscripción, carrera, Personificador,
+  maestro, referencia a Altares e integrantes con su correo (para el envío de constancias).
+- **Datos para el futuro Reporte de Cierre:** los registrantes guardan género, carrera y autodescripción
+  cultural, y las evaluaciones guardan periodo, carrera snapshot y estado. El reporte se podrá construir
+  sin reconstruir el histórico.
+
+**Deuda / pendientes de Catrinas:**
+1. **Design system duplicado:** `wwwroot/css`, `lib` e imágenes se copiaron de Altares. Pasarlos a una
+   Razor Class Library en Core cuando se toque la UI de ambas apps.
+2. **Altares aún usa su propia plantilla PDF (Arial).** Catrinas ya usa `Concurso.Core.Pdf.ComponentesConstancia`
+   (Lato). Migrar Altares a esos componentes en una fase posterior.
+3. **Sin edición administrativa de inscripciones:** el responsable edita hasta que haya evaluación o pase la
+   fecha límite; la administración solo puede ver la inscripción y activar o desactivar participantes.
+4. **Reporte de Cierre de Catrinas y vista consolidada "TODO":** diferidos (§4).
+5. **Regla de empates:** pendiente del comité (vision.md §13.11).
+6. **Gates R6 y R7** siguen abiertos para ambas apps.
+

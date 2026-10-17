@@ -4,6 +4,9 @@ Sistema de gestión y evaluación para el Concurso de Altares de Muertos de la F
 
 AltarWeb permite a los jueces registrar evaluaciones de altares bajo los nuevos criterios culturales, calcular puntajes por nivel y por elemento, gestionar el registro de participantes (alumnos, maestros y administrativos), administrar equipos por carrera y periodo, y generar y enviar constancias oficiales en PDF a todos los participantes, maestros encargados y jueces.
 
+> **Plataformas separadas (2026-10-17):** este README describe **Altares** (`src/Altares.Web`). El Concurso de Catrinas es una
+> plataforma independiente: ver [`src/Catrinas.Web/README.md`](src/Catrinas.Web/README.md).
+
 La especificación funcional completa vive en [`vision.md`](vision.md), el estado técnico interno en [`current_state.md`](current_state.md) y la guía de publicación en línea en [`DESPLIEGUE.md`](DESPLIEGUE.md).
 
 ---
