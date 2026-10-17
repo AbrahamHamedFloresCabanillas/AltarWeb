@@ -73,7 +73,6 @@ namespace AltarWeb.Controllers
                 .Include(e => e.Equipo).ThenInclude(eq => eq.Carrera)
                 .Include(e => e.Equipo).ThenInclude(eq => eq.Difunto)
                 .Include(e => e.Juez)
-                .Include(e => e.EvaluacionCatrina)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (eval == null) return NotFound();
@@ -95,9 +94,7 @@ namespace AltarWeb.Controllers
                 Narrador = eval.Narrador,
                 NotaFinal = eval.NotaFinal,
                 Lugar = eval.Lugar,
-                Estado = eval.Estado,
-                IncluyeCatrina = eval.IncluyeCatrina,
-                NotaCatrina = eval.EvaluacionCatrina?.NotaCatrina
+                Estado = eval.Estado
             });
         }
 
@@ -141,7 +138,6 @@ namespace AltarWeb.Controllers
                     .Include(e => e.CreadoPorRegistrante)
                     .Include(e => e.Integrantes).ThenInclude(ri => ri.Registrante)
                     .Include(e => e.Evaluacion).ThenInclude(ev => ev!.ElementosEvaluados)
-                    .Include(e => e.Evaluacion).ThenInclude(ev => ev!.EvaluacionCatrina)
                     .FirstOrDefaultAsync(e => e.Id == equipoId.Value);
 
                 if (equipo == null) return NotFound();
@@ -206,12 +202,6 @@ namespace AltarWeb.Controllers
                 vm.Narrador = eval?.Narrador ?? 0;
                 vm.NotaFinalPreview = eval?.NotaFinal ?? 0;
 
-                vm.HaceCatrina = equipo.HaceCatrina;
-                vm.Vestuario = eval?.EvaluacionCatrina?.Vestuario ?? 0;
-                vm.Maquillaje = eval?.EvaluacionCatrina?.Maquillaje ?? 0;
-                vm.Accesorios = eval?.EvaluacionCatrina?.Accesorios ?? 0;
-                vm.OriginalidadCreatividad = eval?.EvaluacionCatrina?.OriginalidadCreatividad ?? 0;
-                vm.ApegoTradiciones = eval?.EvaluacionCatrina?.ApegoTradiciones ?? 0;
             }
 
             var config = await ObtenerConfiguracionAsync(periodo);
@@ -222,11 +212,6 @@ namespace AltarWeb.Controllers
             vm.PesoNarrador = config.PesoNarrador;
             vm.PesoElementoRitual = config.PesoElementoRitual;
             vm.PesoElementoDecorativo = config.PesoElementoDecorativo;
-            vm.PesoCatrinaVestuario = config.PesoCatrinaVestuario;
-            vm.PesoCatrinaMaquillaje = config.PesoCatrinaMaquillaje;
-            vm.PesoCatrinaAccesorios = config.PesoCatrinaAccesorios;
-            vm.PesoCatrinaOriginalidadCreatividad = config.PesoCatrinaOriginalidadCreatividad;
-            vm.PesoCatrinaApegoTradiciones = config.PesoCatrinaApegoTradiciones;
             vm.ValorSatisfaccionNoLoTiene = config.ValorSatisfaccionNoLoTiene;
             vm.ValorSatisfaccionRegular = config.ValorSatisfaccionRegular;
             vm.ValorSatisfaccionBueno = config.ValorSatisfaccionBueno;
@@ -240,8 +225,6 @@ namespace AltarWeb.Controllers
             int equipoId, int niveles, string tipoAltar, string semblanza,
             decimal esenciaPersonalidad, decimal valoracionGeneral,
             decimal distribucionNiveles, decimal narrador,
-            decimal vestuario, decimal maquillaje, decimal accesorios,
-            decimal originalidadCreatividad, decimal apegoTradiciones,
             string accion)
         {
             var juezId = HttpContext.Session.GetInt32("JuezId");
@@ -289,7 +272,6 @@ namespace AltarWeb.Controllers
             eval.ValoracionGeneral = valoracionGeneral;
             eval.DistribucionNiveles = distribucionNiveles;
             eval.Narrador = narrador;
-            eval.IncluyeCatrina = equipo.HaceCatrina;
             eval.SnapshotNombreEquipo = equipo.Nombre;
             eval.SnapshotNombreAltar = equipo.NombreAltar;
             eval.SnapshotDifuntoNombre = equipo.Difunto?.Nombre ?? string.Empty;
@@ -390,22 +372,6 @@ namespace AltarWeb.Controllers
             eval.EsenciaPersonalidadFinal = _calculo.CalcularEsenciaPersonalidadFinal(eval.EsenciaPersonalidad, cantidadTematizados, config);
 
             eval.NotaFinal = _calculo.CalcularNotaFinal(eval, config);
-
-            if (equipo.HaceCatrina)
-            {
-                var catrina = await _context.EvaluacionesCatrina.FirstOrDefaultAsync(c => c.EvaluacionId == eval.Id);
-                if (catrina == null)
-                {
-                    catrina = new EvaluacionCatrina { EvaluacionId = eval.Id };
-                    _context.EvaluacionesCatrina.Add(catrina);
-                }
-                catrina.Vestuario = vestuario;
-                catrina.Maquillaje = maquillaje;
-                catrina.Accesorios = accesorios;
-                catrina.OriginalidadCreatividad = originalidadCreatividad;
-                catrina.ApegoTradiciones = apegoTradiciones;
-                catrina.NotaCatrina = _calculo.CalcularNotaCatrina(catrina, config);
-            }
 
             await _context.SaveChangesAsync();
 

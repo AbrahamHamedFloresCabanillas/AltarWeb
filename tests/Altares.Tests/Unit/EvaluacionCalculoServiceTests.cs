@@ -7,7 +7,7 @@ using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
 
 namespace Altares.Tests.Unit;
 
-// Formulas de vision.md 7.2, 7.5 y 7.7 con la configuracion por defecto de ConfiguracionPeriodo.
+// Formulas de vision.md 7.2 y 7.7 con la configuracion por defecto de ConfiguracionPeriodo.
 public class EvaluacionCalculoServiceTests
 {
     private static readonly ConfiguracionPeriodo Config = new() { Periodo = "2026-2" };
@@ -89,24 +89,7 @@ public class EvaluacionCalculoServiceTests
     }
 
     [Fact]
-    public void NotaCatrina_AplicaPesos25_20_10_20_25()
-    {
-        var servicio = new EvaluacionCalculoService(null!);
-        var catrina = new EvaluacionCatrina
-        {
-            Vestuario = 10m,
-            Maquillaje = 8m,
-            Accesorios = 6m,
-            OriginalidadCreatividad = 4m,
-            ApegoTradiciones = 2m
-        };
-
-        // 2.5 + 1.6 + 0.6 + 0.8 + 0.5
-        Assert.Equal(6.0m, servicio.CalcularNotaCatrina(catrina, Config));
-    }
-
-    [Fact]
-    public async Task RecalcularLugares_RankeaSoloFinalesDeLaMismaCarreraYPeriodo()
+    public async Task RecalcularLugares_RankeaSoloFinalesDeLaMismaCarreraYPeriodo_YNoTocaCatrina()
     {
         await using var context = CrearContextoEnMemoria();
         var sistemas = new CatalogoCarrera { Id = 1, Nombre = "Sistemas" };
@@ -142,9 +125,9 @@ public class EvaluacionCalculoServiceTests
         Assert.Null(otraCarrera.Lugar);
         Assert.Null(otroPeriodo.Lugar);
 
-        // Ranking de Catrina independiente del ranking del altar.
-        Assert.Equal(1, e2.EvaluacionCatrina!.LugarCatrina);
-        Assert.Equal(2, e1.EvaluacionCatrina!.LugarCatrina);
+        // F2: Altares ya no calcula el ranking de Catrina; los datos historicos no se tocan.
+        Assert.Null(e2.EvaluacionCatrina!.LugarCatrina);
+        Assert.Null(e1.EvaluacionCatrina!.LugarCatrina);
     }
 
     private static AltarDbContext CrearContextoEnMemoria() =>

@@ -63,10 +63,6 @@
                         <div style="font-size:28px; font-weight:800; color:var(--altar-primary);">@(Model.NotaFinal?.ToString("0.0") ?? "—")</div>
                     </div>
 
-                    @if (Model.IncluyeCatrina && Model.NotaCatrina != null)
-                    {
-                        <span class="altar-badge altar-badge-purple">Nota de Catrina (aparte) — @Model.NotaCatrina?.ToString("0.0")</span>
-                    }
                 </div>
 
                 <div class="altar-card">

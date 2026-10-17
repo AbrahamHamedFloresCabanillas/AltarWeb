@@ -145,7 +145,6 @@ namespace AltarWeb.ViewModels.Altar
         public string MaestroEncargadoIdentificador { get; set; } = string.Empty;
 
         public string? UbicacionAltar { get; set; }
-        public bool HaceCatrina { get; set; }
 
         // Solo lectura en la vista.
         public string Periodo { get; set; } = string.Empty;
@@ -192,16 +191,6 @@ namespace AltarWeb.ViewModels.Altar
         [Range(0, 100)] public decimal PesoNarradorPct { get; set; }
 
         public decimal SumaPesos => PesoObjetivoCulturalPct + PesoEsenciaPersonalidadPct + PesoValoracionGeneralPct + PesoDistribucionNivelesPct + PesoNarradorPct;
-
-        // Criterios de Evaluacion de la Personificacion de Catrinas — categoria independiente del
-        // altar, con su propio ranking por carrera.
-        [Range(0, 100)] public decimal PesoCatrinaVestuarioPct { get; set; }
-        [Range(0, 100)] public decimal PesoCatrinaMaquillajePct { get; set; }
-        [Range(0, 100)] public decimal PesoCatrinaAccesoriosPct { get; set; }
-        [Range(0, 100)] public decimal PesoCatrinaOriginalidadCreatividadPct { get; set; }
-        [Range(0, 100)] public decimal PesoCatrinaApegoTradicionesPct { get; set; }
-
-        public decimal SumaPesosCatrina => PesoCatrinaVestuarioPct + PesoCatrinaMaquillajePct + PesoCatrinaAccesoriosPct + PesoCatrinaOriginalidadCreatividadPct + PesoCatrinaApegoTradicionesPct;
 
         // PRIV-01: piso minimo de 3 (vision.md 12.2 recomienda 5 por defecto) para que el umbral no
         // pueda anularse a 0/negativo y exponer categorias demograficas de 1-2 personas identificables.

@@ -26,7 +26,6 @@ namespace AltarWeb.ViewModels.Altar
         [DataType(DataType.Date)]
         public DateOnly DifuntoFechaDefuncion { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddYears(-1));
 
-        public bool HaceCatrina { get; set; }
 
         public List<CatalogoCarrera> Carreras { get; set; } = new();
     }
@@ -61,7 +60,6 @@ namespace AltarWeb.ViewModels.Altar
 
         public string? UbicacionAltar { get; set; }
 
-        public bool HaceCatrina { get; set; }
 
         public DateTime CreadoEn { get; set; }
 

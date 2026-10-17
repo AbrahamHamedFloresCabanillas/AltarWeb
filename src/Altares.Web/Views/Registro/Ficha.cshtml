@@ -93,17 +93,6 @@
                 }
             </div>
 
-            <div class="altar-flex" style="justify-content:space-between; margin:18px 0;">
-                <div>
-                    <div class="altar-label" style="margin-bottom:2px;">&iquest;El equipo har&aacute; Catrina?</div>
-                    <p class="altar-slider-hint" style="margin:0;">Categor&iacute;a de evaluaci&oacute;n independiente y opcional.</p>
-                </div>
-                <label class="altar-toggle">
-                    <input type="checkbox" asp-for="HaceCatrina" value="true" disabled="@(!Model.PuedeEditar ? "disabled" : null)" />
-                    <span class="altar-toggle-slider"></span>
-                </label>
-            </div>
-
             <p class="altar-text-muted" style="font-size:13px;"><i class="fa-regular fa-calendar"></i> Fecha de inscripci&oacute;n: @Model.CreadoEn.ToString("d MMM yyyy") (autom&aacute;tica)</p>
 
             @if (Model.PuedeEditar)

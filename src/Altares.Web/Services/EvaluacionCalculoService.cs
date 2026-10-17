@@ -68,17 +68,9 @@ namespace AltarWeb.Services
             return Math.Round(nota, 2);
         }
 
-        public decimal CalcularNotaCatrina(EvaluacionCatrina catrina, ConfiguracionPeriodo config)
-        {
-            var nota = catrina.Vestuario * config.PesoCatrinaVestuario
-                + catrina.Maquillaje * config.PesoCatrinaMaquillaje
-                + catrina.Accesorios * config.PesoCatrinaAccesorios
-                + catrina.OriginalidadCreatividad * config.PesoCatrinaOriginalidadCreatividad
-                + catrina.ApegoTradiciones * config.PesoCatrinaApegoTradiciones;
-            return Math.Round(nota, 2);
-        }
-
         // Lugar (1/2/3) por Carrera+Periodo, solo entre evaluaciones en estado Final (seccion 13.4).
+        // Desde F2 (2026-10-17) Altares ya no calcula el ranking de Catrina: el concurso de Catrinas
+        // vive en Catrinas.Web. EvaluacionCatrina.LugarCatrina queda como dato historico sin uso.
         public async Task RecalcularLugaresAsync(int carreraId, string periodo)
         {
             var finales = await _context.EvaluacionesConcurso
@@ -89,20 +81,6 @@ namespace AltarWeb.Services
             for (int i = 0; i < finales.Count; i++)
             {
                 finales[i].Lugar = i < 3 ? i + 1 : null;
-            }
-
-            var catrinas = await _context.EvaluacionesCatrina
-                .Include(c => c.Evaluacion)
-                .Where(c => c.Evaluacion.Estado == EstadoEvaluacion.Final
-                    && c.Evaluacion.Periodo == periodo
-                    && c.Evaluacion.Equipo.CarreraId == carreraId
-                    && c.NotaCatrina != null)
-                .OrderByDescending(c => c.NotaCatrina)
-                .ToListAsync();
-
-            for (int i = 0; i < catrinas.Count; i++)
-            {
-                catrinas[i].LugarCatrina = i < 3 ? i + 1 : null;
             }
 
             await _context.SaveChangesAsync();

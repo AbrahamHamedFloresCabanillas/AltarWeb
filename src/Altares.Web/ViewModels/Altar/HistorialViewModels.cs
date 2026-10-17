@@ -46,7 +46,5 @@ namespace AltarWeb.ViewModels.Altar
 
         public EstadoEvaluacion Estado { get; set; }
 
-        public bool IncluyeCatrina { get; set; }
-        public decimal? NotaCatrina { get; set; }
     }
 }

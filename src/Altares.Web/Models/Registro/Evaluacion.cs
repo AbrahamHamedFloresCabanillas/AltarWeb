@@ -37,6 +37,8 @@ namespace AltarWeb.Models.Registro
 
         public decimal ValoracionGeneral { get; set; }
 
+        // LEGADO (F2, 2026-10-17): el Concurso de Catrinas se separo en Catrinas.Web. Altares ya no lee ni escribe
+        // estos datos; columna, tabla y relacion se conservan fisicamente hasta despues del concurso.
         public bool IncluyeCatrina { get; set; }
         public virtual EvaluacionCatrina? EvaluacionCatrina { get; set; }
 

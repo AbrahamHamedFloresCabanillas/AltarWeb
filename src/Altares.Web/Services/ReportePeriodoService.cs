@@ -54,7 +54,6 @@ namespace AltarWeb.Services
                 .Where(e => e.Periodo == periodo)
                 .Include(e => e.Equipo).ThenInclude(eq => eq.Carrera)
                 .Include(e => e.Juez)
-                .Include(e => e.EvaluacionCatrina)
                 .Include(e => e.ElementosEvaluados).ThenInclude(ee => ee.Elemento)
                 .ToListAsync();
 
@@ -129,9 +128,7 @@ namespace AltarWeb.Services
                     .GroupBy(e => $"{e.Evaluacion!.Niveles} niveles")
                     .Select(g => (Etiqueta: g.Key, Conteo: g.Count()))
                     .OrderByDescending(g => g.Conteo)
-                    .ToList(),
-                EquiposConCatrina = equipos.Count(e => e.HaceCatrina),
-                EquiposSinCatrina = equipos.Count(e => !e.HaceCatrina)
+                    .ToList()
                 // RegistrantesAlumnosPorCarrera se calcula en el controlador junto con el
                 // resto de demografia porque comparte el universo de registrantesEnPeriodo.
             };
@@ -155,10 +152,6 @@ namespace AltarWeb.Services
                 };
             }
 
-            var catrinasConNota = finales
-                .Where(e => e.EvaluacionCatrina?.NotaCatrina != null)
-                .Select(e => e.EvaluacionCatrina!.NotaCatrina!.Value)
-                .ToList();
 
             var elementosFinales = finales.SelectMany(e => e.ElementosEvaluados).ToList();
 
@@ -189,8 +182,6 @@ namespace AltarWeb.Services
                 PromedioValoracionGeneral = Promedio(finales.Select(e => e.ValoracionGeneral)),
                 PromedioDistribucionNiveles = Promedio(finales.Select(e => e.DistribucionNiveles)),
                 PromedioNarrador = Promedio(finales.Select(e => e.Narrador)),
-                PromedioNotaCatrina = catrinasConNota.Count > 0 ? Math.Round(catrinasConNota.Average(), 2) : null,
-                EquiposConNotaCatrina = catrinasConNota.Count,
                 PodiumAltarPorCarrera = finales
                     .Where(e => e.Lugar is >= 1 and <= 3)
                     .OrderBy(e => e.Equipo.Carrera.Nombre).ThenBy(e => e.Lugar)
@@ -201,17 +192,6 @@ namespace AltarWeb.Services
                         NombreEquipo = e.SnapshotNombreEquipo,
                         NombreAltar = e.SnapshotNombreAltar,
                         Nota = e.NotaFinal
-                    }).ToList(),
-                PodiumCatrinaPorCarrera = finales
-                    .Where(e => e.EvaluacionCatrina?.LugarCatrina is >= 1 and <= 3)
-                    .OrderBy(e => e.Equipo.Carrera.Nombre).ThenBy(e => e.EvaluacionCatrina!.LugarCatrina)
-                    .Select(e => new PodiumEntry
-                    {
-                        Carrera = e.Equipo.Carrera.Nombre,
-                        Lugar = e.EvaluacionCatrina!.LugarCatrina!.Value,
-                        NombreEquipo = e.SnapshotNombreEquipo,
-                        NombreAltar = e.SnapshotNombreAltar,
-                        Nota = e.EvaluacionCatrina.NotaCatrina
                     }).ToList(),
                 TopNoLoTiene = TopPorSatisfaccion(Satisfaccion.NoLoTiene),
                 TopBueno = TopPorSatisfaccion(Satisfaccion.Bueno)
@@ -356,8 +336,6 @@ namespace AltarWeb.Services
                             {
                                 AddRow(t, $"Niveles · {etiqueta}", conteo.ToString());
                             }
-                            AddRow(t, "Equipos con Catrina", r.DistribucionAcademica.EquiposConCatrina.ToString());
-                            AddRow(t, "Equipos sin Catrina", r.DistribucionAcademica.EquiposSinCatrina.ToString());
                         });
 
                         col.Item().Component(new SeccionTitulo("3. Resultados de evaluación (solo Final)"));
@@ -372,7 +350,6 @@ namespace AltarWeb.Services
                             AddRow(t, "Valoración General · promedio", r.ResultadosEvaluacion.PromedioValoracionGeneral?.ToString("0.00") ?? "—");
                             AddRow(t, "Distribución por Niveles · promedio", r.ResultadosEvaluacion.PromedioDistribucionNiveles?.ToString("0.00") ?? "—");
                             AddRow(t, "Explicación oral · promedio", r.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—");
-                            AddRow(t, "Nota de Catrina · promedio", r.ResultadosEvaluacion.PromedioNotaCatrina?.ToString("0.00") ?? "— (sin evaluaciones de Catrina)");
                         });
 
                         col.Item().Text("Nota Final por carrera").Bold().FontSize(10);
@@ -392,17 +369,6 @@ namespace AltarWeb.Services
                             t.ColumnsDefinition(c => { c.RelativeColumn(2); c.RelativeColumn(); c.RelativeColumn(2); c.RelativeColumn(); });
                             AddHeaderRow(t, "Carrera", "Lugar", "Equipo / Altar", "Nota");
                             foreach (var p in r.ResultadosEvaluacion.PodiumAltarPorCarrera)
-                            {
-                                AddRow(t, p.Carrera, $"{p.Lugar}°", $"{p.NombreEquipo} · {p.NombreAltar}", p.Nota?.ToString("0.00") ?? "—");
-                            }
-                        });
-
-                        col.Item().Text("Podio de Catrina por carrera").Bold().FontSize(10);
-                        col.Item().Table(t =>
-                        {
-                            t.ColumnsDefinition(c => { c.RelativeColumn(2); c.RelativeColumn(); c.RelativeColumn(2); c.RelativeColumn(); });
-                            AddHeaderRow(t, "Carrera", "Lugar", "Equipo / Altar", "Nota");
-                            foreach (var p in r.ResultadosEvaluacion.PodiumCatrinaPorCarrera)
                             {
                                 AddRow(t, p.Carrera, $"{p.Lugar}°", $"{p.NombreEquipo} · {p.NombreAltar}", p.Nota?.ToString("0.00") ?? "—");
                             }

@@ -100,11 +100,6 @@
                     <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>@etiqueta</span><strong>@conteo</strong></div>
                 }
             </div>
-            <div class="altar-card">
-                <div class="altar-card-title">Catrina</div>
-                <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>Con Catrina</span><strong>@Model.DistribucionAcademica.EquiposConCatrina</strong></div>
-                <div class="altar-flex" style="justify-content:space-between; padding:4px 0;"><span>Sin Catrina</span><strong>@Model.DistribucionAcademica.EquiposSinCatrina</strong></div>
-            </div>
         </div>
 
         <div class="altar-card-title">3. Resultados de evaluación <span class="altar-text-muted" style="font-weight:400; font-size:13px;">(solo evaluaciones Final)</span></div>
@@ -121,7 +116,6 @@
                 <div><span class="altar-label">Valoración General</span>@(Model.ResultadosEvaluacion.PromedioValoracionGeneral?.ToString("0.00") ?? "—")</div>
                 <div><span class="altar-label">Distribución por Niveles</span>@(Model.ResultadosEvaluacion.PromedioDistribucionNiveles?.ToString("0.00") ?? "—")</div>
                 <div><span class="altar-label">Explicación oral</span>@(Model.ResultadosEvaluacion.PromedioNarrador?.ToString("0.00") ?? "—")</div>
-                <div><span class="altar-label">Nota de Catrina</span>@(Model.ResultadosEvaluacion.PromedioNotaCatrina?.ToString("0.00") ?? "—") <span class="altar-text-muted" style="font-size:12px;">(@Model.ResultadosEvaluacion.EquiposConNotaCatrina equipos)</span></div>
             </div>
         </div>
         <div class="altar-card" style="margin-bottom:20px;">
@@ -141,29 +135,13 @@
                 </tbody>
             </table>
         </div>
-        <div class="altar-grid-2" style="margin-bottom:20px;">
+        <div style="margin-bottom:20px;">
             <div class="altar-card">
                 <div class="altar-card-title">Podio del altar por carrera</div>
                 <table class="altar-table">
                     <thead><tr><th>Carrera</th><th>Lugar</th><th>Equipo / Altar</th><th>Nota</th></tr></thead>
                     <tbody>
                         @foreach (var p in Model.ResultadosEvaluacion.PodiumAltarPorCarrera)
-                        {
-                            <tr><td>@p.Carrera</td><td>@p.Lugar&deg;</td><td>@p.NombreEquipo &middot; @p.NombreAltar</td><td>@(p.Nota?.ToString("0.00") ?? "—")</td></tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-            <div class="altar-card">
-                <div class="altar-card-title">Podio de Catrina por carrera</div>
-                @if (!Model.ResultadosEvaluacion.PodiumCatrinaPorCarrera.Any())
-                {
-                    <p class="altar-text-muted">Sin equipos con Catrina evaluada.</p>
-                }
-                <table class="altar-table">
-                    <thead><tr><th>Carrera</th><th>Lugar</th><th>Equipo / Altar</th><th>Nota</th></tr></thead>
-                    <tbody>
-                        @foreach (var p in Model.ResultadosEvaluacion.PodiumCatrinaPorCarrera)
                         {
                             <tr><td>@p.Carrera</td><td>@p.Lugar&deg;</td><td>@p.NombreEquipo &middot; @p.NombreAltar</td><td>@(p.Nota?.ToString("0.00") ?? "—")</td></tr>
                         }

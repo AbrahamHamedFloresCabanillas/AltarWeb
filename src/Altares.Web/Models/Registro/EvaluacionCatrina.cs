@@ -1,5 +1,7 @@
 namespace AltarWeb.Models.Registro
 {
+    // LEGADO (F2, 2026-10-17): el Concurso de Catrinas se separo en Catrinas.Web. Altares ya no lee ni escribe
+    // esta tabla (EvaluacionesCatrina); se conserva fisicamente con sus datos hasta despues del concurso.
     public class EvaluacionCatrina
     {
         public int Id { get; set; }

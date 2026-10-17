@@ -38,8 +38,6 @@ namespace AltarWeb.ViewModels.Altar
         public List<ConteoConPorcentaje> RegistrantesAlumnosPorCarrera { get; set; } = new();
         public List<(string Etiqueta, int Conteo)> EquiposPorTipoAltar { get; set; } = new();
         public List<(string Etiqueta, int Conteo)> EquiposPorNiveles { get; set; } = new();
-        public int EquiposConCatrina { get; set; }
-        public int EquiposSinCatrina { get; set; }
     }
 
     public class NotaStats
@@ -69,11 +67,8 @@ namespace AltarWeb.ViewModels.Altar
         public decimal? PromedioValoracionGeneral { get; set; }
         public decimal? PromedioDistribucionNiveles { get; set; }
         public decimal? PromedioNarrador { get; set; }
-        public decimal? PromedioNotaCatrina { get; set; }
-        public int EquiposConNotaCatrina { get; set; }
 
         public List<PodiumEntry> PodiumAltarPorCarrera { get; set; } = new();
-        public List<PodiumEntry> PodiumCatrinaPorCarrera { get; set; } = new();
 
         public List<(string Elemento, int Conteo)> TopNoLoTiene { get; set; } = new();
         public List<(string Elemento, int Conteo)> TopBueno { get; set; } = new();

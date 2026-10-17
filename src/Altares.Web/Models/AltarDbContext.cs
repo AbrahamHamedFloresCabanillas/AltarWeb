@@ -24,6 +24,7 @@ namespace AltarWeb.Models
         public DbSet<Registro.Evaluacion> EvaluacionesConcurso { get; set; }
         public DbSet<Registro.EvaluacionIntegrante> EvaluacionIntegrantes { get; set; }
         public DbSet<Registro.ElementoEvaluado> ElementosEvaluados { get; set; }
+        // LEGADO (F2): tabla historica de Catrina, sin uso en Altares (ver EvaluacionCatrina).
         public DbSet<Registro.EvaluacionCatrina> EvaluacionesCatrina { get; set; }
         public DbSet<Registro.ConfiguracionPeriodo> ConfiguracionesPeriodo { get; set; }
 

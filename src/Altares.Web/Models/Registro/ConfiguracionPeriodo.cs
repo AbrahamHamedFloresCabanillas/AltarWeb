@@ -43,8 +43,8 @@ namespace AltarWeb.Models.Registro
         // menos personas que este numero se agrupa bajo "Otros / grupo reducido".
         public int UmbralAgrupacionDemografica { get; set; } = 5;
 
-        // Pesos de la formula de NotaCatrina, suman 1.0. Categoria independiente del altar
-        // (premio "Mejor Catrina" por carrera), con su propio ranking.
+        // LEGADO (F2, 2026-10-17): el Concurso de Catrinas se separo en Catrinas.Web. Altares ya no lee ni escribe
+        // ni muestra estos pesos; las columnas se conservan fisicamente hasta despues del concurso.
         public decimal PesoCatrinaVestuario { get; set; } = 0.25m;
         public decimal PesoCatrinaMaquillaje { get; set; } = 0.20m;
         public decimal PesoCatrinaAccesorios { get; set; } = 0.10m;

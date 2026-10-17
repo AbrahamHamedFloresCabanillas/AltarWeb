@@ -32,8 +32,8 @@ namespace AltarWeb.Models.Registro
 
         public string? UbicacionAltar { get; set; }
 
-        // Declarado por el equipo en la Ficha de Registro (no por el juez); determina si
-        // la pestana de evaluacion de Catrina aparece en NuevaEvaluacion.
+        // LEGADO (F2, 2026-10-17): el Concurso de Catrinas se separo en Catrinas.Web. Altares ya no lee ni escribe
+        // este campo; la columna se conserva fisicamente (datos historicos) hasta despues del concurso.
         public bool HaceCatrina { get; set; }
 
         public bool Activo { get; set; } = true;

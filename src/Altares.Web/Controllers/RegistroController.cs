@@ -536,8 +536,7 @@ namespace AltarWeb.Controllers
                 CreadoPorRegistranteId = registrante.Id,
                 MaestroEncargadoId = maestroId,
                 MaestroEncargadoIdentificadorPendiente = maestroPendiente,
-                UbicacionAltar = string.IsNullOrWhiteSpace(model.UbicacionAltar) ? null : model.UbicacionAltar.Trim(),
-                HaceCatrina = model.HaceCatrina
+                UbicacionAltar = string.IsNullOrWhiteSpace(model.UbicacionAltar) ? null : model.UbicacionAltar.Trim()
             };
 
             // SEC-11: transaccion explicita para las 3 escrituras (Equipo, Difunto, RegistranteEquipo).
@@ -650,7 +649,6 @@ namespace AltarWeb.Controllers
             equipo.MaestroEncargadoId = maestroId;
             equipo.MaestroEncargadoIdentificadorPendiente = maestroPendiente;
             equipo.UbicacionAltar = string.IsNullOrWhiteSpace(model.UbicacionAltar) ? null : model.UbicacionAltar.Trim();
-            equipo.HaceCatrina = model.HaceCatrina;
 
             if (equipo.Difunto != null)
             {
@@ -834,8 +832,7 @@ namespace AltarWeb.Controllers
                 DifuntoFechaDefuncion = equipo.Difunto?.FechaDefuncion ?? DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
                 CarreraId = equipo.CarreraId,
                 MaestroEncargadoIdentificador = equipo.MaestroEncargado?.Identificador ?? equipo.MaestroEncargadoIdentificadorPendiente ?? string.Empty,
-                UbicacionAltar = equipo.UbicacionAltar,
-                HaceCatrina = equipo.HaceCatrina
+                UbicacionAltar = equipo.UbicacionAltar
             };
 
             vm.EquipoId = equipo.Id;

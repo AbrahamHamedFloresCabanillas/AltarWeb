@@ -79,13 +79,6 @@ namespace AltarWeb.ViewModels.Altar
         public decimal Narrador { get; set; }
         public decimal NotaFinalPreview { get; set; }
 
-        // Catrina — declarado por el equipo en su Ficha de Registro, de solo lectura aqui.
-        public bool HaceCatrina { get; set; }
-        public decimal Vestuario { get; set; }
-        public decimal Maquillaje { get; set; }
-        public decimal Accesorios { get; set; }
-        public decimal OriginalidadCreatividad { get; set; }
-        public decimal ApegoTradiciones { get; set; }
 
         // Pesos/escala vigentes (para el calculo en vivo en JS)
         public decimal PesoObjetivoCultural { get; set; }
@@ -100,10 +93,5 @@ namespace AltarWeb.ViewModels.Altar
         public decimal ValorSatisfaccionBueno { get; set; }
         public decimal BonusPorElementoTematizado { get; set; }
 
-        public decimal PesoCatrinaVestuario { get; set; }
-        public decimal PesoCatrinaMaquillaje { get; set; }
-        public decimal PesoCatrinaAccesorios { get; set; }
-        public decimal PesoCatrinaOriginalidadCreatividad { get; set; }
-        public decimal PesoCatrinaApegoTradiciones { get; set; }
     }
 }
