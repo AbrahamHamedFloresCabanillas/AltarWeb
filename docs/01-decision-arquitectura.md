@@ -413,7 +413,7 @@ documentación, y **commit independiente**.
 | Fase | Contenido | Estado / esfuerzo (h) |
 |---|---|---|
 | **F0A** | Rama, tag `pre-separacion`, suite mínima de tests, baseline en .NET 8 | **Hecha** — commit `9173f4c` |
-| **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | Autorizada; 2–6 |
+| **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | **Hecha** — commit `2713d15` (.NET 10.0.13, Pkcs fijado a 10.0.13 por GHSA-846f-f764-76mx) |
 | F1 | Monorepo + extracción de `Concurso.Core` **sin cambio de comportamiento** | 10–20 |
 | F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | 6–10 |
 | **F3** | Catrinas.Web con el modelo de §7.1 | Diseño desbloqueado; **implementación pendiente de autorización**; 30–55 |
