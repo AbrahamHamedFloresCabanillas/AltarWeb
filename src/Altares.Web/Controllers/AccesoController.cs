@@ -10,11 +10,16 @@ namespace AltarWeb.Controllers
     {
         private readonly AltarDbContext _context;
         private readonly ILogger<AccesoController> _logger;
+        private readonly LimitadorIntentosLogin _limitador;
 
-        public AccesoController(AltarDbContext context, ILogger<AccesoController> logger)
+        // Ambito del contador de intentos por cuenta (SEC-04): cuentas de backoffice.
+        private const string AmbitoLimite = "juez";
+
+        public AccesoController(AltarDbContext context, ILogger<AccesoController> logger, LimitadorIntentosLogin limitador)
         {
             _context = context;
             _logger = logger;
+            _limitador = limitador;
         }
 
         // La vista de login independiente se retiró: el landing de dos pestañas
@@ -22,10 +27,18 @@ namespace AltarWeb.Controllers
         public IActionResult Login() { return RedirectToAction("Login", "Registro"); }
 
         [HttpPost]
-        [EnableRateLimiting("login")]
+        [EnableRateLimiting(PoliticasRateLimit.LoginIp)]
         public async Task<IActionResult> Login(string usuario, string password)
         {
             var entrada = (usuario ?? string.Empty).Trim();
+
+            // SEC-04: la cuenta intentada esta en pausa por demasiados intentos fallidos, venga de la IP que venga.
+            if (_limitador.EstaBloqueada(AmbitoLimite, entrada, out var espera))
+            {
+                _logger.LogWarning("Login de Juez/Admin rechazado por limite de cuenta. Usuario intentado: '{Usuario}', IP: {IP}, reintentar en {Segundos}s",
+                    _limitador.NormalizarCuenta(entrada), HttpContext.Connection.RemoteIpAddress, (int)Math.Ceiling(espera.TotalSeconds));
+                return new ResultadoLimiteExcedido(espera);
+            }
             var juez = await _context.Jueces
                 .FirstOrDefaultAsync(j => j.Usuario == entrada || j.CorreoInstitucional == entrada.ToLower());
 
@@ -33,11 +46,14 @@ namespace AltarWeb.Controllers
             var (esValido, requiereRehash) = PasswordHashService.Verificar(password, juez?.Password);
             if (juez == null || !esValido)
             {
+                _limitador.RegistrarFallo(AmbitoLimite, entrada);
                 // LOG-01: registra el intento fallido (usuario intentado + IP), nunca la contraseña.
                 _logger.LogWarning("Login fallido de Juez/Admin. Usuario intentado: '{Usuario}', IP: {IP}",
                     entrada, HttpContext.Connection.RemoteIpAddress);
                 return RedirectToAction("Login", "Registro", new { error = "Usuario o contraseña incorrectos", tab = "acceso" });
             }
+
+            _limitador.Reiniciar(AmbitoLimite, entrada);
 
             if (juez.Pendiente)
             {

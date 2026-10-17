@@ -1,8 +1,6 @@
-using System.Threading.RateLimiting;
 using AltarWeb.Models;
 using AltarWeb.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,27 +27,10 @@ builder.Services.AddScoped<ReportePeriodoService>();
 builder.Services.AddScoped<IVerificadorCambioPassword, VerificadorCambioPasswordJuez>();
 builder.Services.AddSingleton(sp => new ServicioCorreoSmtp(sp.GetRequiredService<IConfiguration>(), "Concurso Altares FIM"));
 
-// SEC-04: throttling por IP de las rutas de login (Acceso/Login, Registro/Login, GoogleCallback).
-// No sustituye PBKDF2/rehash-on-login (SEC-02); es una capa adicional contra fuerza bruta online.
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.OnRejected = (context, _) =>
-    {
-        context.HttpContext.Response.Redirect("/Registro/Login?error=" +
-            Uri.EscapeDataString("Demasiados intentos. Espera un minuto e intenta de nuevo."));
-        return ValueTask.CompletedTask;
-    };
-    options.AddPolicy("login", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocido",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            }));
-});
+// SEC-04 (evolucion 2026-10-17, desde Concurso.Core): limite estricto de intentos FALLIDOS por cuenta
+// (aplicado en AccesoController/RegistroController) + techo amplio por IP en los endpoints de login y de
+// Google. Valores en "Seguridad:RateLimiting" (ver LimitesLoginOptions).
+builder.Services.AddConcursoLimitesLogin(builder.Configuration);
 
 // SEC-10 (antiforgery global) y SEC-03 (cambio de password obligatorio), desde Concurso.Core.
 builder.Services.AddControllersWithViews(options => options.AgregarFiltrosSeguridad());
@@ -112,5 +93,5 @@ app.MapControllerRoute(
 app.Run();
 
 // Expone la clase generada por las top-level statements para WebApplicationFactory<Program> en las
-// pruebas de integracion (tests/AltarWeb.Tests).
+// pruebas de integracion (tests/Altares.Tests).
 public partial class Program { }

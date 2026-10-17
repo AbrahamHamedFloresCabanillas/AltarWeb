@@ -16,11 +16,16 @@ namespace AltarWeb.Controllers
     {
         private readonly AltarDbContext _context;
         private readonly ILogger<RegistroController> _logger;
+        private readonly LimitadorIntentosLogin _limitador;
 
-        public RegistroController(AltarDbContext context, ILogger<RegistroController> logger)
+        // Ambito del contador de intentos por cuenta (SEC-04): participantes del Portal de Registro.
+        private const string AmbitoLimite = "registrante";
+
+        public RegistroController(AltarDbContext context, ILogger<RegistroController> logger, LimitadorIntentosLogin limitador)
         {
             _context = context;
             _logger = logger;
+            _limitador = limitador;
         }
 
         public IActionResult Login(string? error = null, string? tab = null)
@@ -31,24 +36,35 @@ namespace AltarWeb.Controllers
         }
 
         [HttpPost]
-        [EnableRateLimiting("login")]
+        [EnableRateLimiting(PoliticasRateLimit.LoginIp)]
         public async Task<IActionResult> Login(RegistroLoginViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
 
             var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
+
+            // SEC-04: la cuenta intentada esta en pausa por demasiados intentos fallidos, venga de la IP que venga.
+            if (_limitador.EstaBloqueada(AmbitoLimite, correo, out var espera))
+            {
+                _logger.LogWarning("Login de Registrante rechazado por limite de cuenta. Correo intentado: '{Correo}', IP: {IP}, reintentar en {Segundos}s",
+                    _limitador.NormalizarCuenta(correo), HttpContext.Connection.RemoteIpAddress, (int)Math.Ceiling(espera.TotalSeconds));
+                return new ResultadoLimiteExcedido(espera);
+            }
             var registrante = await _context.Registrantes
                 .FirstOrDefaultAsync(r => r.CorreoInstitucional.ToLower() == correo);
 
             var (esValido, requiereRehash) = PasswordHashService.Verificar(model.Password, registrante?.PasswordHash);
             if (registrante == null || !esValido)
             {
+                _limitador.RegistrarFallo(AmbitoLimite, correo);
                 // LOG-01: registra el intento fallido (correo intentado + IP), nunca la contraseña.
                 _logger.LogWarning("Login fallido de Registrante. Correo intentado: '{Correo}', IP: {IP}",
                     correo, HttpContext.Connection.RemoteIpAddress);
                 ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos.");
                 return View(model);
             }
+
+            _limitador.Reiniciar(AmbitoLimite, correo);
 
             if (!registrante.Activo)
             {
@@ -195,6 +211,8 @@ namespace AltarWeb.Controllers
         // --- Google OAuth ---
         // intent = "registrante" (alumno/maestro/administrativo) o "juez".
 
+        // SEC-04: el challenge no conoce la cuenta todavia; solo lleva el techo amplio por IP del flujo OAuth.
+        [EnableRateLimiting(PoliticasRateLimit.OAuthIp)]
         public IActionResult GoogleLogin(string intent)
         {
             var props = new AuthenticationProperties
@@ -209,8 +227,10 @@ namespace AltarWeb.Controllers
             return Challenge(props, "Google");
         }
 
+        // SEC-04: Google ya autentico a la persona; no hay intentos "fallidos" que contar por cuenta, asi que
+        // solo aplica el techo amplio por IP (antes compartia el limite de 10/min por IP del login local).
         [HttpGet("Registro/google-listo")]
-        [EnableRateLimiting("login")]
+        [EnableRateLimiting(PoliticasRateLimit.OAuthIp)]
         public async Task<IActionResult> GoogleCallback()
         {
             // El resultado hay que leerlo del esquema de COOKIE, no del esquema "Google": el handler
@@ -278,7 +298,10 @@ namespace AltarWeb.Controllers
             }
         }
 
+        // SEC-04: exige la identidad verificada de un solo uso (SEC-01), asi que no se presta a fuerza bruta;
+        // solo lleva el techo amplio por IP del flujo OAuth.
         [HttpPost]
+        [EnableRateLimiting(PoliticasRateLimit.OAuthIp)]
         public async Task<IActionResult> CompletarGoogle(CompletarGoogleViewModel model)
         {
             var (googleValido, emailVerificado, nombreVerificado) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "registrante");
@@ -352,6 +375,7 @@ namespace AltarWeb.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting(PoliticasRateLimit.OAuthIp)]
         public async Task<IActionResult> CompletarGoogleJuez(CompletarGoogleJuezViewModel model)
         {
             var (googleValido, emailVerificado, nombreVerificado) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "juez");
