@@ -165,3 +165,7 @@ app.MapControllerRoute(
     pattern: "{controller=Registro}/{action=Login}/{id?}");
 
 app.Run();
+
+// Expone la clase generada por las top-level statements para WebApplicationFactory<Program> en las
+// pruebas de integracion (tests/AltarWeb.Tests).
+public partial class Program { }
