@@ -984,6 +984,14 @@ namespace AltarWeb.Controllers
             return vm;
         }
 
+        // Gate R6 y prueba de carga (F4): como llega la peticion al hosting (IP, esquema, X-Forwarded-*) y
+        // memoria del proceso. Solo administradores; sin cookies, tokens ni datos personales.
+        public IActionResult Diagnostico()
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+            return Json(Concurso.Core.Diagnostico.DiagnosticoServidor.Construir(HttpContext));
+        }
+
         [HttpPost]
         public async Task<IActionResult> QuitarRecorrido()
         {

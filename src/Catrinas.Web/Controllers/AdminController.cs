@@ -109,6 +109,10 @@ namespace Catrinas.Web.Controllers
             return RedirectToAction(nameof(Participantes));
         }
 
+        // Gate R6 y prueba de carga (F4): como llega la peticion al hosting (IP, esquema, X-Forwarded-*) y
+        // memoria del proceso. Solo administradores; sin cookies, tokens ni datos personales.
+        public IActionResult Diagnostico() => Json(Concurso.Core.Diagnostico.DiagnosticoServidor.Construir(HttpContext));
+
         public async Task<IActionResult> Configuracion()
         {
             var periodo = PeriodoHelper.ObtenerPeriodoActual();

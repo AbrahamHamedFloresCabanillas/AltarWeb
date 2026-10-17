@@ -45,6 +45,7 @@ public class SeguridadTests
     [InlineData("/Admin/Jurado", "tab=jurado")]
     [InlineData("/Admin/Participantes", "tab=jurado")]
     [InlineData("/Admin/Configuracion", "tab=jurado")]
+    [InlineData("/Admin/Diagnostico", "tab=jurado")]
     [InlineData("/Constancia/Grupal?evaluacionId=1", "tab=jurado")]
     [InlineData("/Constancia/Individuales?evaluacionId=1", "tab=jurado")]
     [InlineData("/Registro/Panel", "/")]
@@ -55,6 +56,25 @@ public class SeguridadTests
     {
         var r = await _f.Cliente().GetAsync(ruta);
         Http.Redirige(r, destino);
+    }
+
+    // Diagnostico del gate R6: solo admin, refleja la IP de la conexion y no expone cookies.
+    [Fact]
+    public async Task Diagnostico_SoloAdmin_SinCookies()
+    {
+        var juez = await Escenario.JuradoAsync(_f);
+        Http.Redirige(await juez.GetAsync("/Admin/Diagnostico"), "Evaluacion");
+
+        var admin = await Escenario.JuradoAsync(_f, admin: true);
+        var peticion = new HttpRequestMessage(HttpMethod.Get, "/Admin/Diagnostico");
+        peticion.Headers.Add(CatrinasFactory.CabeceraIpRemota, "198.51.100.77");
+        peticion.Headers.Add("X-Forwarded-For", "192.0.2.10");
+        var json = await (await admin.SendAsync(peticion)).Content.ReadAsStringAsync();
+        Assert.Contains("\"red.remoteIpAddress\":\"198.51.100.77\"", json);
+        Assert.Contains("cabecera.X-Forwarded-For", json);
+        Assert.Contains("memoria.workingSetMB", json);
+        Assert.DoesNotContain(".Catrinas.Sesion", json);
+        Assert.DoesNotContain("Cookie", json);
     }
 
     // 29. Antiforgery en POST.

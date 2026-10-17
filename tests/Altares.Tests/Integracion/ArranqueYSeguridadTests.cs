@@ -37,6 +37,7 @@ public class ArranqueYSeguridadTests
     [InlineData("/AltarAdmin/Configuracion")]
     [InlineData("/AltarAdmin/ReportePeriodo")]
     [InlineData("/AltarAdmin/ReportePeriodoPdf")]
+    [InlineData("/AltarAdmin/Diagnostico")]
     [InlineData("/Constancia/DescargarGrupal/1")]
     [InlineData("/Constancia/DescargarIndividuales/1")]
     [InlineData("/Constancia/DescargarJuez/1")]
