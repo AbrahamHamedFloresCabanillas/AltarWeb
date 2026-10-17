@@ -533,3 +533,16 @@ o sigue fallando, se pasa al plan B (Azure B1).
 5. **Regla de empates:** pendiente del comité (vision.md §13.11).
 6. **Gates R6 y R7** siguen abiertos para ambas apps.
 
+**Revisión de seguridad de F3 (2026-10-17).** Sin hallazgos altos. Dos medios, ambos heredados del patrón de Altares:
+- **M2: desactivar una cuenta no cerraba su sesión abierta.**
+  - **Corregido en Catrinas:** los filtros `SoloJurado`, `SoloAdmin` y `SoloParticipante` revalidan la
+    cuenta (activa, no pendiente y rol) contra la BD en cada petición y limpian la sesión si ya no es válida.
+    Lo cubre la prueba `CuentaDesactivada_PierdeSuSesionAbierta`.
+  - **[PEND] Altares** conserva el comportamiento anterior: el rol vive en la sesión y una cuenta
+    desactivada sigue operando hasta que expira. Se corrige con la migración de SEC-08.
+- **M1: el responsable puede agregar a cualquier persona por su identificador, sin su consentimiento.**
+  Esa persona queda atada a la inscripción durante el periodo y el mensaje revela su nombre.
+  - **[PEND] Decisión de producto:** flujo de invitación con aceptación, o al menos permitir que un
+    integrante salga de la inscripción.
+  - Altares tiene el mismo patrón.
+

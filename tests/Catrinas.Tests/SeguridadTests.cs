@@ -81,6 +81,33 @@ public class SeguridadTests
         Http.Redirige(await semilla.GetAsync("/Admin/Configuracion"), "CambiarPasswordObligatorio");
     }
 
+    // Revision de seguridad F3 (M2): desactivar una cuenta corta su sesion abierta en la siguiente peticion.
+    [Fact]
+    public async Task CuentaDesactivada_PierdeSuSesionAbierta()
+    {
+        var juez = await Escenario.JuradoAsync(_f);
+        Assert.Equal(HttpStatusCode.OK, (await juez.GetAsync("/Evaluacion/Index")).StatusCode);
+        var e = await Escenario.CrearAsync(_f);
+        Assert.Equal(HttpStatusCode.OK, (await e.Responsable.GetAsync("/Inscripcion/Editar")).StatusCode);
+
+        await _f.ConContextoAsync(async c =>
+        {
+            foreach (var j in await c.Jueces.Where(j => j.Usuario!.StartsWith("jurado-")).ToListAsync()) j.Activo = false;
+            (await c.Registrantes.SingleAsync(r => r.Id == e.ResponsableId)).Activo = false;
+            await c.SaveChangesAsync();
+        });
+
+        Http.Redirige(await juez.GetAsync("/Evaluacion/Index"), "tab=jurado");
+        Http.Redirige(await e.Responsable.GetAsync("/Inscripcion/Editar"), "/");
+        // La sesion quedo limpia: reactivar la cuenta no la revive.
+        await _f.ConContextoAsync(async c =>
+        {
+            (await c.Registrantes.SingleAsync(r => r.Id == e.ResponsableId)).Activo = true;
+            await c.SaveChangesAsync();
+        });
+        Http.Redirige(await e.Responsable.GetAsync("/Inscripcion/Editar"), "/");
+    }
+
     // 31. Rate limiting por cuenta (Core) tambien en Catrinas: el 6.o intento fallido recibe 429.
     [Fact]
     public async Task RateLimiting_PorCuenta()

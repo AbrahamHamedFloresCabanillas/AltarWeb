@@ -36,46 +36,80 @@ namespace Catrinas.Web
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class AccesoPublicoAttribute : Attribute { }
 
+    // Cada peticion del jurado o de un participante revalida la cuenta contra la BD: si la administracion
+    // la desactiva (o deja pendiente, o le quita el rol de admin), la sesion abierta deja de servir en la
+    // siguiente peticion, en vez de seguir viva hasta que expire (revision de seguridad F3, M2).
+    internal static class RevalidacionSesion
+    {
+        public static async Task<Juez?> JuezVigenteAsync(HttpContext http)
+        {
+            var id = http.Session.JuezId();
+            if (id == null) return null;
+            var juez = await http.RequestServices.GetRequiredService<CatrinasDbContext>().Jueces.AsNoTracking()
+                .FirstOrDefaultAsync(j => j.Id == id && j.Activo && !j.Pendiente);
+            if (juez == null) http.Session.Clear();
+            else http.Session.SetString(Sesion.JuezRol, juez.Rol);
+            return juez;
+        }
+
+        public static async Task<bool> ParticipanteVigenteAsync(HttpContext http)
+        {
+            var id = http.Session.Registrante();
+            if (id == null) return false;
+            var activo = await http.RequestServices.GetRequiredService<CatrinasDbContext>().Registrantes.AsNoTracking()
+                .AnyAsync(r => r.Id == id && r.Activo);
+            if (!activo) http.Session.Clear();
+            return activo;
+        }
+    }
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class SoloJuradoAttribute : ActionFilterAttribute
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (context.HttpContext.Session.JuezId() == null)
+            if (await RevalidacionSesion.JuezVigenteAsync(context.HttpContext) == null)
             {
                 context.Result = new RedirectToActionResult("Login", "Registro", new { tab = "jurado" });
+                return;
             }
+            await next();
         }
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class SoloAdminAttribute : ActionFilterAttribute
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            var sesion = context.HttpContext.Session;
-            if (sesion.JuezId() == null)
+            var juez = await RevalidacionSesion.JuezVigenteAsync(context.HttpContext);
+            if (juez == null)
             {
                 context.Result = new RedirectToActionResult("Login", "Registro", new { tab = "jurado" });
+                return;
             }
-            else if (!sesion.EsAdmin())
+            if (juez.Rol != RolesJuez.Admin)
             {
                 context.HttpContext.RequestServices.GetRequiredService<ILogger<SoloAdminAttribute>>()
-                    .LogWarning("Acceso denegado (rol insuficiente). JuezId: {JuezId}, Ruta: {Ruta}", sesion.JuezId(), context.HttpContext.Request.Path);
+                    .LogWarning("Acceso denegado (rol insuficiente). JuezId: {JuezId}, Ruta: {Ruta}", juez.Id, context.HttpContext.Request.Path);
                 context.Result = new RedirectToActionResult("Index", "Evaluacion", null);
+                return;
             }
+            await next();
         }
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class SoloParticipanteAttribute : ActionFilterAttribute
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (context.HttpContext.Session.Registrante() == null)
+            if (!await RevalidacionSesion.ParticipanteVigenteAsync(context.HttpContext))
             {
                 context.Result = new RedirectToActionResult("Login", "Registro", null);
+                return;
             }
+            await next();
         }
     }
 
