@@ -115,13 +115,13 @@ using (var scope = app.Services.CreateScope())
 
 // CFG-02: en Azure App Service el TLS se termina en el proxy de la plataforma; sin esto,
 // Request.IsHttps es false detras del proxy, lo que rompe cookies Secure, UseHttpsRedirection y las
-// URLs absolutas del callback de Google. KnownNetworks/KnownProxies se vacian porque App Service no
+// URLs absolutas del callback de Google. KnownIPNetworks/KnownProxies se vacian porque App Service no
 // expone la app detras de un proxy publico adicional identificable de antemano.
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
-forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownIPNetworks.Clear();
 forwardedHeadersOptions.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
