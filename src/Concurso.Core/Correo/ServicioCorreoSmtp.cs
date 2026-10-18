@@ -5,8 +5,11 @@ using Microsoft.Extensions.Configuration;
 namespace Concurso.Core.Correo
 {
     // Envio SMTP autenticado configurado en la seccion "Smtp" de cada app (Host, Port, EnableSsl, User,
-    // Password, FromName). Usar el puerto 587 con STARTTLS: System.Net.Mail.SmtpClient no soporta SSL
-    // implicito (465).
+    // Password, FromName, TimeoutSegundos). Usar el puerto 587 con STARTTLS: System.Net.Mail.SmtpClient no
+    // soporta SSL implicito (465).
+    //
+    // F4: SendMailAsync ignora SmtpClient.Timeout, asi que un servidor que acepta la conexion y no responde
+    // dejaba la peticion colgada. El limite se aplica con un CancellationToken y se reporta como TimeoutException.
     public class ServicioCorreoSmtp
     {
         private readonly IConfiguration _configuration;
@@ -27,7 +30,7 @@ namespace Concurso.Core.Correo
             if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(password)
                 || host == "pendiente-configurar" || user == "pendiente-configurar")
             {
-                throw new InvalidOperationException("La configuración SMTP no está completa. Configura la sección \"Smtp\" en appsettings.json.");
+                throw new InvalidOperationException("La configuración SMTP no está completa. Configura la sección \"Smtp\" (variables Smtp__Host, Smtp__User y Smtp__Password del sitio).");
             }
 
             using var smtp = new SmtpClient(host, _configuration.GetValue("Smtp:Port", 587))
@@ -44,7 +47,17 @@ namespace Concurso.Core.Correo
 
             using var stream = new MemoryStream(adjunto);
             mail.Attachments.Add(new Attachment(stream, nombreArchivo, "application/pdf"));
-            await smtp.SendMailAsync(mail);
+
+            var limite = TimeSpan.FromSeconds(Math.Clamp(_configuration.GetValue("Smtp:TimeoutSegundos", 30), 1, 120));
+            using var cancelacion = new CancellationTokenSource(limite);
+            try
+            {
+                await smtp.SendMailAsync(mail, cancelacion.Token);
+            }
+            catch (OperationCanceledException) when (cancelacion.IsCancellationRequested)
+            {
+                throw new TimeoutException($"El servidor SMTP no respondio en {limite.TotalSeconds:0} s.");
+            }
         }
     }
 }

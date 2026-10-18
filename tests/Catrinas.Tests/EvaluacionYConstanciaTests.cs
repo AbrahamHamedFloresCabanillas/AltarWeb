@@ -112,6 +112,48 @@ public class EvaluacionTests
         Assert.Equal(7.00m, actual.NotaCatrina);
     }
 
+    // Hallazgo de la prueba de carga (F4): varios jueces cerrando Final a la vez en la MISMA carrera
+    // chocaban al recalcular lugares (conflicto de rowversion -> 500) o podian dejar lugares de una foto
+    // vieja. Ahora el recalculo se serializa y al final los lugares coinciden con las notas.
+    [Fact]
+    public async Task CierresFinalSimultaneos_MismaCarrera_SinErroresYLugaresCorrectos()
+    {
+        const int carrera = 9;
+        var escenarios = new List<Escenario>();
+        for (var k = 0; k < 8; k++) escenarios.Add(await Escenario.CrearAsync(_f, carreraId: carrera));
+        var jueces = new List<HttpClient>();
+        for (var k = 0; k < 8; k++) jueces.Add(await Escenario.JuradoAsync(_f));
+
+        // Notas distintas para que el orden esperado sea inequivoco: 3, 4, ..., 10.
+        var respuestas = await Task.WhenAll(escenarios.Select((e, k) =>
+            Http.GuardarEvaluacionAsync(jueces[k], e.InscripcionId, "final", 3 + k, 3 + k, 3 + k, 3 + k, 3 + k)));
+
+        Assert.All(respuestas, r => Assert.Equal(HttpStatusCode.Redirect, r.StatusCode));
+        var finales = escenarios.Select(e => Escenario.Evaluacion(_f, e.InscripcionId)!).ToList();
+        Assert.All(finales, f => Assert.Equal(EstadoEvaluacion.Final, f.Estado));
+        Assert.Equal(new int?[] { null, null, null, null, null, 3, 2, 1 }, finales.Select(f => f.Lugar).ToArray());
+    }
+
+    // Hallazgo de la prueba de carga (F4): un rowVersion alterado o mal formado devolvia 500
+    // (FormatException en Convert.FromBase64String). Ahora se trata como conflicto y no guarda nada.
+    [Theory]
+    [InlineData("no-es-base64!")]
+    [InlineData("&#x2B;AAAAAAAAB9E=")]
+    [InlineData("AAAA")]
+    public async Task RowVersionMalFormado_NoEs500NiGuarda(string rowVersion)
+    {
+        var e = await Escenario.CrearAsync(_f);
+        var juez = await Escenario.JuradoAsync(_f);
+        Http.Redirige(await Http.GuardarEvaluacionAsync(juez, e.InscripcionId, "preliminar", 5, 5, 5, 5, 5), "Evaluar");
+
+        var r = await Http.GuardarEvaluacionAsync(juez, e.InscripcionId, "final", 9, 9, 9, 9, 9, rowVersion: rowVersion);
+
+        Http.Redirige(r, "Evaluar");
+        var actual = Escenario.Evaluacion(_f, e.InscripcionId)!;
+        Assert.Equal(EstadoEvaluacion.Preliminar, actual.Estado);
+        Assert.Equal(5.00m, actual.NotaCatrina);
+    }
+
     // 22. Pesos invalidos: la configuracion rechaza sumas distintas de 100 y la BD tambien.
     //     Cambiar pesos despues no recalcula evaluaciones ya cerradas.
     [Fact]

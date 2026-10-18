@@ -10,11 +10,13 @@ namespace AltarWeb.Controllers
     {
         private readonly AltarDbContext _context;
         private readonly ConstanciaService _constancias;
+        private readonly ILogger<ConstanciaController> _logger;
 
-        public ConstanciaController(AltarDbContext context, ConstanciaService constancias)
+        public ConstanciaController(AltarDbContext context, ConstanciaService constancias, ILogger<ConstanciaController> logger)
         {
             _context = context;
             _constancias = constancias;
+            _logger = logger;
         }
 
         public async Task<IActionResult> DescargarGrupal(int evaluacionId)
@@ -95,13 +97,23 @@ namespace AltarWeb.Controllers
                     nombreMaestro: nombreMaestro,
                     correoMaestro: correoMaestro,
                     nombreJuez: nombreJuez,
-                    correoJuez: null);
+                    correoJuez: eval.Juez?.CorreoInstitucional);
 
                 TempData["Mensaje"] = "Constancias enviadas por correo.";
             }
             catch (InvalidOperationException ex)
             {
+                // Configuracion SMTP incompleta: el mensaje es nuestro y no contiene datos personales.
                 TempData["Error"] = ex.Message;
+            }
+            catch (Exception ex)
+            {
+                // F4: antes solo se atrapaba la configuracion incompleta; un error SMTP real (credenciales,
+                // servidor caido, tiempo agotado) terminaba en 500. No se registra el mensaje de la excepcion
+                // porque SmtpFailedRecipientException incluye la direccion del destinatario.
+                _logger.LogError("Error al enviar constancias de la evaluación {EvaluacionId}: {Tipo} {Estado}",
+                    evaluacionId, ex.GetType().Name, (ex as System.Net.Mail.SmtpException)?.StatusCode);
+                TempData["Error"] = "No se pudieron enviar todas las constancias por correo (algunas pudieron enviarse). Puedes descargarlas desde esta página.";
             }
 
             return RedirectToAction("Detalle", "AltarEvaluacion", new { id = evaluacionId });

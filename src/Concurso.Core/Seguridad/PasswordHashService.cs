@@ -14,6 +14,7 @@ namespace Concurso.Core.Seguridad
     {
         private const int LongitudHashLegadoSha256 = 44;
         private static readonly PasswordHasher<object> Hasher = new();
+        private static readonly Lazy<string> HashSenuelo = new(() => Hasher.HashPassword(new object(), Guid.NewGuid().ToString("N")));
 
         public static string HashPassword(string password) => Hasher.HashPassword(new object(), password);
 
@@ -62,7 +63,14 @@ namespace Concurso.Core.Seguridad
 
         public static (bool EsValido, bool RequiereRehash) Verificar(string password, string? hashAlmacenado)
         {
-            if (string.IsNullOrEmpty(hashAlmacenado)) return (false, false);
+            if (string.IsNullOrEmpty(hashAlmacenado))
+            {
+                // F4: cuenta inexistente (o solo de Google) respondia en ~5 ms contra ~120 ms de una cuenta
+                // real, lo que permitia saber que correos estan registrados midiendo el tiempo. Se hace el
+                // mismo trabajo de PBKDF2 contra un hash señuelo y se rechaza igual.
+                Hasher.VerifyHashedPassword(new object(), HashSenuelo.Value, password ?? string.Empty);
+                return (false, false);
+            }
 
             if (hashAlmacenado.Length == LongitudHashLegadoSha256)
             {

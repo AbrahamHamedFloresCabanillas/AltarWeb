@@ -71,19 +71,23 @@ namespace AltarWeb.Services
         // Lugar (1/2/3) por Carrera+Periodo, solo entre evaluaciones en estado Final (seccion 13.4).
         // Desde F2 (2026-10-17) Altares ya no calcula el ranking de Catrina: el concurso de Catrinas
         // vive en Catrinas.Web. EvaluacionCatrina.LugarCatrina queda como dato historico sin uso.
-        public async Task RecalcularLugaresAsync(int carreraId, string periodo)
-        {
-            var finales = await _context.EvaluacionesConcurso
-                .Where(e => e.Estado == EstadoEvaluacion.Final && e.Periodo == periodo && e.Equipo.CarreraId == carreraId)
-                .OrderByDescending(e => e.NotaFinal)
-                .ToListAsync();
-
-            for (int i = 0; i < finales.Count; i++)
+        //
+        // Serializado por carrera+periodo (F4): sin el bloqueo, dos cierres Final simultaneos leian cada uno
+        // su propia foto y el ultimo en guardar podia dejar lugares desactualizados.
+        public Task RecalcularLugaresAsync(int carreraId, string periodo) =>
+            Concurso.Core.Datos.BloqueoExclusivo.EjecutarAsync(_context, $"altares-lugares:{periodo}:{carreraId}", async () =>
             {
-                finales[i].Lugar = i < 3 ? i + 1 : null;
-            }
+                var finales = await _context.EvaluacionesConcurso
+                    .Where(e => e.Estado == EstadoEvaluacion.Final && e.Periodo == periodo && e.Equipo.CarreraId == carreraId)
+                    .OrderByDescending(e => e.NotaFinal)
+                    .ToListAsync();
 
-            await _context.SaveChangesAsync();
-        }
+                for (int i = 0; i < finales.Count; i++)
+                {
+                    finales[i].Lugar = i < 3 ? i + 1 : null;
+                }
+
+                await _context.SaveChangesAsync();
+            });
     }
 }

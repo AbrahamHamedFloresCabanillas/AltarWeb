@@ -117,19 +117,25 @@ namespace Catrinas.Web
                 });
         }
 
-        public static async Task RecalcularLugaresAsync(CatrinasDbContext context, int carreraId, string periodo)
-        {
-            var finales = await context.Evaluaciones
-                .Where(e => e.Estado == EstadoEvaluacion.Final && e.Periodo == periodo && e.Inscripcion.CarreraId == carreraId)
-                .ToListAsync();
-
-            var lugares = CalcularLugares(finales.Select(e => (e.Id, e.NotaCatrina)));
-            foreach (var evaluacion in finales)
+        // Serializado por carrera+periodo (F4): dos cierres Final simultaneos ya no chocan por rowversion
+        // ni dejan lugares calculados con una foto vieja. Se lee sin seguimiento y se escribe con
+        // ExecuteUpdate porque la evaluacion recien guardada sigue rastreada en este contexto con un
+        // rowversion que otro recalculo pudo haber cambiado mientras se esperaba el bloqueo.
+        public static Task RecalcularLugaresAsync(CatrinasDbContext context, int carreraId, string periodo) =>
+            Concurso.Core.Datos.BloqueoExclusivo.EjecutarAsync(context, $"catrinas-lugares:{periodo}:{carreraId}", async () =>
             {
-                evaluacion.Lugar = lugares[evaluacion.Id];
-            }
+                var finales = await context.Evaluaciones.AsNoTracking()
+                    .Where(e => e.Estado == EstadoEvaluacion.Final && e.Periodo == periodo && e.Inscripcion.CarreraId == carreraId)
+                    .Select(e => new { e.Id, e.NotaCatrina })
+                    .ToListAsync();
 
-            await context.SaveChangesAsync();
-        }
+                var lugares = CalcularLugares(finales.Select(e => (e.Id, e.NotaCatrina)));
+                foreach (var grupo in lugares.GroupBy(l => l.Value))
+                {
+                    var ids = grupo.Select(l => l.Key).ToList();
+                    var lugar = grupo.Key;
+                    await context.Evaluaciones.Where(e => ids.Contains(e.Id)).ExecuteUpdateAsync(s => s.SetProperty(e => e.Lugar, lugar));
+                }
+            });
     }
 }

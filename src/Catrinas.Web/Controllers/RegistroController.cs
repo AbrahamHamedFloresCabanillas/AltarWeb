@@ -159,9 +159,7 @@ namespace Catrinas.Web.Controllers
                 return RedirectToAction(nameof(Login), new
                 {
                     tab,
-                    error = identidad.Motivo == MotivoRechazoGoogle.CorreoNoVerificado
-                        ? "Tu correo de Google no está verificado. Usa tu cuenta institucional @uabc.edu.mx."
-                        : "Debes usar tu correo institucional @uabc.edu.mx."
+                    error = ValidacionIdentidadGoogle.MensajeRechazo(identidad.Motivo)
                 });
             }
 

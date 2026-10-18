@@ -34,6 +34,24 @@ public class AltarWebFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("GoogleAuth__ClientSecret", "secreto-de-prueba");
         Environment.SetEnvironmentVariable("SEED_ADMIN_USUARIO", AdminUsuario);
         Environment.SetEnvironmentVariable("SEED_ADMIN_PASSWORD", AdminPassword);
+        // SMTP hacia un puerto local cerrado: ninguna prueba envia correo real y los errores SMTP se pueden probar.
+        Environment.SetEnvironmentVariable("Smtp__Host", "127.0.0.1");
+        Environment.SetEnvironmentVariable("Smtp__Port", PuertoSmtpCerrado.ToString());
+        Environment.SetEnvironmentVariable("Smtp__EnableSsl", "false");
+        Environment.SetEnvironmentVariable("Smtp__User", "altares-pruebas@ejemplo.test");
+        Environment.SetEnvironmentVariable("Smtp__Password", "no-real");
+        Environment.SetEnvironmentVariable("Smtp__TimeoutSegundos", "5");
+    }
+
+    // Puerto que se abre y se cierra: nadie escucha ahi durante las pruebas.
+    private static readonly int PuertoSmtpCerrado = ObtenerPuertoCerrado();
+    private static int ObtenerPuertoCerrado()
+    {
+        var escucha = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        escucha.Start();
+        var puerto = ((System.Net.IPEndPoint)escucha.LocalEndpoint).Port;
+        escucha.Stop();
+        return puerto;
     }
 
     // IP del cliente que ve la app cuando la prueba no indica otra (TEST-NET-3, RFC 5737).

@@ -79,8 +79,10 @@ namespace Catrinas.Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al enviar constancias de la evaluación {EvaluacionId}", evaluacionId);
-                TempData["Error"] = "No se pudieron enviar las constancias por correo. Puedes descargarlas desde esta página.";
+                // Sin el mensaje de la excepcion: SmtpFailedRecipientException incluye la direccion del destinatario.
+                _logger.LogError("Error al enviar constancias de la evaluación {EvaluacionId}: {Tipo} {Estado}",
+                    evaluacionId, ex.GetType().Name, (ex as System.Net.Mail.SmtpException)?.StatusCode);
+                TempData["Error"] = "No se pudieron enviar todas las constancias por correo (algunas pudieron enviarse). Puedes descargarlas desde esta página.";
             }
             return RedirectToAction("Detalle", "Evaluacion", new { id = evaluacionId });
         }

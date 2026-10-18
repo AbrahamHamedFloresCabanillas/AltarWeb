@@ -25,11 +25,22 @@ namespace Concurso.Core.Identidad
 
         public static AuthenticationBuilder AddGoogleInstitucional(this AuthenticationBuilder builder, IConfiguration configuration)
         {
+            // F4: sin estos valores el handler de Google falla al validar sus opciones en CADA peticion (500 en
+            // todo el sitio, incluso "/"). Mejor no arrancar y decir exactamente que falta.
+            var clientId = configuration["GoogleAuth:ClientId"];
+            var clientSecret = configuration["GoogleAuth:ClientSecret"];
+            if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            {
+                throw new InvalidOperationException(
+                    "Falta configurar GoogleAuth:ClientId y/o GoogleAuth:ClientSecret (variables de entorno del sitio " +
+                    "GoogleAuth__ClientId / GoogleAuth__ClientSecret). Ver docs/04-despliegue-altares.md o docs/05-despliegue-catrinas.md.");
+            }
+
             builder.Services.Configure<ValidacionGoogleOptions>(configuration.GetSection(ValidacionGoogleOptions.Seccion));
             return builder.AddGoogle("Google", options =>
             {
-                options.ClientId = configuration["GoogleAuth:ClientId"] ?? string.Empty;
-                options.ClientSecret = configuration["GoogleAuth:ClientSecret"] ?? string.Empty;
+                options.ClientId = clientId;
+                options.ClientSecret = clientSecret;
                 options.CallbackPath = CallbackPathPorDefecto;
                 options.Scope.Add("email");
                 options.Scope.Add("profile");
@@ -98,6 +109,16 @@ namespace Concurso.Core.Identidad
 
             static ResultadoIdentidadGoogle Rechazo(MotivoRechazoGoogle motivo) => new(false, string.Empty, string.Empty, motivo);
         }
+
+        // Mensaje para la persona. El caso "correo UABC sin claim hd" tiene texto propio (F4, gate R7): permite
+        // diagnosticar en el hosting si Google no entrega "hd" sin mostrar ni registrar tokens ni claims.
+        public static string MensajeRechazo(MotivoRechazoGoogle motivo) => motivo switch
+        {
+            MotivoRechazoGoogle.CorreoNoVerificado => "Tu correo de Google no está verificado. Usa tu cuenta institucional @uabc.edu.mx.",
+            MotivoRechazoGoogle.DominioWorkspaceInvalido =>
+                "Google no identificó tu cuenta @uabc.edu.mx como cuenta de la organización UABC. Entra con tu contraseña o avisa a la administración (código: hd).",
+            _ => "Debes usar tu correo institucional @uabc.edu.mx."
+        };
     }
 
     // SEC-01: el email/nombre que muestran las vistas de "completar registro" viajan como campo oculto,

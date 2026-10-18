@@ -168,4 +168,34 @@ public class MapeoClaimsGoogleTests
         var (_, validacion) = Configurar(new() { ["GoogleAuth:ExigirDominioWorkspace"] = "false" });
         Assert.False(validacion.ExigirDominioWorkspace);
     }
+
+    // Gate R7: el rechazo por falta de "hd" debe distinguirse en pantalla del de dominio ajeno,
+    // sin incluir claims ni datos de la cuenta.
+    [Fact]
+    public void MensajeRechazo_DistingueFaltaDeHd()
+    {
+        var sinHd = ValidacionIdentidadGoogle.MensajeRechazo(MotivoRechazoGoogle.DominioWorkspaceInvalido);
+        var ajeno = ValidacionIdentidadGoogle.MensajeRechazo(MotivoRechazoGoogle.DominioNoInstitucional);
+        Assert.NotEqual(sinHd, ajeno);
+        Assert.Contains("código: hd", sinHd);
+        Assert.Equal("Debes usar tu correo institucional @uabc.edu.mx.", ajeno);
+    }
+
+    // Hallazgo F4: sin ClientId el sitio entero respondia 500 (validacion de opciones en cada peticion).
+    // Ahora no arranca y el mensaje nombra la clave faltante, sin exponer ningun valor.
+    [Theory]
+    [InlineData(null, "secreto")]
+    [InlineData("id", null)]
+    [InlineData("", "")]
+    public void SinCredencialesDeGoogle_NoArrancaYDiceQueFalta(string? clientId, string? clientSecret)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["GoogleAuth:ClientId"] = clientId,
+            ["GoogleAuth:ClientSecret"] = clientSecret
+        }).Build();
+
+        var error = Assert.Throws<InvalidOperationException>(() => new ServiceCollection().AddAuthentication().AddGoogleInstitucional(configuration));
+        Assert.Contains("GoogleAuth:ClientId", error.Message);
+    }
 }

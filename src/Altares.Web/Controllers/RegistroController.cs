@@ -261,9 +261,7 @@ namespace AltarWeb.Controllers
             {
                 _logger.LogWarning("Identidad de Google rechazada. Motivo: {Motivo}, IP: {IP}",
                     identidad.Motivo, HttpContext.Connection.RemoteIpAddress);
-                var mensaje = identidad.Motivo == MotivoRechazoGoogle.CorreoNoVerificado
-                    ? "Tu correo de Google no está verificado. Usa tu cuenta institucional @uabc.edu.mx."
-                    : "Debes usar tu correo institucional @uabc.edu.mx.";
+                var mensaje = ValidacionIdentidadGoogle.MensajeRechazo(identidad.Motivo);
                 return RedirectToAction("Login", new { tab = tabError, error = mensaje });
             }
 

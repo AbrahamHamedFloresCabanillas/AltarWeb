@@ -133,11 +133,13 @@ namespace Catrinas.Web.Controllers
             else
             {
                 // Concurrencia optimista: si otro juez guardo despues de que este abrio la pantalla, se rechaza.
-                if (string.IsNullOrEmpty(rowVersion) || !evaluacion.RowVersion.SequenceEqual(Convert.FromBase64String(rowVersion)))
+                // Un rowVersion ausente o mal formado (formulario alterado) se trata igual, sin excepcion (F4: antes era 500).
+                var rowVersionEnviado = DecodificarRowVersion(rowVersion);
+                if (rowVersionEnviado == null || !evaluacion.RowVersion.SequenceEqual(rowVersionEnviado))
                 {
                     return Volver(inscripcionId, "Otro integrante del jurado modificó esta evaluación mientras la tenías abierta. Revisa los valores actuales.");
                 }
-                _context.Entry(evaluacion).Property(e => e.RowVersion).OriginalValue = Convert.FromBase64String(rowVersion);
+                _context.Entry(evaluacion).Property(e => e.RowVersion).OriginalValue = rowVersionEnviado;
             }
 
             evaluacion.JuezId = juezId;
@@ -234,6 +236,14 @@ namespace Catrinas.Web.Controllers
         {
             TempData["Error"] = error;
             return RedirectToAction(nameof(Evaluar), new { inscripcionId });
+        }
+
+        // rowversion de SQL Server = 8 bytes; cualquier otra cosa se considera mal formada.
+        private static byte[]? DecodificarRowVersion(string? valor)
+        {
+            if (string.IsNullOrEmpty(valor)) return null;
+            var bytes = new byte[8];
+            return Convert.TryFromBase64String(valor, bytes, out var escritos) && escritos == 8 ? bytes : null;
         }
 
         private Task<Inscripcion?> CargarInscripcionAsync(int inscripcionId) =>

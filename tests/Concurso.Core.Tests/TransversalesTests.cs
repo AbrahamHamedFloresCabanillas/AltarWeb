@@ -62,6 +62,32 @@ public class PasswordHashServiceTests
         Assert.Equal((false, false), PasswordHashService.Verificar("incorrecta", hash));
     }
 
+    // Hallazgo F4 (prueba de abuso): sin hash almacenado (cuenta inexistente o solo Google) la respuesta era
+    // casi instantanea y delataba que correos existen. Debe rechazar y tardar del mismo orden que una
+    // verificacion real (margen amplio para no depender del equipo donde corre la prueba).
+    [Fact]
+    public void SinHashAlmacenado_RechazaConCostoComparable()
+    {
+        var hash = PasswordHashService.HashPassword("correcta-123");
+        Assert.Equal((false, false), PasswordHashService.Verificar("lo-que-sea", null));
+        Assert.Equal((false, false), PasswordHashService.Verificar("lo-que-sea", ""));
+
+        static double Mediana(Action accion)
+        {
+            var tiempos = Enumerable.Range(0, 5).Select(_ =>
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                accion();
+                return sw.Elapsed.TotalMilliseconds;
+            }).OrderBy(t => t).ToArray();
+            return tiempos[2];
+        }
+
+        var real = Mediana(() => PasswordHashService.Verificar("incorrecta", hash));
+        var inexistente = Mediana(() => PasswordHashService.Verificar("incorrecta", null));
+        Assert.True(inexistente >= real * 0.3, $"Sin hash tardo {inexistente:F1} ms contra {real:F1} ms de una verificacion real.");
+    }
+
     [Fact]
     public void SEC02_HashSha256Legado_VerificaYPideRehash()
     {
