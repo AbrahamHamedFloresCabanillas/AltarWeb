@@ -3,7 +3,7 @@
 > **Actualizado 2026-10-17 (F4, rama `separacion-altares-catrinas`).** El repositorio ya son **dos
 > plataformas independientes**: `src/Altares.Web` (lo que describe este documento) y `src/Catrinas.Web`
 > (ver su [README](src/Catrinas.Web/README.md)), con infraestructura común en `src/Concurso.Core`,
-> pruebas en `tests/` (198 en verde) y herramientas en `tools/`. Las secciones de abajo sobre
+> pruebas en `tests/` (199 en verde) y herramientas en `tools/`. Las secciones de abajo sobre
 > controladores, modelo y deuda siguen describiendo Altares; lo que cambió con la separación está
 > resumido en "Estado tras la separación". Estado general y pendientes de salida a producción:
 > [`docs/00-auditoria-estado-actual.md`](docs/00-auditoria-estado-actual.md) y

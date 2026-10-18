@@ -573,8 +573,9 @@ o sigue fallando, se pasa al plan B (Azure B1).
 `AUDITORIA_SEGURIDAD.md` §0-quater): recálculo de lugares bajo concurrencia (ambas apps),
 `rowVersion` mal formado (Catrinas), sitio caído sin credenciales de Google, enumeración de cuentas
 por tiempo, `appsettings` local dentro del paquete, errores y *timeout* de SMTP (Altares), registro
-del destinatario en errores de correo (Catrinas). Además, Altares ahora envía por correo la constancia
-del juez cuando el juez tiene correo, igual que Catrinas.
+del destinatario en errores de correo (Catrinas). La constancia del juez de Altares **no** se envía
+desde cada `EnviarTodas(evaluacionId)` (es por su participación, no por equipo; se repetiría una vez
+por equipo evaluado): se descarga, y el envío único por periodo queda propuesto en `docs/09` §5.
 
 **Pendiente (requiere el hosting o al propietario):** contratar y configurar (docs/04–05), R6, R7,
 correo real con SPF/DKIM, carga en el hosting con el criterio de §11.4, independencia y aceptación

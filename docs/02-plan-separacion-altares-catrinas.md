@@ -36,9 +36,9 @@ Los hashes de F4c–F4e se listan en el reporte de cierre y en `git log`.
 | Suite | Pruebas (2026-10-17, tras F4) |
 |---|---:|
 | `Concurso.Core.Tests` | 54 |
-| `Altares.Tests` | 76 |
+| `Altares.Tests` | 77 |
 | `Catrinas.Tests` | 68 |
-| **Total** | **198**, 0 omitidas, 0 fallidas |
+| **Total** | **199**, 0 omitidas, 0 fallidas |
 
 ```bash
 dotnet test AltarWeb.sln -c Release

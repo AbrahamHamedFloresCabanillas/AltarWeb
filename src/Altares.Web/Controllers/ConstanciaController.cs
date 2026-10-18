@@ -97,7 +97,10 @@ namespace AltarWeb.Controllers
                     nombreMaestro: nombreMaestro,
                     correoMaestro: correoMaestro,
                     nombreJuez: nombreJuez,
-                    correoJuez: eval.Juez?.CorreoInstitucional);
+                    // La constancia del juez es por su participacion en el concurso (vision.md §9), no por equipo:
+                    // enviarla desde cada evaluacion le llegaria repetida una vez por equipo evaluado. Se sigue
+                    // pudiendo descargar (DescargarJuez); el envio unico por periodo queda propuesto en docs/09.
+                    correoJuez: null);
 
                 TempData["Mensaje"] = "Constancias enviadas por correo.";
             }

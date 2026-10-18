@@ -59,4 +59,53 @@ public class CorreoConstanciasTests
         Assert.Contains(_factory.Logs, l => l.Contains("Error al enviar constancias") && l.Contains("SmtpException"));
         Assert.DoesNotContain(_factory.Logs, l => l.Contains(correo, StringComparison.OrdinalIgnoreCase));
     }
+
+    // La constancia del juez es por su participacion (vision.md §9), no por equipo: "Enviar constancias"
+    // de cada evaluacion NO debe mandarla, o un juez con N equipos la recibiria N veces. Sigue descargable.
+    // El SMTP de pruebas apunta a un puerto cerrado: cualquier intento de envio dejaria un error en el log.
+    [Fact]
+    public async Task EnviarTodas_NoEnviaLaConstanciaDelJuez_PeroSeDescarga()
+    {
+        await _factory.CrearJuezAsync("juez-varios-f4", "Juez-Varios-2026!", correo: "juez.varios.f4@uabc.edu.mx");
+        var evaluaciones = new List<int>();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AltarDbContext>();
+            var juezId = await context.Jueces.Where(j => j.Usuario == "juez-varios-f4").Select(j => j.Id).SingleAsync();
+            var carreraId = await context.CatalogoCarreras.Select(c => c.Id).FirstAsync();
+            for (var k = 1; k <= 2; k++)
+            {
+                // Sin creador, integrantes ni maestro: el unico destinatario posible seria el juez.
+                var equipo = new Equipo { Nombre = $"Equipo juez F4 {k}", NombreAltar = "Altar", CarreraId = carreraId, Periodo = "2033-2", CodigoPublico = $"ALT-2033-2-J00{k}" };
+                context.EquiposConcurso.Add(equipo);
+                await context.SaveChangesAsync();
+                var evaluacion = new Evaluacion { EquipoId = equipo.Id, JuezId = juezId, Periodo = "2033-2", Niveles = 7, Estado = EstadoEvaluacion.Final, NotaFinal = 70 + k, SnapshotNombreEquipo = equipo.Nombre };
+                context.EvaluacionesConcurso.Add(evaluacion);
+                await context.SaveChangesAsync();
+                evaluaciones.Add(evaluacion.Id);
+            }
+        }
+
+        var cliente = _factory.CrearCliente();
+        string Token(string h) => Regex.Match(h, "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"").Groups[1].Value;
+        var login = await cliente.PostAsync("/Acceso/Login", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["usuario"] = "juez-varios-f4", ["password"] = "Juez-Varios-2026!", ["__RequestVerificationToken"] = Token(await cliente.GetStringAsync("/Registro/Login"))
+        }));
+        Assert.Contains("Historial", login.Headers.Location!.OriginalString);
+
+        foreach (var id in evaluaciones)
+        {
+            var r = await cliente.PostAsync("/Constancia/EnviarTodas", new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["evaluacionId"] = id.ToString(), ["__RequestVerificationToken"] = Token(await cliente.GetStringAsync("/Registro/Login"))
+            }));
+            Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);
+            Assert.DoesNotContain(_factory.Logs, l => l.Contains($"Error al enviar constancias de la evaluación {id}"));
+
+            var pdf = await cliente.GetAsync($"/Constancia/DescargarJuez?evaluacionId={id}");
+            Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
+            Assert.Equal("application/pdf", pdf.Content.Headers.ContentType?.MediaType);
+        }
+    }
 }

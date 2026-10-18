@@ -54,6 +54,11 @@
   - **M1:** alta de integrantes por identificador sin consentimiento (riesgo aceptado para
     noviembre): invitación con aceptación o permitir salir de un equipo.
   - Regla de desempate de Catrinas (comité).
+  - **Constancia del juez por periodo:** hoy el PDF del juez se genera por evaluación ("evaluando al
+    equipo X") y solo se descarga. Punto correcto para enviarla: una acción de administración por
+    periodo ("Enviar constancias del jurado") que mande **una** constancia por juez con al menos una
+    evaluación Final en el periodo, con texto de participación general. En Catrinas, `EnviarTodas`
+    sí la envía por evaluación (desde F3): revisar con la misma regla.
   - Migrar Altares a la plantilla PDF común (Lato) de `Concurso.Core`.
   - Design system compartido (Razor Class Library).
   - Edición administrativa de inscripciones en Catrinas y restablecimiento de contraseña del jurado.

@@ -27,7 +27,7 @@
 | Catrinas | Plataforma independiente: inscripción (ligada a un altar por referencia blanda o independiente), integrantes, Personificador, jurado propio, Preliminar/Final con confirmación y concurrencia optimista, ranking por carrera con empates, constancias, administración |
 | Independencia | Bases, sitios, cookies, Data Protection, clientes OAuth, buzones y paquetes separados; ninguna app lee la base de la otra |
 | Seguridad | Ver sección 3 |
-| Pruebas | 198 (Core 54, Altares 76, Catrinas 68), todas en verde |
+| Pruebas | 199 (Core 54, Altares 77, Catrinas 68), todas en verde |
 | Carga | Línea base local de 200 usuarios: 0 errores tras corregir los defectos que encontró ([07 §3](07-checklist-produccion.md)) |
 | Despliegue | Paquetes `win-x86` sin configuración, generados y verificados por script; secretos solo en variables de entorno del sitio |
 

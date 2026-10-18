@@ -265,7 +265,8 @@ Las variables de entorno no se tocan. Desplegar Altares no obliga a desplegar Ca
 Con un equipo de prueba cuyos correos sean buzones reales que puedas revisar (p. ej. tu cuenta
 `@uabc.edu.mx`), y una evaluación Final:
 - [ ] **Enviar constancias por correo** (Detalle de la evaluación): llegan la grupal, las
-      individuales, la del maestro y la del juez (si el juez tiene correo), con remitente
+      individuales y la del maestro (la del juez **no** se envía desde cada evaluación: es por su
+      participación y se descarga desde el detalle), con remitente
       `Concurso de Altares FIM <altares@<dominio>>`, y **no** a spam.
 - [ ] El ZIP de constancias individuales se descarga (el ZIP no se envía por correo).
 - [ ] **Error SMTP:** cambia temporalmente `Smtp__Password` por un valor erróneo, reinicia y
