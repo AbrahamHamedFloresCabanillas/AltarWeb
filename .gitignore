@@ -370,8 +370,11 @@ AltarWeb/appsettings.json
 AltarWeb/appsettings.Development.json
 src/*/appsettings.json
 src/*/appsettings.Development.json
+src/*/appsettings.Production.json
+src/*/appsettings.Staging.json
 # Archivos subidos en runtime (recorridos PDF, etc.) — no son parte del codigo
 AltarWeb/wwwroot/uploads/
 src/*/wwwroot/uploads/
 # Llaves de Data Protection persistidas en disco
 src/*/keys/
+src/*/App_Data/

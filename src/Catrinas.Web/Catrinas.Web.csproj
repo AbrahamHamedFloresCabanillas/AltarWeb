@@ -34,4 +34,17 @@
     <Using Include="Concurso.Core.Pdf" />
   </ItemGroup>
 
+  <!-- F4: la configuracion local (el archivo donde irian credenciales) y las plantillas NUNCA viajan en el paquete.
+       En el hosting la configuracion y los secretos van en las variables de entorno del sitio (panel de MonsterASP), ver docs/05-despliegue-catrinas.md. -->
+  <ItemGroup>
+    <Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <!-- F4: GC de estacion de trabajo. El de servidor reserva memoria por nucleo y el hosting limita a 512 MB
+       por sitio; con este GC la prueba de PDF (20 descargas concurrentes, heap limitado a 384 MB) no tuvo
+       errores. Sustituye el ajuste manual de runtimeconfig.json que pedia la guia anterior. -->
+  <PropertyGroup>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
 </Project>

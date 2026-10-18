@@ -27,6 +27,10 @@ DELETE FROM Difuntos                WHERE EquipoId IN (SELECT Id FROM @equipos);
 DELETE FROM EquiposConcurso         WHERE Id IN (SELECT Id FROM @equipos);
 DELETE FROM Registrantes            WHERE CorreoInstitucional LIKE '%.demo@uabc.edu.mx';
 
+-- Si el periodo quedo sin equipos, el consecutivo de CodigoPublico vuelve a empezar en 0001
+-- (los equipos reales no heredan numeros de datos ficticios). Con equipos restantes no se toca.
+DELETE c FROM ContadoresCodigoPublico c WHERE NOT EXISTS (SELECT 1 FROM EquiposConcurso e WHERE e.Periodo = c.Periodo);
+
 COMMIT TRANSACTION;
 
 SELECT 'Registrantes demo restantes' AS Concepto, COUNT(*) AS Total

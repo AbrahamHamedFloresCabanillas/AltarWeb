@@ -44,7 +44,12 @@ namespace Concurso.Core.Seguridad
             var nombreApp = configuration["Seguridad:DataProtection:ApplicationName"] ?? applicationNamePorDefecto;
             var rutaLlaves = configuration["Seguridad:DataProtection:KeysPath"];
             if (!string.IsNullOrWhiteSpace(nombreApp)) builder.SetApplicationName(nombreApp);
-            if (!string.IsNullOrWhiteSpace(rutaLlaves)) builder.PersistKeysToFileSystem(new DirectoryInfo(rutaLlaves));
+            // Una ruta relativa (p. ej. "App_Data/keys") se resuelve contra la carpeta de la app y no contra el
+            // directorio de trabajo, que en IIS/hosting compartido no siempre es el mismo.
+            if (!string.IsNullOrWhiteSpace(rutaLlaves))
+            {
+                builder.PersistKeysToFileSystem(new DirectoryInfo(Path.IsPathRooted(rutaLlaves) ? rutaLlaves : Path.Combine(AppContext.BaseDirectory, rutaLlaves)));
+            }
             return services;
         }
 
