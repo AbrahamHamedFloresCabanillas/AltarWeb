@@ -35,6 +35,14 @@ No consulta la base de Altares, no llama a sus endpoints y funciona aunque Altar
 5. Datos ficticios opcionales (nunca en una base real): `Datos/Demo/datos-demo-catrinas.sql`, y para
    quitarlos `Datos/Demo/limpiar-datos-demo-catrinas.sql`. Ejecútalos con `sqlcmd ... -f 65001 -i <archivo>`.
 
+## Despliegue
+
+Guía completa en [`docs/05-despliegue-catrinas.md`](../../docs/05-despliegue-catrinas.md) (la infraestructura
+común está en `docs/04` §A). El paquete se genera con `tools/Publicar/publicar.ps1` y **no** lleva
+ningún `appsettings*.json`: en el hosting la configuración y los secretos son variables de entorno
+del sitio. Antes de abrir inscripciones reales, `despliegue/verificar-limpieza-catrinas.sql` debe
+dar 0 (sin datos demo ni de prueba de carga).
+
 ## Qué hace
 
 | Actor | Flujo |
@@ -46,6 +54,7 @@ No consulta la base de Altares, no llama a sus endpoints y funciona aunque Altar
 **Reglas clave:**
 - **Nota:** suma ponderada con los pesos vigentes **al guardar**. Cada evaluación guarda los pesos con los que se calculó; cambiarlos después **no** recalcula lo ya guardado.
 - **Ranking por carrera y periodo:** solo evaluaciones Final. **No hay criterio de desempate definido** (vision.md §13.11): notas iguales comparten lugar (1, 1, 3) y no se usa ningún campo incidental para desempatar.
+- **Concurrencia:** dos personas del jurado sobre la misma evaluación → la segunda recibe un aviso (`rowversion`); un `rowVersion` alterado se trata igual, sin error. El recálculo de lugares al cerrar Final se serializa por carrera y periodo (F4).
 - **Constancias:** grupal, individual (indica Personificador o Integrante, en ZIP), maestro encargado (si existe) y jurado, con el lugar cuando aplica. Se generan desde el snapshot de la evaluación.
 
 ## Pruebas

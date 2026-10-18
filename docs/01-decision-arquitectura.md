@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Estado | **Aprobado conceptualmente** (2026-10-17). Autorizadas solo F0A y F0B. Modelo de Catrinas definido (§7.1); **la implementación de F1–F3 requiere autorización explícita** |
+| Estado | **Aprobado** (2026-10-17). F0A–F3 hechas y aprobadas; **F4 en curso**: hecho todo lo que no depende del hosting; faltan las acciones del propietario y las pruebas en el hosting (§14, `docs/07`) |
 | Fecha | 2026-10-17 |
 | Commit base auditado | `6c800ae` (tag de rollback `pre-separacion`) |
 | Rama de trabajo | `separacion-altares-catrinas` |
@@ -413,11 +413,11 @@ documentación, y **commit independiente**.
 |---|---|---|
 | **F0A** | Rama, tag `pre-separacion`, suite mínima de tests, baseline en .NET 8 | **Hecha** — commit `9173f4c` |
 | **F0B** | .NET 8 → 10 + EF Core 10; build; todos los tests; verificar QuestPDF, OAuth, migraciones, sesiones y arranque. Commit reversible | **Hecha** — commit `2713d15` (.NET 10.0.13, Pkcs fijado a 10.0.13 por GHSA-846f-f764-76mx) |
-| F1 | Monorepo + extracción de `Concurso.Core` sin cambio funcional + SEC-04 por cuenta + endurecimiento de SEC-01 y CFG-02 | **Hecha** (pendiente de autorización para F2) |
-| F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | **Hecha** (pendiente de autorización para F3). Esquema de Catrina conservado como legado; sin migraciones destructivas |
-| **F3** | Catrinas.Web con el modelo de §7.1 | **Hecha** (pendiente de revisión local del propietario; F4 no autorizada). Ver `src/Catrinas.Web/README.md` y §13 |
-| F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | 10–18 |
-| Docs | `docs/00–09`, actualización de README, current_state y DESPLIEGUE | 6–10 |
+| F1 | Monorepo + extracción de `Concurso.Core` sin cambio funcional + SEC-04 por cuenta + endurecimiento de SEC-01 y CFG-02 | **Hecha** |
+| F2 | Altares sin Catrina + `CodigoPublico` (§2.6) | **Hecha**. Esquema de Catrina conservado como legado; sin migraciones destructivas |
+| **F3** | Catrinas.Web con el modelo de §7.1 | **Hecha** y aprobada. Ver `src/Catrinas.Web/README.md` y §13 |
+| F4 | Despliegue, OAuth ×2, buzones ×2 con SPF/DKIM/DMARC, prueba de carga (§11), pruebas de independencia (§5), gate de §8.4 | **En curso** (§14): código, herramientas, línea base local y documentación hechos; falta el hosting |
+| Docs | `docs/00–09`, actualización de README, current_state y DESPLIEGUE | **Hecha** (se completa con los resultados del hosting) |
 
 El propietario necesita **~6–10 h propias**: cuentas, dominio, Google Cloud, buzones, revisión del
 gate de §8.4 y pruebas de aceptación.
@@ -430,12 +430,12 @@ separado y Catrinas opera este año con `pre-separacion`. Requiere aceptación d
 | Id | Riesgo | Mitigación |
 |---|---|---|
 | ~~R1~~ | ~~El rate limiting de login (10 por minuto por IP) bloquearía a usuarios legítimos detrás del NAT de la FIM.~~ | **Resuelto en F1 (2026-10-17):** límite estricto por cuenta + techo amplio por IP, configurable (`AUDITORIA_SEGURIDAD.md` §0-ter). Falta calibrar el techo por IP con la prueba de carga (§11). |
-| R2 | 512 MB de RAM y CPU no publicada para ~200 usuarios y generación de PDFs | Prueba de carga (§11); complemento de RAM o plan B |
+| R2 | 512 MB de RAM y CPU no publicada para ~200 usuarios y generación de PDFs | Prueba de carga (§11); complemento de RAM o plan B. **Línea base local (F4):** 0 errores con 200 usuarios; PDF con heap limitado a 384 MB y GC de estación: 315 MB máx. Falta medir en el hosting. |
 | R3 | Plazo de ~14 días con F3 aún sin definir | Resolver §7.1 cuanto antes; fallback de §9 |
 | R4 | DPA o ubicación de datos incompatibles con políticas de la UABC | Gate de §8.4; Azure con región elegible como alternativa |
 | R5 | Correo marcado como spam | SPF + DKIM + DMARC en F4; prueba de envío a cuentas `@uabc.edu.mx` |
 | **R6** | **`X-Forwarded-*`**: la topología de proxies de MonsterASP es desconocida. Con la configuración por defecto (solo loopback) la app no confía en cabeceras de clientes. Si el hosting tuviera un proxy no-loopback delante, `RemoteIpAddress` sería la del proxy (todo el tráfico compartiría el techo por IP) y `IsHttps` podría ser falso. | **Gate obligatorio de F4, no se cierra sin probarlo en staging o producción:** registrar `RemoteIpAddress`, `X-Forwarded-For/Proto` y `Request.IsHttps` reales; confirmar que la cookie `Secure` y el callback de Google funcionan en `https`. Solo entonces configurar `Seguridad:ForwardedHeaders:KnownProxies/KnownNetworks` con las IP verificadas. No se adivinan proxies. |
-| **R7** | Cuentas UABC legítimas sin claim `hd` de Google Workspace serían rechazadas en el login con Google. | **Gate de F4:** probar con una cuenta UABC real. Si no trae `hd`, poner `GoogleAuth:ExigirDominioWorkspace=false` (se sigue exigiendo `email_verified` y el dominio) y documentarlo. |
+| **R7** | Cuentas UABC legítimas sin claim `hd` de Google Workspace serían rechazadas en el login con Google. | **Gate de F4:** probar con una cuenta UABC real (`docs/04` §B.6). Si no trae `hd`, **detenerse**: no se desactiva `hd` sin decisión explícita del propietario; opciones de *fallback* en `docs/07` §4. |
 
 ## 11. Prueba de carga (antes de F4, contra el hosting real con datos ficticios)
 
@@ -446,7 +446,7 @@ separado y Catrinas opera este año con `pre-separacion`. Requiere aceptación d
   512 MB.
 - Base con datos sintéticos: 13 carreras, ~130 equipos, ~600 registrantes, ~30 jueces.
 - R1 resuelto o con límite elevado solo para la ventana de la prueba.
-- Herramienta propuesta: **k6** (open source). Se pedirá autorización antes de instalarla.
+- Herramienta: **`tools/PruebaCarga`** (consola .NET propia, sin dependencias; no hizo falta instalar k6). Ver su README.
 
 ### 11.1 Escenario mixto (~200 usuarios virtuales)
 
@@ -553,4 +553,30 @@ o sigue fallando, se pasa al plan B (Azure B1).
     - no se registra PII en los logs.
   - Altares tiene el mismo patrón.
   - **Pendiente de revisión post-concurso:** invitación con aceptación, o permitir que un integrante salga.
+
+## 14. Estado de F4 (2026-10-17) — decisiones y resultados
+
+**Decisiones de despliegue:**
+- **Dominios:** `altares.<dominio>` y `catrinas.<dominio>` como *subdomain websites* de MonsterASP
+  Premium; portada estática en el dominio raíz; el tercer subdominio queda libre. Alternativa
+  institucional (`*.fim.uabc.edu.mx`) documentada para después. (`docs/04` §A.1)
+- **Sin staging separado:** el plan da dos bases. Antes del gate de §8.4 los sitios de producción
+  funcionan como staging con datos ficticios; se limpian y verifican en cero antes de abrir.
+- **Configuración y secretos:** variables de entorno del sitio (panel de MonsterASP), no
+  `appsettings`. Ningún `appsettings*.json` viaja en el paquete.
+- **Paquete:** `win-x86`, framework-dependent, generado y verificado por `tools/Publicar/publicar.ps1`.
+- **GC de estación de trabajo** en ambas apps (validado con heap limitado a 384 MB).
+- **Data Protection:** `KeysPath` relativo (`App_Data/keys`) resuelto contra la carpeta de la app.
+- **Rate limiting:** se mantienen 5/5 min por cuenta y 300/600 por minuto por IP (medido, `docs/07` §3.3).
+
+**Defectos encontrados por la prueba de carga y corregidos** (detalle en `docs/07` §3.4 y
+`AUDITORIA_SEGURIDAD.md` §0-quater): recálculo de lugares bajo concurrencia (ambas apps),
+`rowVersion` mal formado (Catrinas), sitio caído sin credenciales de Google, enumeración de cuentas
+por tiempo, `appsettings` local dentro del paquete, errores y *timeout* de SMTP (Altares), registro
+del destinatario en errores de correo (Catrinas). Además, Altares ahora envía por correo la constancia
+del juez cuando el juez tiene correo, igual que Catrinas.
+
+**Pendiente (requiere el hosting o al propietario):** contratar y configurar (docs/04–05), R6, R7,
+correo real con SPF/DKIM, carga en el hosting con el criterio de §11.4, independencia y aceptación
+manual, prueba de restauración, gate de §8.4, limpieza y verificación de datos ficticios.
 

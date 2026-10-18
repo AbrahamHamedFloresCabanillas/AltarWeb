@@ -1,17 +1,18 @@
 # Despliegue gratuito de AltarWeb — guía paso a paso
 
-> ⚠️ **Documento parcialmente obsoleto (2026-10-17).** Describe el despliegue de la app única anterior
-> a la separación en Altares y Catrinas. En la rama `separacion-altares-catrinas` ya cambiaron:
-> - el proyecto, que ahora es `src/Altares.Web/Altares.Web.csproj`;
-> - el ejecutable, que ahora es `Altares.Web.exe` (en `web.config`, `processPath=".\Altares.Web.exe"`);
-> - el runtime, que ahora es **.NET 10**;
-> - la configuración, que suma `Seguridad:RateLimiting` y `Seguridad:ForwardedHeaders`;
-> - Google, que ahora exige `email_verified` y `hd`.
+> ⛔ **OBSOLETO (2026-10-17). No usar para desplegar.** Describe la app única anterior a la
+> separación (.NET 8, `AltarWeb.exe`, `appsettings.json` dentro del paquete, ajustes manuales tras
+> cada publish). La guía vigente es:
+> - [`docs/04-despliegue-altares.md`](docs/04-despliegue-altares.md) — infraestructura común y Altares;
+> - [`docs/05-despliegue-catrinas.md`](docs/05-despliegue-catrinas.md) — Catrinas;
+> - [`docs/07-checklist-produccion.md`](docs/07-checklist-produccion.md) — checklist de salida.
 >
-> Lo sustituirán `docs/04-despliegue-altares.md` y `docs/05-despliegue-catrinas.md` (fase F4).
+> Se conserva solo como referencia histórica y para un rollback total al tag `pre-separacion`
+> ([`docs/08-rollback-y-recuperacion.md`](docs/08-rollback-y-recuperacion.md) §4). Los datos de sitio y base que
+> menciona son del plan gratuito de septiembre y ya no aplican.
 
-> Escrito el 2026-09-02 para el commit `07ead92`. Complementa la sección
-> *Checklist de despliegue a producción* del [`README.md`](README.md).
+> Escrito el 2026-09-02 para el commit `07ead92`. Complementaba la sección
+> *Checklist de despliegue a producción* del README de entonces.
 
 ## Resumen de la decisión
 

@@ -1,12 +1,13 @@
 # AltarWeb - Estado Actual del Proyecto
 
-> ⚠️ **En transición (2026-10-17):** el repo se está separando en Altares y Catrinas (rama
-> `separacion-altares-catrinas`, `docs/01-decision-arquitectura.md`). En esa rama el código vive en
-> `src/Altares.Web` y `src/Concurso.Core` (no en `AltarWeb/`) y las pruebas en `tests/`. El resto de este
-> documento describe la app única y se reescribirá al cerrar la separación.
->
-> Actualizado: 2026-10-10 · Commit de referencia: `c615f9a` (`master`, sincronizado con `origin/master`,
-> sin cambios locales pendientes).
+> **Actualizado 2026-10-17 (F4, rama `separacion-altares-catrinas`).** El repositorio ya son **dos
+> plataformas independientes**: `src/Altares.Web` (lo que describe este documento) y `src/Catrinas.Web`
+> (ver su [README](src/Catrinas.Web/README.md)), con infraestructura común en `src/Concurso.Core`,
+> pruebas en `tests/` (198 en verde) y herramientas en `tools/`. Las secciones de abajo sobre
+> controladores, modelo y deuda siguen describiendo Altares; lo que cambió con la separación está
+> resumido en "Estado tras la separación". Estado general y pendientes de salida a producción:
+> [`docs/00-auditoria-estado-actual.md`](docs/00-auditoria-estado-actual.md) y
+> [`docs/07-checklist-produccion.md`](docs/07-checklist-produccion.md).
 
 Este documento describe el **estado técnico interno** del sistema (qué existe hoy en el código).
 Los otros documentos del repo cubren lo demás:
@@ -14,12 +15,27 @@ Los otros documentos del repo cubren lo demás:
 | Documento | Responde a |
 |---|---|
 | [`vision.md`](vision.md) (v2.6) | **Qué** debe construirse — especificación funcional, fuente de verdad del comité. |
-| [`README.md`](README.md) | **Cómo** se usa, se configura y se despliega. |
-| [`DESPLIEGUE.md`](DESPLIEGUE.md) | Guía paso a paso de despliegue en hosting gratuito (MonsterASP / Azure). |
+| [`README.md`](README.md) | Índice del monorepo; cada app tiene su README en `src/<App>/`. |
+| [`docs/04`](docs/04-despliegue-altares.md) y [`docs/05`](docs/05-despliegue-catrinas.md) | Despliegue vigente (`DESPLIEGUE.md` es obsoleto). |
 | [`AUDITORIA_SEGURIDAD.md`](AUDITORIA_SEGURIDAD.md) | Auditoría de seguridad (22 hallazgos) y **estado de remediación** de cada uno. |
 | Este archivo | Estado técnico: arquitectura, modelo de datos, deuda técnica, historial. |
 
 ---
+
+## Estado tras la separación (2026-10-17)
+
+- **Altares** ya no tiene Catrina en la UI ni en la lógica (tablas legadas conservadas, sin uso) y
+  cada equipo tiene un `CodigoPublico` inmutable `ALT-{Periodo}-{NNNN}`.
+- **Catrinas** es una app aparte con base, cuentas, jurado, cookies, Data Protection, cliente OAuth y
+  buzón propios.
+- **Seguridad añadida:** límite de login por cuenta + techo por IP; Google exige `email_verified` y
+  `hd`; revalidación de sesión de cuentas desactivadas (M2); tiempo de login igual para cuentas
+  inexistentes; diagnóstico de red y memoria solo para admin.
+- **Robustez añadida en F4:** recálculo de lugares serializado; errores y *timeout* de SMTP
+  manejados; la app no arranca sin credenciales de Google; GC de estación de trabajo.
+- **Despliegue:** paquetes `win-x86` sin configuración, secretos en variables de entorno del sitio.
+- Las secciones siguientes conservan la descripción de Altares de 2026-10-10; donde dicen
+  `AltarWeb/`, hoy es `src/Altares.Web/`.
 
 ## Estado general
 

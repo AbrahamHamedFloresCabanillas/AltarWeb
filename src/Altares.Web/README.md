@@ -1,13 +1,14 @@
-# AltarWeb
+# Altares.Web — Concurso de Altares
 
 Sistema de gestión y evaluación para el Concurso de Altares de Muertos de la Facultad de Ingeniería (FIM) de la Universidad Autónoma de Baja California (UABC).
 
 AltarWeb permite a los jueces registrar evaluaciones de altares bajo los nuevos criterios culturales, calcular puntajes por nivel y por elemento, gestionar el registro de participantes (alumnos, maestros y administrativos), administrar equipos por carrera y periodo, y generar y enviar constancias oficiales en PDF a todos los participantes, maestros encargados y jueces.
 
 > **Plataformas separadas (2026-10-17):** este README describe **Altares** (`src/Altares.Web`). El Concurso de Catrinas es una
-> plataforma independiente: ver [`src/Catrinas.Web/README.md`](src/Catrinas.Web/README.md).
+> plataforma independiente: ver [`../Catrinas.Web/README.md`](../Catrinas.Web/README.md). Índice del repositorio:
+> [`README.md` raíz](../../README.md).
 
-La especificación funcional completa vive en [`vision.md`](vision.md), el estado técnico interno en [`current_state.md`](current_state.md) y la guía de publicación en línea en [`DESPLIEGUE.md`](DESPLIEGUE.md).
+La especificación funcional completa vive en [`vision.md`](../../vision.md), el estado técnico interno en [`current_state.md`](../../current_state.md) y el despliegue en [`docs/04-despliegue-altares.md`](../../docs/04-despliegue-altares.md).
 
 ---
 
@@ -17,7 +18,7 @@ La especificación funcional completa vive en [`vision.md`](vision.md), el estad
 - **Persistencia de datos:** Entity Framework Core + SQL Server (LocalDB en desarrollo)
 - **Generación de documentos:** [QuestPDF](https://www.questpdf.com/) (licencia comunitaria)
 - **Interfaz:** HTML5, CSS3 y FontAwesome 6, con un sistema de diseño propio ("Noche de Altar") que incluye **tema claro, oscuro y automático (según el sistema operativo)**
-- **Correo:** SMTP (Gmail) para el envío de constancias
+- **Correo:** SMTP autenticado (buzón `altares@<dominio>` del hosting; Gmail como respaldo) para el envío de constancias
 - **Autenticación:** sesión local con contraseña (PBKDF2 vía `Microsoft.AspNetCore.Identity.PasswordHasher`) o Google OAuth restringido a `@uabc.edu.mx`, tanto para participantes como para jueces
 
 ---
@@ -145,11 +146,12 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
    cd AltarWeb
    ```
 
-2. **Configurar `src/Altares.Web/appsettings.json`** (no se versiona; créalo a partir de este ejemplo):
+2. **Configurar `src/Altares.Web/appsettings.json`** (no se versiona; cópialo de
+   [`appsettings.Ejemplo.json`](appsettings.Ejemplo.json), que lista todas las claves). Ejemplo mínimo para local:
    ```json
    {
      "ConnectionStrings": {
-       "AltarWebContext": "Server=(localdb)\\MSSQLLocalDB;Database=AltarWebContext;Trusted_Connection=True;MultipleActiveResultSets=true"
+       "AltarContext": "Server=(localdb)\\MSSQLLocalDB;Database=AltarWebContext;Trusted_Connection=True;MultipleActiveResultSets=true"
      },
      "GoogleAuth": {
        "ClientId": "TU_CLIENT_ID_AQUI.apps.googleusercontent.com",
@@ -173,9 +175,9 @@ Las evaluaciones y equipos se agrupan automáticamente según el ciclo escolar:
    ```
    URI de callback de Google (registrar en Google Cloud Console): `http://localhost:5185/Registro/google-callback`.
 
-3. **Ejecutar migraciones:**
+3. **Migraciones:** se aplican solas al arrancar (`SeedData.Initialize` → `Database.Migrate()`). Si prefieres
+   aplicarlas a mano:
    ```bash
-   dotnet tool install --global dotnet-ef   # si no lo tienes instalado
    dotnet ef database update --project src/Altares.Web
    ```
 
@@ -200,6 +202,9 @@ no se escriben a mano.
 Todo lo que crea queda marcado (correos terminados en `.demo@uabc.edu.mx`, matrículas `19xxxxx` /
 `190xx`), y `limpiar-datos-demo.sql` lo borra sin tocar ningún otro periodo ni los registrantes
 reales. **No ejecutes ninguno de los dos contra una base con datos del concurso real.**
+Antes de abrir el registro real, `despliegue/verificar-limpieza-altares.sql` debe dar 0 en todo
+(ver [`docs/03-modelo-datos-y-migracion.md`](../../docs/03-modelo-datos-y-migracion.md) §5). Los scripts de demo
+están en la raíz del repositorio.
 
 ### Seguridad — estado real del sistema (actualizado tras auditoría de seguridad, 2026-07-04)
 
@@ -215,7 +220,7 @@ Resumen del estado actual:
 - **CSRF:** filtro global `AutoValidateAntiforgeryTokenAttribute` en todos los POST/PUT/DELETE.
 - **Cookies de sesión:** `Secure` + `HttpOnly` + `SameSite=Lax` explícitos.
 - **Cabeceras de seguridad:** `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`
-  básica, `ForwardedHeaders` configurado para Azure App Service (o cualquier proxy que termine TLS).
+  básica. `ForwardedHeaders` solo confía en loopback salvo proxies configurados (ver "Proxies" abajo).
   **Deuda técnica conocida:** la CSP usa `script-src 'self' 'unsafe-inline'` porque el layout tiene
   `<script>` inline (tema, sidebar, datepicker) — esto reduce el valor de la CSP contra XSS. Cerrarlo
   requeriría mover esos scripts a archivos estáticos o usar nonces por request; queda pendiente.
@@ -228,6 +233,10 @@ Resumen del estado actual:
   `Seguridad:ForwardedHeaders`; pendiente de verificar con el hosting real (gate de F4).
 - **Google:** además del dominio `@uabc.edu.mx` se exige `email_verified` y el claim `hd` de la
   organización (`GoogleAuth:ExigirDominioWorkspace`, `GoogleAuth:DominioWorkspace`).
+- **Sesiones (M2, F4):** un filtro global revalida en cada petición que el juez siga activo y aprobado (y
+  refresca su rol) y que el participante siga activo; si no, limpia la sesión.
+- **Enumeración de cuentas (F4):** un login con cuenta inexistente hace el mismo trabajo de PBKDF2 que uno
+  real, para que el tiempo de respuesta no revele qué correos están registrados.
 - **Logging:** intentos de login fallidos y accesos denegados por rol se registran (`ILogger`, nivel
   Warning) con usuario/correo intentado e IP — nunca contraseñas ni tokens.
 - **Concurrencia:** índice único a nivel de BD para "un registrante por equipo activo por periodo" y para
@@ -242,20 +251,18 @@ Resumen del estado actual:
   que arrastraba `NuGet.Packaging`/`NuGet.Protocol` vulnerables) solo se incluye en builds `Debug`; un
   `dotnet publish -c Release` no la empaqueta.
 
-### Checklist de despliegue a producción (Azure App Service u otro proxy)
+### Despliegue a producción
 
-> Para el paso a paso completo de publicar la app en hosting gratuito (MonsterASP.NET o Azure App
-> Service F1), con la configuración de Google OAuth y la cadena de conexión, ver
-> [`DESPLIEGUE.md`](DESPLIEGUE.md).
+Guía completa (dominio, sitio, base, variables de entorno, Google, correo, gates R6/R7):
+[`docs/04-despliegue-altares.md`](../../docs/04-despliegue-altares.md). Checklist de salida:
+[`docs/07-checklist-produccion.md`](../../docs/07-checklist-produccion.md). En resumen:
 
-- [ ] Fijar `ASPNETCORE_ENVIRONMENT=Production` explícitamente en la configuración del App Service (en
-  `Development` se muestra la Developer Exception Page con stack trace; no asumir el default).
-- [ ] Definir `SEED_ADMIN_PASSWORD` (o dejar que se genere aleatoria y capturarla del log de arranque
-  antes de que rote el log).
-- [ ] Confirmar que el proxy/App Service termina TLS y que `ForwardedHeaders` refleja `https` en
-  `Request.Scheme` (sin esto, las cookies `Secure` y el callback de Google no funcionan tras el proxy).
-- [ ] Sustituir `GoogleAuth` y `Smtp` en `appsettings.json` con credenciales reales.
-- [ ] Publicar con `dotnet publish -c Release` (no `Debug`) para excluir la herramienta de scaffolding.
+- El paquete se genera con `tools/Publicar/publicar.ps1` (`win-x86`, Release, **sin** ningún
+  `appsettings*.json`).
+- Configuración y secretos van en las **variables de entorno del sitio** (panel del hosting), nunca en
+  archivos ni en git. Sin `GoogleAuth__ClientId/ClientSecret` la app no arranca y dice qué falta.
+- `SEED_ADMIN_PASSWORD` solo para el primer arranque; se borra tras el cambio obligatorio de contraseña.
+- `Seguridad:ForwardedHeaders` se configura solo después de verificar el hosting (gate R6).
 
 ### Decisiones de producto pendientes (no técnicas)
 

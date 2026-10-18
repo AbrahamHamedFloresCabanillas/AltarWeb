@@ -144,6 +144,38 @@ consultada el 2026-10-17.
 - que el callback de Google salga en `https`.
 
 Después se configuran las IP o redes reales, si hacen falta. Esto es un gate obligatorio de F4 (ADR §10, R6).
+Herramienta y procedimiento (F4): `/AltarAdmin/Diagnostico` y `/Admin/Diagnostico` (solo admin) y
+`docs/04-despliegue-altares.md` §B.5, que incluye una prueba de suplantación con `X-Forwarded-For`.
+
+---
+
+## 0-quater. Revisión de seguridad de F4 (2026-10-17)
+
+Alcance: todo lo cambiado en F4 (M2 en Altares, mitigación de M1, endpoints de diagnóstico,
+herramienta de carga, empaquetado y configuración de despliegue) y los defectos que encontró la
+prueba de carga. Sin hallazgos altos abiertos.
+
+| Id | Hallazgo | Severidad | Estado |
+|---|---|---|---|
+| F4-01 | **Enumeración de cuentas por tiempo.** Un login contra una cuenta inexistente (o solo de Google) respondía en ~5 ms y uno real en ~120 ms (PBKDF2), así que se podía saber qué correos están registrados. | 🟢 Baja | ✅ Corregido: `PasswordHashService.Verificar` hace el mismo PBKDF2 contra un hash señuelo. Prueba `SinHashAlmacenado_RechazaConCostoComparable` (fallaba: 0.0 ms contra 113 ms). |
+| F4-02 | **Configuración local dentro del paquete.** `dotnet publish` copiaba el `appsettings.json` local a la carpeta que se sube al hosting. Hoy ese archivo solo tiene marcadores y LocalDB (verificado: ningún valor real), pero es donde se pondrían credenciales, y el paquete las habría llevado. | 🟢 Baja | ✅ Corregido: ningún `appsettings*.json` se publica (`CopyToPublishDirectory=Never`); `tools/Publicar/publicar.ps1` falla si encuentra uno. Secretos solo en variables de entorno del sitio. |
+| F4-03 | **Denegación de servicio por configuración incompleta.** Sin `GoogleAuth:ClientId/ClientSecret`, la validación de opciones del handler de Google fallaba en **cada** petición (500 en todo el sitio, incluso `/`). | 🟢 Baja | ✅ Corregido: la app no arranca y el mensaje nombra la clave faltante (sin valores). Prueba `SinCredencialesDeGoogle_NoArrancaYDiceQueFalta`. |
+| F4-04 | **500 con entrada manipulada.** Catrinas: un `rowVersion` mal formado lanzaba `FormatException`. | 🟢 Baja | ✅ Corregido: se trata como conflicto de concurrencia. Prueba `RowVersionMalFormado_NoEs500NiGuarda`. |
+| F4-05 | **Integridad del ranking bajo concurrencia.** Cierres Final simultáneos en la misma carrera: 500 en Catrinas y posible lugar desactualizado en ambas apps. | 🟡 Media | ✅ Corregido: recálculo serializado con `sp_getapplock` por carrera y periodo (`Concurso.Core.Datos.BloqueoExclusivo`). Pruebas `CierresFinalSimultaneos_…` y `LugaresConcurrentesTests`. |
+| F4-06 | **Errores SMTP no manejados y sin límite de tiempo.** Altares solo atrapaba la configuración incompleta (un error SMTP real daba 500); `SendMailAsync` ignora `SmtpClient.Timeout`. Catrinas registraba el mensaje completo de la excepción, que puede incluir el correo del destinatario. | 🟢 Baja | ✅ Corregido: ambas apps atrapan cualquier error de envío, registran solo tipo y código SMTP (sin destinatario), y el envío se corta a `Smtp:TimeoutSegundos` (30 s). Pruebas `CorreoSmtpTests`, `ErrorSmtp_NoEs500_YNoRegistraElCorreo`. |
+| F4-07 | **Endpoints de diagnóstico.** Exponen IP de la conexión, cabeceras de red y memoria. | Info | Aceptado: solo administradores (revalidados en cada petición), sin cookies, tokens ni datos personales; cubiertos por las pruebas de rutas protegidas. |
+| F4-08 | **Herramienta de carga.** Credenciales solo por variables de entorno; acepta el certificado de desarrollo únicamente con `--certificado-local` y solo si el destino es loopback. Cuentas ficticias identificables y script de limpieza dedicado. | Info | Aceptado. No debe correrse contra una base con datos reales. |
+| F4-09 | **Llaves de Data Protection en disco sin cifrar** (`App_Data/keys`). | Info | Aceptado para hosting compartido: carpeta fuera de `wwwroot`, no servida por IIS, por sitio. Perderla solo cierra sesiones. |
+
+**Sin cambios de criterio:** el límite por cuenta (5 fallidos / 5 min) no se tocó; el techo por IP
+(300/600 por minuto) se mantuvo tras medirlo (`docs/07` §3.3).
+
+**Siguen abiertos:** CFG-02/R6 y R7 (solo se cierran en el hosting), M1 (riesgo aceptado para
+noviembre), gate de privacidad (ADR §8.4), recorrido PDF accesible por URL (hallazgo E), CSP con
+`'unsafe-inline'`, PRIV-05 (sin verificación de correo en registro local, aceptado).
+
+**Dependencias:** `dotnet list package --vulnerable --include-transitive` sin vulnerabilidades en
+lo que se publica; solo `NuGet.Packaging/Protocol 6.12.1` (Low) en el *scaffolding* de Debug.
 
 ---
 
