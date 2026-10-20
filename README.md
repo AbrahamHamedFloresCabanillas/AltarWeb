@@ -49,6 +49,7 @@ de los dos `appsettings.json` se versiona) y sigue su README.
 | [docs/07-checklist-produccion.md](docs/07-checklist-produccion.md) | Checklist de salida, resultados de carga, gates |
 | [docs/08-rollback-y-recuperacion.md](docs/08-rollback-y-recuperacion.md) | Rollback, respaldos y restauración |
 | [docs/09-operacion-y-mantenimiento.md](docs/09-operacion-y-mantenimiento.md) | Operación diaria y pendientes post-concurso |
+| [docs/10-manual-pruebas-locales.md](docs/10-manual-pruebas-locales.md) | Manual para probar las dos plataformas en tu computadora, con cuentas ficticias |
 | [vision.md](vision.md) | Especificación funcional del comité |
 | [current_state.md](current_state.md) | Estado técnico interno |
 | [AUDITORIA_SEGURIDAD.md](AUDITORIA_SEGURIDAD.md) | Auditoría de seguridad y estado de cada hallazgo |
