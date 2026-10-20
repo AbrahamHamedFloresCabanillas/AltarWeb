@@ -23,17 +23,24 @@ despliegue/  portada del dominio raíz · scripts de verificación de datos limp
 docs/     documentación de la separación, despliegue y operación (abajo)
 ```
 
-## Empezar en local
+## Empezar en local (un comando)
 
-Requisitos: .NET 10 SDK y SQL Server LocalDB.
+Requisitos: SDK de **.NET 10** y **SQL Server LocalDB** (Windows).
 
-```bash
-dotnet build AltarWeb.sln
-dotnet test AltarWeb.sln
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/Local/levantar-local.ps1
 ```
 
-Para correr cada app, crea su `appsettings.json` a partir de su `appsettings.Ejemplo.json` (ninguno
-de los dos `appsettings.json` se versiona) y sigue su README.
+Compila, crea las bases `AltaresLocal` y `CatrinasLocal`, arranca **Altares en https://localhost:7185** y
+**Catrinas en https://localhost:7186**, carga cuentas y equipos ficticios y deja las credenciales (generadas al
+azar, ignoradas por git) en `.local/credenciales-locales.txt`. `-Detener` las apaga y `-Reiniciar` empieza de cero.
+Guía de pruebas: [docs/10](docs/10-manual-pruebas-locales.md).
+
+**Con un agente (Claude Code u otro):** pídele *"Lee AGENTS.md y levanta el programa en local"*. [AGENTS.md](AGENTS.md)
+tiene el procedimiento, los avisos para el usuario y las reglas del proyecto.
+
+Compilar y probar: `dotnet build AltarWeb.sln` · `dotnet test AltarWeb.sln` (cada app también se puede correr a
+mano con su `appsettings.json` local, a partir de su `appsettings.Ejemplo.json`; ver su README).
 
 ## Documentación
 
@@ -49,6 +56,7 @@ de los dos `appsettings.json` se versiona) y sigue su README.
 | [docs/07-checklist-produccion.md](docs/07-checklist-produccion.md) | Checklist de salida, resultados de carga, gates |
 | [docs/08-rollback-y-recuperacion.md](docs/08-rollback-y-recuperacion.md) | Rollback, respaldos y restauración |
 | [docs/09-operacion-y-mantenimiento.md](docs/09-operacion-y-mantenimiento.md) | Operación diaria y pendientes post-concurso |
+| [AGENTS.md](AGENTS.md) | Guía para agentes: levantar el programa, comandos y reglas del proyecto |
 | [docs/10-manual-pruebas-locales.md](docs/10-manual-pruebas-locales.md) | Manual para probar las dos plataformas en tu computadora, con cuentas ficticias |
 | [vision.md](vision.md) | Especificación funcional del comité |
 | [current_state.md](current_state.md) | Estado técnico interno |

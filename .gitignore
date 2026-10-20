@@ -378,3 +378,6 @@ src/*/wwwroot/uploads/
 # Llaves de Data Protection persistidas en disco
 src/*/keys/
 src/*/App_Data/
+
+# Entorno local de pruebas (credenciales generadas, logs, pids): nunca se versiona
+.local/

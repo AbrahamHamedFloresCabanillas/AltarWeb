@@ -1,24 +1,33 @@
 # 10 — Manual de pruebas locales (antes de contratar el hosting)
 
-> Para que el propietario use y revise las dos plataformas en su computadora, con datos ficticios.
-> Complementa el checklist de [07](07-checklist-produccion.md). **Este documento no contiene
-> contraseñas**: las de esta máquina están en `local-prueba\credenciales-locales.txt` (fuera del
-> repositorio, en la carpeta `Programa Altar`).
+> Para que cualquiera del equipo use y revise las dos plataformas en su computadora, con datos ficticios.
+> Complementa el checklist de [07](07-checklist-produccion.md). **Este documento no contiene contraseñas**:
+> se generan al azar en cada máquina y quedan en `.local/credenciales-locales.txt` (ignorado por git).
 
-## 1. Cómo arrancar
+## 1. Cómo arrancar (un comando)
 
-Todo vive en `C:\Users\Abram\Desktop\Programa Altar\local-prueba\`:
+**Con un agente:** abre el repo en Claude Code (o el agente que uses) y pídele: *"Lee AGENTS.md y levanta el
+programa en local"*. Él ejecuta lo de abajo y te dice las URLs y dónde están las credenciales.
 
-| Archivo | Para qué |
+**A mano**, desde la raíz del repositorio (Windows, PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/Local/levantar-local.ps1
+```
+
+Requisitos: SDK de **.NET 10** y **SQL Server LocalDB** (viene con Visual Studio). La primera vez tarda 1–3 min.
+Al terminar:
+
+- **Altares:** https://localhost:7185 · **Catrinas:** https://localhost:7186
+- Credenciales y cuentas: `.local/credenciales-locales.txt`
+- Bases independientes: `AltaresLocal` y `CatrinasLocal` (LocalDB).
+
+| Quiero… | Opción del script |
 |---|---|
-| `iniciar-altares.cmd` | Arranca Altares en **https://localhost:7185** (la ventana debe quedarse abierta) |
-| `iniciar-catrinas.cmd` | Arranca Catrinas en **https://localhost:7186** |
-| `cargar-datos.cmd altares` / `catrinas` | Carga cuentas y equipos ficticios (solo con la app arriba y la base vacía) |
-| `reiniciar-bases.cmd` | Borra las dos bases locales para empezar de cero (con las apps detenidas) |
-| `credenciales-locales.txt` | Usuario y contraseñas de prueba |
-
-La primera vez tarda ~1 minuto (compila y crea la base). Las bases son **`AltaresLocal`** y
-**`CatrinasLocal`** en LocalDB: independientes entre sí y de tu base de desarrollo anterior.
+| Detener las dos apps | `-Detener` |
+| Empezar de cero (borra las dos bases y regenera credenciales y datos) | `-Reiniciar` |
+| Levantar sin cuentas ni equipos ficticios | `-SinDatos` |
+| Ver errores | `.local/logs/altares.err.log`, `.local/logs/catrinas.err.log` |
 
 **Aviso del navegador:** las apps usan HTTPS con el certificado de desarrollo de .NET, que Windows
 no confía por defecto. Verás "su conexión no es privada": pulsa *Avanzado → Continuar a
@@ -40,8 +49,7 @@ cuadro de Windows. **No uses `http://`**: la cookie de sesión es `Secure` y no 
 | Integrantes | igual | `carga.b1@uabc.edu.mx` … `carga.b5@uabc.edu.mx` | Pertenecen al equipo del mismo número |
 | Maestros (solo Altares) | igual | `carga.m1@uabc.edu.mx` … `carga.m5@uabc.edu.mx` | Maestro encargado del equipo del mismo número |
 
-- Contraseñas: ver `credenciales-locales.txt` (admin) y la de los demás (jueces y participantes
-  comparten una).
+- Contraseñas: ver `.local/credenciales-locales.txt` (una para el admin y otra compartida por jueces y participantes).
 - El equipo/inscripción **`Carga 001`** ya está evaluado como **Final** (sirve para ver ranking,
   constancias y reporte). Los equipos 2 a 5 están completos pero **sin evaluar**.
 - Para probar **registro y alta de equipo desde cero** no uses estas cuentas (ya tienen equipo):
@@ -151,10 +159,8 @@ deja para los gates R6/R7 de [07](07-checklist-produccion.md).
 
 ## 7. Empezar de cero
 
-1. Cierra las ventanas de las dos apps.
-2. Ejecuta `reiniciar-bases.cmd` (borra solo `AltaresLocal` y `CatrinasLocal`).
-3. Arranca las dos apps otra vez y, con ambas arriba, `cargar-datos.cmd altares` y `cargar-datos.cmd catrinas`.
-   El administrador se vuelve a crear con la contraseña de `credenciales-locales.txt`.
+`powershell -ExecutionPolicy Bypass -File tools/Local/levantar-local.ps1 -Reiniciar` — detiene las apps, borra
+**solo** `AltaresLocal` y `CatrinasLocal`, regenera credenciales y vuelve a cargar los datos ficticios.
 
 ## 8. Pruebas automáticas (opcional)
 
