@@ -21,5 +21,7 @@ public class MarcaTests
 
         Assert.Contains(">Concurso de Altares<", html);
         Assert.DoesNotMatch(">\\s*AltarWeb\\s*<", html);
+        // Tambien la pestaña del navegador.
+        Assert.Matches("<title>[^<]*- Concurso de Altares</title>", html);
     }
 }
