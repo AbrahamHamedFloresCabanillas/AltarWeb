@@ -14,7 +14,8 @@ namespace AltarWeb.Models.Registro.Configurations
             // Catalogo oficial FIM, Apendice C de vision.md (confirmado por Salch).
             builder.HasData(
                 new CatalogoCarrera { Id = 1, Nombre = "Lic. en Sistemas Computacionales", Orden = 1, Activo = true },
-                new CatalogoCarrera { Id = 2, Nombre = "Bioingeniero", Orden = 2, Activo = true },
+                // B2 (2026-10-22, decision del propietario): "Ing. en Bioingeniería" en lugar de "Bioingeniero".
+                new CatalogoCarrera { Id = 2, Nombre = "Ing. en Bioingeniería", Orden = 2, Activo = true },
                 new CatalogoCarrera { Id = 3, Nombre = "Ing. Aeroespacial", Orden = 3, Activo = true },
                 new CatalogoCarrera { Id = 4, Nombre = "Ing. Civil", Orden = 4, Activo = true },
                 new CatalogoCarrera { Id = 5, Nombre = "Ing. en Computación", Orden = 5, Activo = true },
