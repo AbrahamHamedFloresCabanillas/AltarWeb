@@ -13,6 +13,9 @@ namespace AltarWeb.Controllers
 {
     public class AltarEvaluacionController : Controller
     {
+        // Valor que envia el boton del modal "Si, cerrar como Final" (B4).
+        public const string ConfirmacionFinal = "CONFIRMO";
+
         private readonly AltarDbContext _context;
         private readonly EvaluacionCalculoService _calculo;
 
@@ -228,7 +231,7 @@ namespace AltarWeb.Controllers
             int equipoId, int niveles, string tipoAltar, string semblanza,
             decimal esenciaPersonalidad, decimal valoracionGeneral,
             decimal distribucionNiveles, decimal narrador,
-            string accion, string? version)
+            string accion, string? version, string? confirmacion)
         {
             var juezId = HttpContext.Session.GetInt32("JuezId");
             if (juezId == null) return RedirectToAction("Login", "Acceso");
@@ -259,6 +262,15 @@ namespace AltarWeb.Controllers
             if (criterios.Any(c => c.Valor < 0 || c.Valor > 10 || ModelState[c.Campo]?.ValidationState == ModelValidationState.Invalid))
             {
                 TempData["Error"] = "Cada criterio debe calificarse entre 0 y 10.";
+                return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
+            }
+
+            // B4 (2026-10-21): vision.md §7.6 pide una confirmacion explicita para cerrar como Final. Antes solo la
+            // pedia el modal del navegador; un POST directo con accion=final cerraba igual. Como en Catrinas, el
+            // boton del modal envia la confirmacion y el servidor la exige.
+            if (accion == "final" && confirmacion != ConfirmacionFinal)
+            {
+                TempData["Error"] = "Para cerrar como Final confirma explícitamente que revisaste las calificaciones.";
                 return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
             }
 

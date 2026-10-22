@@ -130,7 +130,7 @@ public class FlujoAltaresTests
             ("esenciaPersonalidad", "9"), ("valoracionGeneral", "8"), ("distribucionNiveles", "7"), ("narrador", "10"),
             // Campos de Catrina que una version vieja del formulario podria seguir enviando: se ignoran.
             ("vestuario", "10"), ("maquillaje", "10"), ("accesorios", "10"), ("originalidadCreatividad", "10"), ("apegoTradiciones", "10"),
-            ("accion", accion),
+            ("accion", accion), ("confirmacion", accion == "final" ? "CONFIRMO" : ""),
             ("version", Regex.Match(await juez.GetStringAsync(rutaEvaluacion), "name=\"version\" value=\"([^\"]*)\"").Groups[1].Value)
         };
         AssertRedirect(await PostAsync(juez, rutaEvaluacion, "/AltarEvaluacion/GuardarEvaluacion", await Calificacion("preliminar")), "NuevaEvaluacion");

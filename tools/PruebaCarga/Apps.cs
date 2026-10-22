@@ -155,7 +155,7 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
             ("equipoId", equipoId.ToString()), ("niveles", "7"), ("tipoAltar", "Tradicional"), ("semblanza", "Semblanza de prueba de carga"),
             ("esenciaPersonalidad", Util.D(Util.Azar.Next(5, 11))), ("valoracionGeneral", Util.D(Util.Azar.Next(5, 11))),
             ("distribucionNiveles", Util.D(Util.Azar.Next(5, 11))), ("narrador", Util.D(Util.Azar.Next(5, 11))),
-            ("accion", final ? "final" : "preliminar")
+            ("accion", final ? "final" : "preliminar"), ("confirmacion", final ? "CONFIRMO" : "")
         };
         var html = await juez.GetAsync($"/AltarEvaluacion/NuevaEvaluacion?equipoId={equipoId}", "evaluacion (abrir)");
         foreach (Match m in Regex.Matches(html.Cuerpo, "name=\"Satisfaccion_(\\d+)\""))

@@ -178,6 +178,7 @@
                 <input type="hidden" name="equipoId" value="@Model.EquipoId" />
                 <input type="hidden" name="accion" id="input-accion" value="preliminar" />
                 <input type="hidden" name="version" value="@Model.Version" />
+                <input type="hidden" name="confirmacion" id="input-confirmacion" value="" />
 
                 <div id="tab-altar" style="display:none;">
                     <div class="altar-grid-2">
@@ -670,6 +671,7 @@
 
         function altarSubmitFinal() {
             document.getElementById('input-accion').value = 'final';
+            document.getElementById('input-confirmacion').value = '@AltarWeb.Controllers.AltarEvaluacionController.ConfirmacionFinal';
             document.getElementById('form-evaluacion').submit();
         }
     </script>
