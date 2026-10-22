@@ -173,6 +173,16 @@ public static class Http
     public static Task<HttpResponseMessage> CrearInscripcionAsync(HttpClient cliente, string nombre, int carreraId, params (string, string)[] extra) =>
         PostAsync(cliente, "/Inscripcion/Crear", new[] { ("Nombre", nombre), ("CarreraId", carreraId.ToString()) }.Concat(extra).ToArray());
 
+    // M4: los avisos de la pantalla de inicio viajan en TempData (ya no en ?error=). Comprueba que la respuesta
+    // redirige a esa pantalla (la ruta por defecto) y devuelve su texto, con el mismo cliente para que viaje la cookie.
+    public static async Task<string> AvisoDeLoginAsync(HttpClient cliente, HttpResponseMessage r)
+    {
+        Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);
+        var destino = r.Headers.Location!.OriginalString;
+        Assert.Matches("^/(\\?tab=\\w+)?$", destino);
+        return WebUtility.HtmlDecode(await cliente.GetStringAsync(destino));
+    }
+
     public static void Redirige(HttpResponseMessage r, string contiene)
     {
         Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);

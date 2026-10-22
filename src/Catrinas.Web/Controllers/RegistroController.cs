@@ -29,10 +29,21 @@ namespace Catrinas.Web.Controllers
             _validacionGoogle = validacionGoogle;
         }
 
-        [AccesoPublico]
-        public IActionResult Login(string? error = null, string? tab = null)
+        // M4 (pruebas adversariales 2026-10-21, reportado en Altares; aqui habia el mismo patron): los avisos de
+        // esta pantalla llegaban en ?error= y se mostraba cualquier texto, asi que un enlace podia hacer pasar un
+        // mensaje falso por oficial. Ahora viajan en TempData, que solo escribe el servidor.
+        public const string ClaveAvisoLogin = "AvisoLogin";
+
+        public static IActionResult RedirigirALogin(Controller controlador, string aviso, string? tab)
         {
-            ViewBag.Error = error;
+            controlador.TempData[ClaveAvisoLogin] = aviso;
+            return controlador.RedirectToAction("Login", "Registro", new { tab });
+        }
+
+        [AccesoPublico]
+        public IActionResult Login(string? tab = null)
+        {
+            ViewBag.Error = TempData[ClaveAvisoLogin] as string;
             ViewBag.Tab = tab == "jurado" ? "jurado" : "participantes";
             return View(new LoginParticipanteViewModel());
         }
@@ -124,7 +135,7 @@ namespace Catrinas.Web.Controllers
                 return View(model);
             }
 
-            return RedirectToAction(nameof(Login), new { tab = "jurado", error = "Tu solicitud fue enviada. La administración debe aprobarla antes de que puedas entrar." });
+            return RedirigirALogin(this, "Tu solicitud fue enviada. La administración debe aprobarla antes de que puedas entrar.", "jurado");
         }
 
         // --- Google OAuth (Concurso.Core: email_verified, hd y token de identidad de un solo uso) ---
@@ -146,7 +157,7 @@ namespace Catrinas.Web.Controllers
             var resultado = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (!resultado.Succeeded || resultado.Principal == null)
             {
-                return RedirectToAction(nameof(Login), new { error = "No se pudo completar el inicio de sesión con Google." });
+                return RedirigirALogin(this, "No se pudo completar el inicio de sesión con Google.", null);
             }
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -156,11 +167,7 @@ namespace Catrinas.Web.Controllers
             if (!identidad.Valida)
             {
                 _logger.LogWarning("Identidad de Google rechazada. Motivo: {Motivo}, IP: {IP}", identidad.Motivo, HttpContext.Connection.RemoteIpAddress);
-                return RedirectToAction(nameof(Login), new
-                {
-                    tab,
-                    error = ValidacionIdentidadGoogle.MensajeRechazo(identidad.Motivo)
-                });
+                return RedirigirALogin(this, ValidacionIdentidadGoogle.MensajeRechazo(identidad.Motivo), tab);
             }
 
             if (intent == "jurado")
@@ -168,8 +175,8 @@ namespace Catrinas.Web.Controllers
                 var juez = await _context.Jueces.FirstOrDefaultAsync(j => j.CorreoInstitucional == identidad.Email);
                 if (juez != null)
                 {
-                    if (!juez.Activo) return RedirectToAction(nameof(Login), new { tab, error = "Tu cuenta del jurado fue desactivada." });
-                    if (juez.Pendiente) return RedirectToAction(nameof(Login), new { tab, error = "Tu solicitud aún está pendiente de aprobación." });
+                    if (!juez.Activo) return RedirigirALogin(this, "Tu cuenta del jurado fue desactivada.", tab);
+                    if (juez.Pendiente) return RedirigirALogin(this, "Tu solicitud aún está pendiente de aprobación.", tab);
                     HttpContext.Session.IniciarJuez(juez);
                     return RedirectToAction("Index", "Evaluacion");
                 }
@@ -181,7 +188,7 @@ namespace Catrinas.Web.Controllers
             var registrante = await _context.Registrantes.FirstOrDefaultAsync(r => r.CorreoInstitucional == identidad.Email);
             if (registrante != null)
             {
-                if (!registrante.Activo) return RedirectToAction(nameof(Login), new { error = "Tu cuenta fue desactivada." });
+                if (!registrante.Activo) return RedirigirALogin(this, "Tu cuenta fue desactivada.", null);
                 HttpContext.Session.IniciarRegistrante(registrante);
                 return RedirectToAction(nameof(Panel));
             }
@@ -198,7 +205,7 @@ namespace Catrinas.Web.Controllers
             var (valido, email, nombre) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "participante");
             if (!valido)
             {
-                return RedirectToAction(nameof(Login), new { error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
+                return RedirigirALogin(this, "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\".", null);
             }
 
             // El correo SIEMPRE es el verificado por Google; el nombre se puede ajustar.
@@ -223,7 +230,7 @@ namespace Catrinas.Web.Controllers
             var (valido, email, _) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "jurado");
             if (!valido)
             {
-                return RedirectToAction(nameof(Login), new { tab = "jurado", error = "Tu sesión de Google expiró o no es válida." });
+                return RedirigirALogin(this, "Tu sesión de Google expiró o no es válida.", "jurado");
             }
 
             model.CorreoInstitucional = email;
@@ -239,7 +246,7 @@ namespace Catrinas.Web.Controllers
             }
 
             IdentidadGoogleVerificada.Limpiar(HttpContext.Session);
-            return RedirectToAction(nameof(Login), new { tab = "jurado", error = "Tu solicitud fue enviada. La administración debe aprobarla antes de que puedas entrar." });
+            return RedirigirALogin(this, "Tu solicitud fue enviada. La administración debe aprobarla antes de que puedas entrar.", "jurado");
         }
 
         // --- Panel del participante ---

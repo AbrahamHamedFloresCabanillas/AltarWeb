@@ -82,7 +82,8 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
     public async Task<bool> LoginJuezAsync(Cliente c, string usuario, string password, string operacion)
     {
         var r = await c.PostAsync("/Registro/Login", "/Acceso/Login", operacion, ("usuario", usuario), ("password", password));
-        if (r.Codigo != 302 || r.Destino?.Contains("error=") == true) return false;
+        // Un login fallido regresa a la pantalla de inicio (ruta por defecto) con el aviso en TempData.
+        if (r.Codigo != 302 || r.Destino is null || r.Destino == "/" || r.Destino.StartsWith("/?")) return false;
         return await ResolverCambioObligatorioAsync(c, r.Destino, password);
     }
 
@@ -207,7 +208,8 @@ public sealed class AppCatrinas : AppBase, IAppBajoPrueba
     public async Task<bool> LoginJuezAsync(Cliente c, string usuario, string password, string operacion)
     {
         var r = await c.PostAsync("/Registro/Login?tab=jurado", "/Acceso/Login", operacion, ("usuario", usuario), ("password", password));
-        if (r.Codigo != 302 || r.Destino?.Contains("error=") == true) return false;
+        // Un login fallido regresa a la pantalla de inicio (ruta por defecto) con el aviso en TempData.
+        if (r.Codigo != 302 || r.Destino is null || r.Destino == "/" || r.Destino.StartsWith("/?")) return false;
         return await ResolverCambioObligatorioAsync(c, r.Destino, password);
     }
 

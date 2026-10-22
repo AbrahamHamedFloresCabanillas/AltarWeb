@@ -78,7 +78,7 @@ public class RegistroTests
 
         var solicitante = _f.Cliente();
         var pendiente = await Http.LoginJuradoAsync(solicitante, correo, "Solicitud-2026!");
-        Http.Redirige(pendiente, "pendiente");
+        Assert.Contains("pendiente de aprobación", await Http.AvisoDeLoginAsync(solicitante, pendiente));
 
         var admin = await Escenario.JuradoAsync(_f, admin: true);
         var id = _f.ConContexto(c => c.Jueces.Single(j => j.CorreoInstitucional == correo).Id);
@@ -102,9 +102,10 @@ public class RegistroTests
         Assert.StartsWith("https://accounts.google.com/", challenge.Headers.Location!.ToString());
         Assert.Contains(Uri.EscapeDataString(CatrinasFactory.Host + "/Registro/google-callback"), challenge.Headers.Location!.ToString());
 
-        var intento = await Http.PostAsync(_f.Cliente(), "/Registro/CompletarGoogle",
+        var intruso = _f.Cliente();
+        var intento = await Http.PostAsync(intruso, "/Registro/CompletarGoogle",
             ("NombreCompleto", "Intruso"), ("CorreoInstitucional", "intruso.catrinas@uabc.edu.mx"), ("Identificador", "1999999"));
-        Http.Redirige(intento, "error=");
+        Assert.Contains("sesión de Google expiró", await Http.AvisoDeLoginAsync(intruso, intento));
         Assert.False(_f.ConContexto(c => c.Registrantes.Any(r => r.CorreoInstitucional == "intruso.catrinas@uabc.edu.mx")));
     }
 }

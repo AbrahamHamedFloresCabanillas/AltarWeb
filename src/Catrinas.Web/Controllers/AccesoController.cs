@@ -52,14 +52,14 @@ namespace Catrinas.Web.Controllers
                 _limitador.RegistrarFallo(AmbitoLimite, entrada);
                 if (cuentaResuelta != null) _limitador.RegistrarFallo(AmbitoCuentaResuelta, cuentaResuelta);
                 _logger.LogWarning("Login fallido del jurado. Usuario intentado: '{Usuario}', IP: {IP}", entrada, HttpContext.Connection.RemoteIpAddress);
-                return RedirectToAction("Login", "Registro", new { tab = "jurado", error = "Usuario o contraseña incorrectos." });
+                return RegistroController.RedirigirALogin(this, "Usuario o contraseña incorrectos.", "jurado");
             }
 
             _limitador.Reiniciar(AmbitoLimite, entrada);
             _limitador.Reiniciar(AmbitoCuentaResuelta, cuentaResuelta);
 
-            if (!juez.Activo) return RedirectToAction("Login", "Registro", new { tab = "jurado", error = "Tu cuenta del jurado fue desactivada." });
-            if (juez.Pendiente) return RedirectToAction("Login", "Registro", new { tab = "jurado", error = "Tu solicitud aún está pendiente de aprobación." });
+            if (!juez.Activo) return RegistroController.RedirigirALogin(this, "Tu cuenta del jurado fue desactivada.", "jurado");
+            if (juez.Pendiente) return RegistroController.RedirigirALogin(this, "Tu solicitud aún está pendiente de aprobación.", "jurado");
 
             if (requiereRehash)
             {
