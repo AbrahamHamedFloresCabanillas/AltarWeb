@@ -2,6 +2,7 @@ using Catrinas.Web.Datos;
 using Catrinas.Web.Modelos;
 using Catrinas.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catrinas.Web.Controllers
@@ -98,7 +99,10 @@ namespace Catrinas.Web.Controllers
 
             var cerrarFinal = accion == "final";
             var criterios = new[] { vestuario, maquillaje, accesorios, originalidadCreatividad, apegoTradiciones };
-            if (criterios.Any(c => c < 0 || c > 10))
+            // Un valor no numerico (formulario alterado) llega como 0 con ModelState invalido: tambien se rechaza
+            // (prueba adversarial 2026-10-21; antes se guardaba como 0).
+            var campos = new[] { nameof(vestuario), nameof(maquillaje), nameof(accesorios), nameof(originalidadCreatividad), nameof(apegoTradiciones) };
+            if (criterios.Any(c => c < 0 || c > 10) || campos.Any(c => ModelState[c]?.ValidationState == ModelValidationState.Invalid))
             {
                 return Volver(inscripcionId, "Cada criterio debe calificarse entre 0 y 10.");
             }
