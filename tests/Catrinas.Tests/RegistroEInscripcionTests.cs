@@ -242,14 +242,20 @@ public class InscripcionTests
         var a = await Escenario.CrearAsync(_f, conPersonificador: false);
         var b = await Escenario.CrearAsync(_f, conPersonificador: false);
         var n = Escenario.Siguiente();
-        await Http.SignupAsync(_f.Cliente(), "Disputada", $"13{n:D5}", $"disputada{n}@uabc.edu.mx");
+        var disputada = _f.Cliente();
+        await Http.SignupAsync(disputada, "Disputada", $"13{n:D5}", $"disputada{n}@uabc.edu.mx");
 
-        var tokenA = await Http.TokenAsync(a.Responsable, "/Inscripcion/Editar");
-        var tokenB = await Http.TokenAsync(b.Responsable, "/Inscripcion/Editar");
-        Task<HttpResponseMessage> Agregar(HttpClient c, string token) => c.PostAsync("/Inscripcion/AgregarIntegrante",
-            new FormUrlEncodedContent(new Dictionary<string, string> { ["identificador"] = $"13{n:D5}", ["__RequestVerificationToken"] = token }));
+        // A1: las dos inscripciones la invitan y ella acepta las dos invitaciones a la vez.
+        await Http.PostDesdeAsync(a.Responsable, "/Inscripcion/Editar", "/Inscripcion/AgregarIntegrante", ("identificador", $"13{n:D5}"));
+        await Http.PostDesdeAsync(b.Responsable, "/Inscripcion/Editar", "/Inscripcion/AgregarIntegrante", ("identificador", $"13{n:D5}"));
+        var invitaciones = _f.ConContexto(c => c.Invitaciones.Where(x => x.Registrante.Identificador == $"13{n:D5}").Select(x => x.Id).ToList());
+        Assert.Equal(2, invitaciones.Count);
 
-        var respuestas = await Task.WhenAll(Agregar(a.Responsable, tokenA), Agregar(b.Responsable, tokenB));
+        var token = await Http.TokenAsync(disputada, "/Registro/Panel");
+        Task<HttpResponseMessage> Aceptar(int invitacionId) => disputada.PostAsync("/Inscripcion/AceptarInvitacion",
+            new FormUrlEncodedContent(new Dictionary<string, string> { ["invitacionId"] = invitacionId.ToString(), ["__RequestVerificationToken"] = token }));
+
+        var respuestas = await Task.WhenAll(Aceptar(invitaciones[0]), Aceptar(invitaciones[1]));
         Assert.All(respuestas, r => Assert.Equal(HttpStatusCode.Redirect, r.StatusCode)); // nunca un 500
         Assert.Equal(1, _f.ConContexto(c => c.Miembros.Count(m => m.Registrante.Identificador == $"13{n:D5}")));
     }

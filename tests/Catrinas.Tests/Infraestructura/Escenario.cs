@@ -45,7 +45,10 @@ public sealed class Escenario
             return (i.Id, i.ResponsableId, c.Registrantes.Single(r => r.CorreoInstitucional == $"int.cat{n}@uabc.edu.mx").Id);
         });
 
+        // A1: el responsable invita y el integrante acepta desde su panel.
         Http.Redirige(await Http.PostDesdeAsync(responsable, "/Inscripcion/Editar", "/Inscripcion/AgregarIntegrante", ("identificador", $"16{n:D5}")), "Editar");
+        var invitacionId = factory.ConContexto(c => c.Invitaciones.Single(x => x.InscripcionId == inscripcionId && x.RegistranteId == integranteId).Id);
+        Http.Redirige(await Http.PostDesdeAsync(integrante, "/Registro/Panel", "/Inscripcion/AceptarInvitacion", ("invitacionId", invitacionId.ToString())), "Panel");
         if (conPersonificador)
         {
             Http.Redirige(await Http.PostDesdeAsync(responsable, "/Inscripcion/Editar", "/Inscripcion/DesignarPersonificador", ("registranteId", integranteId.ToString())), "Editar");

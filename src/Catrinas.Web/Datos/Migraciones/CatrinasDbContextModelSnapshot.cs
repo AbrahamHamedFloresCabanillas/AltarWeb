@@ -487,6 +487,38 @@ namespace Catrinas.Web.Datos.Migraciones
                         });
                 });
 
+            modelBuilder.Entity("Catrinas.Web.Modelos.InvitacionInscripcion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreadaEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InscripcionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Periodo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("RegistranteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InscripcionId", "RegistranteId")
+                        .IsUnique();
+
+                    b.HasIndex("RegistranteId", "Periodo");
+
+                    b.ToTable("InvitacionesInscripcion", (string)null);
+                });
+
             modelBuilder.Entity("Catrinas.Web.Modelos.Juez", b =>
                 {
                     b.Property<int>("Id")
@@ -718,6 +750,25 @@ namespace Catrinas.Web.Datos.Migraciones
                         .IsRequired();
 
                     b.Navigation("Evaluacion");
+                });
+
+            modelBuilder.Entity("Catrinas.Web.Modelos.InvitacionInscripcion", b =>
+                {
+                    b.HasOne("Catrinas.Web.Modelos.Inscripcion", "Inscripcion")
+                        .WithMany()
+                        .HasForeignKey("InscripcionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Catrinas.Web.Modelos.Registrante", "Registrante")
+                        .WithMany()
+                        .HasForeignKey("RegistranteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Inscripcion");
+
+                    b.Navigation("Registrante");
                 });
 
             modelBuilder.Entity("Catrinas.Web.Modelos.MiembroInscripcion", b =>

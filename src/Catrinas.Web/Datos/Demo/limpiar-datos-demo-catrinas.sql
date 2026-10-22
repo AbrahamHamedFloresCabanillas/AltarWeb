@@ -16,6 +16,10 @@ DELETE ie FROM IntegrantesEvaluados ie JOIN Evaluaciones e ON e.Id = ie.Evaluaci
 DELETE FROM Evaluaciones WHERE InscripcionId IN (SELECT Id FROM @ins);
 DELETE FROM MiembrosInscripcion WHERE InscripcionId IN (SELECT Id FROM @ins);
 DELETE FROM Inscripciones WHERE Id IN (SELECT Id FROM @ins);
+-- A1: invitaciones pendientes de estas cuentas (la FK hacia Registrantes es Restrict).
+IF OBJECT_ID('InvitacionesInscripcion') IS NOT NULL
+    DELETE x FROM InvitacionesInscripcion x JOIN Registrantes r ON r.Id = x.RegistranteId
+    WHERE r.CorreoInstitucional LIKE '%.demo@uabc.edu.mx';
 DELETE FROM Registrantes WHERE CorreoInstitucional LIKE '%.demo@uabc.edu.mx'
     AND NOT EXISTS (SELECT 1 FROM MiembrosInscripcion m WHERE m.RegistranteId = Registrantes.Id)
     AND NOT EXISTS (SELECT 1 FROM Inscripciones i WHERE i.ResponsableId = Registrantes.Id OR i.MaestroEncargadoId = Registrantes.Id);

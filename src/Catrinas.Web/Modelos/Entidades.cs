@@ -154,6 +154,20 @@ namespace Catrinas.Web.Modelos
         public DateTime FechaIngreso { get; set; } = DateTime.UtcNow;
     }
 
+    // A1 (pruebas adversariales 2026-10-21): el responsable ya no agrega integrantes directamente; los invita y la
+    // persona acepta o rechaza desde su panel. Mientras no acepte no es miembro ni queda atada a la inscripcion.
+    public class InvitacionInscripcion
+    {
+        public int Id { get; set; }
+        public int InscripcionId { get; set; }
+        public Inscripcion Inscripcion { get; set; } = null!;
+        public int RegistranteId { get; set; }
+        public Registrante Registrante { get; set; } = null!;
+        // Copia del periodo (como MiembroInscripcion): al aceptar se descartan sus demas invitaciones del periodo.
+        public string Periodo { get; set; } = string.Empty;
+        public DateTime CreadaEn { get; set; } = DateTime.UtcNow;
+    }
+
     // Evaluacion del jurado de Catrinas: cinco criterios 0-10 y nota ponderada. Guarda los pesos con los
     // que se calculo y un snapshot de la inscripcion, para que el historico no dependa de cambios
     // posteriores en la configuracion ni en los registros.

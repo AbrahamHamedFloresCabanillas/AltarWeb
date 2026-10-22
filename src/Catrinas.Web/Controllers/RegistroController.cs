@@ -273,8 +273,21 @@ namespace Catrinas.Web.Controllers
                 .FirstOrDefaultAsync(i => i.Activo && i.Periodo == periodo && i.Miembros.Any(m => m.RegistranteId == registranteId));
 
             var limiteInscripcion = FechaConcursoHelper.LimitePasado(config.FechaLimiteInscripcion);
+            // A1: con inscripcion en el periodo ya no puede aceptar otras invitaciones, asi que solo se muestran sin ella.
+            var invitaciones = inscripcion != null ? new List<InvitacionRecibidaViewModel>() : await _context.Invitaciones.AsNoTracking()
+                .Where(x => x.RegistranteId == registranteId && x.Periodo == periodo && x.Inscripcion.Activo)
+                .OrderBy(x => x.CreadaEn)
+                .Select(x => new InvitacionRecibidaViewModel
+                {
+                    Id = x.Id,
+                    Inscripcion = x.Inscripcion.Nombre,
+                    Carrera = x.Inscripcion.Carrera.Nombre,
+                    Responsable = x.Inscripcion.Responsable.NombreCompleto
+                })
+                .ToListAsync();
             return View(new PanelParticipanteViewModel
             {
+                Invitaciones = invitaciones,
                 Registrante = registrante,
                 Inscripcion = inscripcion,
                 Periodo = periodo,

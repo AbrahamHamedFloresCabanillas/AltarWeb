@@ -15,6 +15,7 @@ namespace Catrinas.Web.Datos
         public DbSet<Juez> Jueces => Set<Juez>();
         public DbSet<Inscripcion> Inscripciones => Set<Inscripcion>();
         public DbSet<MiembroInscripcion> Miembros => Set<MiembroInscripcion>();
+        public DbSet<InvitacionInscripcion> Invitaciones => Set<InvitacionInscripcion>();
         public DbSet<EvaluacionCatrina> Evaluaciones => Set<EvaluacionCatrina>();
         public DbSet<IntegranteEvaluado> IntegrantesEvaluados => Set<IntegranteEvaluado>();
         public DbSet<ConfiguracionPeriodo> Configuraciones => Set<ConfiguracionPeriodo>();
@@ -97,6 +98,17 @@ namespace Catrinas.Web.Datos
                     .HasDatabaseName("IX_MiembrosInscripcion_UnPersonificador");
                 e.HasOne(x => x.Inscripcion).WithMany(i => i.Miembros).HasForeignKey(x => x.InscripcionId).OnDelete(DeleteBehavior.Cascade);
                 e.HasOne(x => x.Registrante).WithMany(r => r.Membresias).HasForeignKey(x => x.RegistranteId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // A1: invitaciones pendientes de aceptar. Una por persona e inscripcion (reinvitar no duplica).
+            b.Entity<InvitacionInscripcion>(e =>
+            {
+                e.ToTable("InvitacionesInscripcion");
+                e.Property(x => x.Periodo).HasMaxLength(10).IsRequired();
+                e.HasIndex(x => new { x.InscripcionId, x.RegistranteId }).IsUnique();
+                e.HasIndex(x => new { x.RegistranteId, x.Periodo });
+                e.HasOne(x => x.Inscripcion).WithMany().HasForeignKey(x => x.InscripcionId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(x => x.Registrante).WithMany().HasForeignKey(x => x.RegistranteId).OnDelete(DeleteBehavior.Restrict);
             });
 
             b.Entity<EvaluacionCatrina>(e =>

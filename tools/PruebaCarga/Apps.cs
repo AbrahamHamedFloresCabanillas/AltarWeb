@@ -202,6 +202,7 @@ public sealed class AppCatrinas : AppBase, IAppBajoPrueba
     private static readonly Regex Evaluar = new("/Evaluacion/Evaluar\\?inscripcionId=(\\d+)");
     private static readonly Regex Detalle = new("/Evaluacion/Detalle/(\\d+)");
     private static readonly Regex RowVersion = new("name=\"rowVersion\" value=\"([^\"]*)\"");
+    private static readonly Regex Invitacion = new("name=\"invitacionId\" value=\"(\\d+)\"");
 
     public string Nombre => "catrinas";
     public string RutaDiagnostico => "/Admin/Diagnostico";
@@ -239,6 +240,13 @@ public sealed class AppCatrinas : AppBase, IAppBajoPrueba
         var agregar = await org.PostAsync("/Inscripcion/Editar", "/Inscripcion/AgregarIntegrante", "preparar agregar integrante",
             ("identificador", Cuentas.Integrante(i).Identificador));
         Exigir(agregar.Codigo == 302, $"agregar integrante a la inscripcion {i}");
+
+        // A1: agregar crea una invitacion; el integrante la acepta desde su panel.
+        var invitacion = Invitacion.Match(await integrante.HtmlAsync("/Registro/Panel"));
+        Exigir(invitacion.Success, $"no aparece la invitacion a la inscripcion {i}");
+        var aceptar = await integrante.PostAsync("/Registro/Panel", "/Inscripcion/AceptarInvitacion", "preparar aceptar invitacion",
+            ("invitacionId", invitacion.Groups[1].Value));
+        Exigir(aceptar.Codigo == 302, $"aceptar invitacion a la inscripcion {i}");
 
         var m = Personificador.Match(await org.HtmlAsync("/Inscripcion/Editar"));
         Exigir(m.Success, $"no aparece el boton de personificador de la inscripcion {i}");

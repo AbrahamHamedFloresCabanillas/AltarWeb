@@ -134,6 +134,16 @@ namespace Catrinas.Web.ViewModels
         public bool PuedeCrear { get; set; }
         public string? MotivoNoPuedeCrear { get; set; }
         public string Periodo { get; set; } = string.Empty;
+        // A1: invitaciones que la persona puede aceptar o rechazar (solo mientras no esta en una inscripcion).
+        public List<InvitacionRecibidaViewModel> Invitaciones { get; set; } = new();
+    }
+
+    public class InvitacionRecibidaViewModel
+    {
+        public int Id { get; set; }
+        public string Inscripcion { get; set; } = string.Empty;
+        public string Carrera { get; set; } = string.Empty;
+        public string Responsable { get; set; } = string.Empty;
     }
 
     public class FilaInscripcionViewModel

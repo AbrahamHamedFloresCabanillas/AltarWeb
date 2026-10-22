@@ -58,13 +58,30 @@
                     }
                 </tbody>
             </table>
+            @{ var invitaciones = ViewBag.Invitaciones as List<(int Id, string Identificador)> ?? new(); }
+            @if (invitaciones.Count > 0)
+            {
+                <div class="altar-card-subtitle" style="margin-top:12px;">Invitaciones pendientes de aceptar</div>
+                @foreach (var invitacion in invitaciones)
+                {
+                    <div class="altar-flex altar-gap-sm" style="padding:6px 0;">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span style="flex:1;">@invitacion.Identificador <span class="altar-text-muted" style="font-size:12px;">· pendiente</span></span>
+                        @if (bloqueo == null)
+                        {
+                            <form asp-action="CancelarInvitacion" method="post"><input type="hidden" name="invitacionId" value="@invitacion.Id" /><button class="altar-btn altar-btn-sm altar-btn-outline" type="submit" title="Cancelar invitación" aria-label="Cancelar invitación"><i class="fa-solid fa-xmark"></i></button></form>
+                        }
+                    </div>
+                }
+            }
             @if (bloqueo == null)
             {
-                <form asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:12px;" onsubmit="return confirm('¿Agregar a la persona con matrícula o número de empleado ' + this.identificador.value + '? Quedará vinculada a esta inscripción durante el periodo; confirma que aceptó participar.');">
-                    <input type="text" name="identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="Matrícula / No. de empleado del integrante" />
-                    <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
+                @* A1 (2026-10-21): se invita; la persona queda en la inscripcion solo cuando acepta desde su panel. *@
+                <form asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:12px;">
+                    <input type="text" name="identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="Matrícula / No. de empleado de quien quieres invitar" />
+                    <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Invitar</button>
                 </form>
-                <p class="altar-text-muted" style="font-size:12px;">Agrega solo a personas que aceptaron participar contigo. Deben tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.</p>
+                <p class="altar-text-muted" style="font-size:12px;">La persona verá la invitación en su panel y entrará a la inscripción cuando la acepte. Debe tener cuenta en el Concurso de Catrinas.</p>
             }
         </div>
     </div>

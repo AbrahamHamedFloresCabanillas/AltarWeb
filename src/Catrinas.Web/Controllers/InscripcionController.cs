@@ -85,6 +85,7 @@ namespace Catrinas.Web.Controllers
             ViewBag.Inscripcion = inscripcion;
             ViewBag.MotivoBloqueo = ReglasInscripcion.MotivoEdicionBloqueada(inscripcion, config);
             ViewBag.Faltantes = ReglasInscripcion.Faltantes(inscripcion);
+            ViewBag.Invitaciones = await InvitacionesPendientesAsync(inscripcion.Id);
             return View(await ConCarrerasAsync(new InscripcionFormViewModel
             {
                 Id = inscripcion.Id,
@@ -111,6 +112,7 @@ namespace Catrinas.Web.Controllers
                 ViewBag.Inscripcion = inscripcion;
                 ViewBag.MotivoBloqueo = ReglasInscripcion.MotivoEdicionBloqueada(inscripcion, config);
                 ViewBag.Faltantes = ReglasInscripcion.Faltantes(inscripcion);
+                ViewBag.Invitaciones = await InvitacionesPendientesAsync(inscripcion.Id);
                 return View(await ConCarrerasAsync(model));
             }
 
@@ -142,30 +144,103 @@ namespace Catrinas.Web.Controllers
             if (inscripcion == null) return RedirectToAction("Panel", "Registro");
             if (await RechazarSiBloqueadaAsync(inscripcion) is { } rechazo) return rechazo;
 
-            // M1 (riesgo aceptado temporalmente, ADR §13): el alta sigue siendo por identificador, sin flujo
-            // de invitacion. Para no convertir el formulario en un buscador de personas, todos los rechazos
-            // usan el mismo mensaje (no distingue "no existe" de "ya esta en otra inscripcion") y la
-            // confirmacion no repite el nombre.
-            const string rechazoGenerico = "No se pudo agregar a esa persona. Verifica la matrícula o número de empleado: debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.";
+            // A1 (pruebas adversariales 2026-10-21; cierra el riesgo M1 aceptado en ADR §13): ya no se agrega
+            // directamente. Se crea una invitacion que la persona acepta o rechaza desde su panel, y la respuesta es
+            // la misma exista o no la cuenta, tenga o no inscripcion (el formulario no sirve de buscador de personas).
             var id = (identificador ?? string.Empty).Trim();
             var registrante = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == id && r.Activo);
-            if (registrante == null || await _context.Miembros.AnyAsync(m => m.RegistranteId == registrante.Id && m.Periodo == inscripcion.Periodo))
+            if (registrante != null && registrante.Id != RegistranteId
+                && !await _context.Miembros.AnyAsync(m => m.RegistranteId == registrante.Id && m.Periodo == inscripcion.Periodo)
+                && !await _context.Invitaciones.AnyAsync(i => i.InscripcionId == inscripcion.Id && i.RegistranteId == registrante.Id))
             {
-                TempData["Error"] = rechazoGenerico;
-                return RedirectToAction(nameof(Editar));
+                _context.Invitaciones.Add(new InvitacionInscripcion { InscripcionId = inscripcion.Id, RegistranteId = registrante.Id, Periodo = inscripcion.Periodo });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Doble envio del mismo formulario: el indice unico (InscripcionId, RegistranteId) ya la tiene.
+                }
             }
 
-            _context.Miembros.Add(new MiembroInscripcion { InscripcionId = inscripcion.Id, RegistranteId = registrante.Id, Periodo = inscripcion.Periodo });
+            TempData["Mensaje"] = "Si esa matrícula o número de empleado pertenece a una cuenta del Concurso de Catrinas que aún no está en otra inscripción de este periodo, verá tu invitación en su panel y quedará en la inscripción cuando la acepte.";
+            return RedirectToAction(nameof(Editar));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelarInvitacion(int invitacionId)
+        {
+            var inscripcion = await ObtenerPropiaAsync();
+            if (inscripcion == null) return RedirectToAction("Panel", "Registro");
+
+            var invitacion = await _context.Invitaciones.FirstOrDefaultAsync(i => i.Id == invitacionId && i.InscripcionId == inscripcion.Id);
+            if (invitacion != null)
+            {
+                _context.Invitaciones.Remove(invitacion);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Invitación cancelada.";
+            }
+            return RedirectToAction(nameof(Editar));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AceptarInvitacion(int invitacionId)
+        {
+            // Solo la persona invitada puede aceptar su propia invitacion.
+            var invitacion = await _context.Invitaciones
+                .Include(i => i.Inscripcion).ThenInclude(ins => ins.Evaluacion)
+                .FirstOrDefaultAsync(i => i.Id == invitacionId && i.RegistranteId == RegistranteId);
+            if (invitacion == null || !invitacion.Inscripcion.Activo)
+            {
+                TempData["Error"] = "La invitación ya no está disponible.";
+                return RedirectToAction("Panel", "Registro");
+            }
+
+            if (await _context.Miembros.AnyAsync(m => m.RegistranteId == RegistranteId && m.Periodo == invitacion.Periodo))
+            {
+                TempData["Error"] = "Ya estás en una inscripción de este periodo.";
+                return RedirectToAction("Panel", "Registro");
+            }
+
+            // Mismo candado que editar la inscripcion: sin evaluacion y antes de la fecha limite de requisitos.
+            var motivo = ReglasInscripcion.MotivoEdicionBloqueada(invitacion.Inscripcion, await ConfiguracionCatrinas.ObtenerAsync(_context, invitacion.Periodo));
+            if (motivo != null)
+            {
+                TempData["Error"] = $"No puedes unirte a esta inscripción: {motivo}";
+                return RedirectToAction("Panel", "Registro");
+            }
+
+            _context.Miembros.Add(new MiembroInscripcion { InscripcionId = invitacion.InscripcionId, RegistranteId = RegistranteId, Periodo = invitacion.Periodo });
+            // Con inscripcion en este periodo, sus demas invitaciones del periodo ya no aplican.
+            _context.Invitaciones.RemoveRange(
+                await _context.Invitaciones.Where(i => i.RegistranteId == RegistranteId && i.Periodo == invitacion.Periodo).ToListAsync());
             try
             {
                 await _context.SaveChangesAsync();
-                TempData["Mensaje"] = "Integrante agregado a la inscripción.";
             }
             catch (DbUpdateException)
             {
-                TempData["Error"] = rechazoGenerico;
+                // El indice unico (RegistranteId, Periodo) gano la carrera: dos invitaciones aceptadas a la vez.
+                TempData["Error"] = "Ya estás en una inscripción de este periodo.";
+                return RedirectToAction("Panel", "Registro");
             }
-            return RedirectToAction(nameof(Editar));
+
+            TempData["Mensaje"] = $"Te uniste a la inscripción '{invitacion.Inscripcion.Nombre}'.";
+            return RedirectToAction("Panel", "Registro");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RechazarInvitacion(int invitacionId)
+        {
+            var invitacion = await _context.Invitaciones.FirstOrDefaultAsync(i => i.Id == invitacionId && i.RegistranteId == RegistranteId);
+            if (invitacion != null)
+            {
+                _context.Invitaciones.Remove(invitacion);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Invitación rechazada.";
+            }
+            return RedirectToAction("Panel", "Registro");
         }
 
         [HttpPost]
@@ -228,6 +303,15 @@ namespace Catrinas.Web.Controllers
                 .Include(i => i.Miembros).ThenInclude(m => m.Registrante)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(i => i.Activo && i.ResponsableId == RegistranteId && i.Periodo == PeriodoHelper.ObtenerPeriodoActual());
+
+        // A1: invitaciones enviadas que aun no se aceptan. Solo la matricula que el responsable escribio, no el nombre.
+        private async Task<List<(int Id, string Identificador)>> InvitacionesPendientesAsync(int inscripcionId) =>
+            (await _context.Invitaciones.AsNoTracking()
+                .Where(i => i.InscripcionId == inscripcionId)
+                .OrderBy(i => i.CreadaEn)
+                .Select(i => new { i.Id, i.Registrante.Identificador })
+                .ToListAsync())
+            .Select(i => (i.Id, i.Identificador)).ToList();
 
         private async Task<IActionResult?> RechazarSiBloqueadaAsync(Inscripcion inscripcion)
         {
