@@ -6,9 +6,11 @@ namespace AltarWeb.ViewModels.Altar
     public class RegistroSignupJuezViewModel
     {
         [Required(ErrorMessage = "Ingresa tu nombre completo.")]
+        [StringLength(LimitesTexto.NombrePersona, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreCompleto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa tu correo institucional.")]
+        [StringLength(LimitesTexto.Correo, ErrorMessage = LimitesTexto.Mensaje)]
         [EmailAddress]
         public string CorreoInstitucional { get; set; } = string.Empty;
 
@@ -37,9 +39,11 @@ namespace AltarWeb.ViewModels.Altar
         [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "El identificador debe tener 5 dígitos (maestro/administrativo) o 7 dígitos (alumno).")]
         public string Identificador { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Telefono, ErrorMessage = LimitesTexto.Mensaje)]
         public string? Telefono { get; set; }
         public int? CatalogoGeneroId { get; set; }
         public int? CatalogoCarreraId { get; set; }
+        [StringLength(LimitesTexto.Autodescripcion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? AutodescripcionCultural { get; set; }
 
         public List<CatalogoGenero> Generos { get; set; } = new();

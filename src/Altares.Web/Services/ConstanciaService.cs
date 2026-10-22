@@ -224,14 +224,21 @@ namespace AltarWeb.Services
             return documento.GeneratePdf();
         }
 
-        private static string LimpiarNombreArchivo(string valor)
+        // M2 (pruebas adversariales 2026-10-21): un nombre de 5,021 caracteres generaba dentro del ZIP un archivo
+        // que Windows no puede extraer. Ademas de limpiar caracteres se recorta, conservando la extension.
+        public const int LongitudMaximaNombreArchivo = 120;
+
+        public static string LimpiarNombreArchivo(string valor)
         {
             foreach (var caracter in Path.GetInvalidFileNameChars())
             {
                 valor = valor.Replace(caracter, '_');
             }
 
-            return valor;
+            if (valor.Length <= LongitudMaximaNombreArchivo) return valor;
+
+            var extension = Path.GetExtension(valor);
+            return valor[..(LongitudMaximaNombreArchivo - extension.Length)].TrimEnd() + extension;
         }
     }
 }

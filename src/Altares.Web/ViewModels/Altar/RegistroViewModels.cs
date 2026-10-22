@@ -17,6 +17,7 @@ namespace AltarWeb.ViewModels.Altar
     public class RegistroSignupViewModel
     {
         [Required(ErrorMessage = "Ingresa tu nombre completo.")]
+        [StringLength(LimitesTexto.NombrePersona, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreCompleto { get; set; } = string.Empty;
 
         // El Tipo ya no se elige a mano: se infiere de la longitud (7 dígitos = Alumno,
@@ -27,13 +28,16 @@ namespace AltarWeb.ViewModels.Altar
         public string Identificador { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa tu correo institucional.")]
+        [StringLength(LimitesTexto.Correo, ErrorMessage = LimitesTexto.Mensaje)]
         [EmailAddress]
         public string CorreoInstitucional { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Telefono, ErrorMessage = LimitesTexto.Mensaje)]
         public string? Telefono { get; set; }
 
         public int? CatalogoGeneroId { get; set; }
         public int? CatalogoCarreraId { get; set; }
+        [StringLength(LimitesTexto.Autodescripcion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? AutodescripcionCultural { get; set; }
 
         [Required(ErrorMessage = "Elige una contraseña.")]

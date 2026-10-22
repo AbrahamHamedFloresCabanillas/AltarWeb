@@ -45,6 +45,7 @@ namespace AltarWeb.ViewModels.Altar
     public class CrearJuezViewModel
     {
         [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        [StringLength(LimitesTexto.NombrePersona, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreCompleto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa un usuario.")]
@@ -63,6 +64,7 @@ namespace AltarWeb.ViewModels.Altar
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        [StringLength(LimitesTexto.NombrePersona, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreCompleto { get; set; } = string.Empty;
 
         // Solo aplica a cuentas locales; las de Google inician sesion con CorreoInstitucional.
@@ -90,6 +92,7 @@ namespace AltarWeb.ViewModels.Altar
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Ingresa el nombre completo.")]
+        [StringLength(LimitesTexto.NombrePersona, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreCompleto { get; set; } = string.Empty;
 
         // A diferencia del signup, aqui el admin SI elige el tipo (puede corregir un Administrativo
@@ -101,12 +104,15 @@ namespace AltarWeb.ViewModels.Altar
         public string Identificador { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el correo institucional.")]
+        [StringLength(LimitesTexto.Correo, ErrorMessage = LimitesTexto.Mensaje)]
         [EmailAddress(ErrorMessage = "El correo no tiene un formato válido.")]
         public string CorreoInstitucional { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Telefono, ErrorMessage = LimitesTexto.Mensaje)]
         public string? Telefono { get; set; }
         public int? CatalogoGeneroId { get; set; }
         public int? CatalogoCarreraId { get; set; }
+        [StringLength(LimitesTexto.Autodescripcion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? AutodescripcionCultural { get; set; }
 
         // Solo lectura en la vista.
@@ -127,12 +133,15 @@ namespace AltarWeb.ViewModels.Altar
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Ingresa el nombre del grupo.")]
+        [StringLength(LimitesTexto.NombreEquipo, ErrorMessage = LimitesTexto.Mensaje)]
         public string Nombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del altar.")]
+        [StringLength(LimitesTexto.NombreAltar, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreAltar { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del difunto.")]
+        [StringLength(LimitesTexto.NombreDifunto, ErrorMessage = LimitesTexto.Mensaje)]
         public string DifuntoNombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa la fecha de defunción.")]
@@ -145,6 +154,7 @@ namespace AltarWeb.ViewModels.Altar
         [Required(ErrorMessage = "Ingresa la matrícula del maestro encargado.")]
         public string MaestroEncargadoIdentificador { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Ubicacion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? UbicacionAltar { get; set; }
 
         // Solo lectura en la vista.

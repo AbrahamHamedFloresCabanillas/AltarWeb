@@ -383,8 +383,8 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("RegistrantesYEquipos", new { tab = "registrantes" });
             }
 
-            var identificador = model.Identificador.Trim();
-            var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
+            var identificador = (model.Identificador ?? string.Empty).Trim();
+            var correo = (model.CorreoInstitucional ?? string.Empty).Trim().ToLowerInvariant();
 
             // Misma regla de dominio que el signup (7/5 digitos segun tipo, dominio @uabc.edu.mx),
             // evaluada sobre una copia para no tocar la entidad rastreada si falla.
@@ -395,6 +395,17 @@ namespace AltarWeb.Controllers
                 {
                     ModelState.AddModelError(member, error.ErrorMessage ?? "Dato inválido.");
                 }
+            }
+
+            // M1: un id de catalogo inexistente terminaba en violacion de llave foranea (500). Se admite uno
+            // inactivo: puede ser el dato historico que el registrante ya tenia.
+            if (model.CatalogoGeneroId != null && !await _context.CatalogoGeneros.AnyAsync(g => g.Id == model.CatalogoGeneroId))
+            {
+                ModelState.AddModelError(nameof(model.CatalogoGeneroId), "Selecciona un género válido.");
+            }
+            if (model.CatalogoCarreraId != null && !await _context.CatalogoCarreras.AnyAsync(c => c.Id == model.CatalogoCarreraId))
+            {
+                ModelState.AddModelError(nameof(model.CatalogoCarreraId), "Selecciona un programa educativo válido.");
             }
 
             // Unicidad contra TODOS los registrantes (tambien inactivos): si un inactivo ya usa el
@@ -520,7 +531,7 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("RegistrantesYEquipos", new { tab = "equipos" });
             }
 
-            var nombre = model.Nombre.Trim();
+            var nombre = (model.Nombre ?? string.Empty).Trim();
             if (await _context.EquiposConcurso.AnyAsync(e => e.Id != equipo.Id && e.Nombre == nombre && e.Periodo == equipo.Periodo))
             {
                 ModelState.AddModelError(nameof(model.Nombre), "Ya existe un equipo con ese nombre en este periodo.");

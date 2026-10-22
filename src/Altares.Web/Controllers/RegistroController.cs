@@ -45,7 +45,7 @@ namespace AltarWeb.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
+            var correo = (model.CorreoInstitucional ?? string.Empty).Trim().ToLowerInvariant();
 
             // SEC-04: la cuenta intentada esta en pausa por demasiados intentos fallidos, venga de la IP que venga.
             if (_limitador.EstaBloqueada(AmbitoLimite, correo, out var espera))
@@ -101,15 +101,15 @@ namespace AltarWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> Signup(RegistroSignupViewModel model)
         {
-            var identificador = model.Identificador.Trim();
+            var identificador = (model.Identificador ?? string.Empty).Trim();
             var tipoInferido = identificador.Length == 7 ? TipoRegistrante.Alumno : TipoRegistrante.Administrativo;
 
             var registrante = new Registrante
             {
                 Tipo = tipoInferido,
-                NombreCompleto = model.NombreCompleto.Trim(),
+                NombreCompleto = (model.NombreCompleto ?? string.Empty).Trim(),
                 Identificador = identificador,
-                CorreoInstitucional = model.CorreoInstitucional.Trim().ToLowerInvariant(),
+                CorreoInstitucional = (model.CorreoInstitucional ?? string.Empty).Trim().ToLowerInvariant(),
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 CatalogoGeneroId = model.CatalogoGeneroId,
                 CatalogoCarreraId = model.CatalogoCarreraId,
@@ -124,6 +124,8 @@ namespace AltarWeb.Controllers
                     ModelState.AddModelError(member, error.ErrorMessage ?? "Dato inválido.");
                 }
             }
+
+            await ValidarCatalogosAsync(model.CatalogoGeneroId, model.CatalogoCarreraId);
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
@@ -177,8 +179,8 @@ namespace AltarWeb.Controllers
         [HttpPost]
         public async Task<IActionResult> SignupJuez(RegistroSignupJuezViewModel model)
         {
-            var identificador = model.Identificador.Trim();
-            var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
+            var identificador = (model.Identificador ?? string.Empty).Trim();
+            var correo = (model.CorreoInstitucional ?? string.Empty).Trim().ToLowerInvariant();
 
             if (!correo.EndsWith("@uabc.edu.mx"))
             {
@@ -197,7 +199,7 @@ namespace AltarWeb.Controllers
 
             var juez = new Juez
             {
-                NombreCompleto = model.NombreCompleto.Trim(),
+                NombreCompleto = (model.NombreCompleto ?? string.Empty).Trim(),
                 CorreoInstitucional = correo,
                 Identificador = identificador,
                 Password = AccesoController.HashPassword(model.Password),
@@ -321,7 +323,7 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Login", new { tab = "registro", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
             }
 
-            var identificador = model.Identificador.Trim();
+            var identificador = (model.Identificador ?? string.Empty).Trim();
             var tipoInferido = identificador.Length == 7 ? TipoRegistrante.Alumno : TipoRegistrante.Administrativo;
 
             var registrante = new Registrante
@@ -344,6 +346,8 @@ namespace AltarWeb.Controllers
                     ModelState.AddModelError(member, error.ErrorMessage ?? "Dato inválido.");
                 }
             }
+
+            await ValidarCatalogosAsync(model.CatalogoGeneroId, model.CatalogoCarreraId);
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
@@ -395,7 +399,7 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Login", new { tab = "acceso", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
             }
 
-            var identificador = model.Identificador.Trim();
+            var identificador = (model.Identificador ?? string.Empty).Trim();
             var correo = emailVerificado;
 
             if (await _context.Jueces.IgnoreQueryFilters().AnyAsync(j => j.Identificador == identificador))
@@ -506,11 +510,13 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            var nombre = model.Nombre.Trim();
+            var nombre = (model.Nombre ?? string.Empty).Trim();
             if (await _context.EquiposConcurso.AnyAsync(e => e.Nombre == nombre && e.Periodo == periodo))
             {
                 ModelState.AddModelError(nameof(model.Nombre), "Ya existe un equipo con ese nombre en este periodo.");
             }
+
+            await ValidarCarreraEquipoAsync(model.CarreraId, nameof(model.CarreraId));
 
             var (maestroId, maestroPendiente, maestroError) = await ResolverMaestroEncargadoAsync(model.MaestroEncargadoIdentificador);
             if (maestroError != null)
@@ -624,11 +630,13 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            var nombre = model.Nombre.Trim();
+            var nombre = (model.Nombre ?? string.Empty).Trim();
             if (await _context.EquiposConcurso.AnyAsync(e => e.Id != equipo.Id && e.Nombre == nombre && e.Periodo == equipo.Periodo))
             {
                 ModelState.AddModelError(nameof(model.Nombre), "Ya existe un equipo con ese nombre en este periodo.");
             }
+
+            await ValidarCarreraEquipoAsync(model.CarreraId, nameof(model.CarreraId));
 
             var (maestroId, maestroPendiente, maestroError) = await ResolverMaestroEncargadoAsync(model.MaestroEncargadoIdentificador);
             if (maestroError != null)
@@ -675,7 +683,7 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Ficha");
             }
 
-            var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == identificador.Trim());
+            var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == (identificador ?? string.Empty).Trim());
             if (candidato == null)
             {
                 TempData["Error"] = "No existe un registrante con ese identificador.";
@@ -803,6 +811,29 @@ namespace AltarWeb.Controllers
         // La regla vive en MaestroEncargadoHelper porque el admin (EditarEquipo) usa la misma.
         private Task<(int? MaestroId, string? Pendiente, string? Error)> ResolverMaestroEncargadoAsync(string identificadorCrudo) =>
             MaestroEncargadoHelper.ResolverAsync(_context, identificadorCrudo);
+
+        // M1 (pruebas adversariales 2026-10-21): un id de catalogo inexistente (formulario alterado) llegaba hasta
+        // la base y terminaba en una violacion de llave foranea (error 500). Ambos son opcionales en el registro.
+        private async Task ValidarCatalogosAsync(int? generoId, int? carreraId)
+        {
+            if (generoId != null && !await _context.CatalogoGeneros.AnyAsync(g => g.Id == generoId && g.Activo))
+            {
+                ModelState.AddModelError(nameof(RegistroSignupViewModel.CatalogoGeneroId), "Selecciona un género válido.");
+            }
+            if (carreraId != null && !await _context.CatalogoCarreras.AnyAsync(c => c.Id == carreraId && c.Activo))
+            {
+                ModelState.AddModelError(nameof(RegistroSignupViewModel.CatalogoCarreraId), "Selecciona un programa educativo válido.");
+            }
+        }
+
+        // Misma regla que ya aplicaba el admin en EditarEquipo.
+        private async Task ValidarCarreraEquipoAsync(int carreraId, string campo)
+        {
+            if (!await _context.CatalogoCarreras.AnyAsync(c => c.Id == carreraId && c.Activo))
+            {
+                ModelState.AddModelError(campo, "Selecciona una carrera válida.");
+            }
+        }
 
         private async Task ValidarFechaDefuncionAsync(string periodo, DateOnly fecha, string campo)
         {

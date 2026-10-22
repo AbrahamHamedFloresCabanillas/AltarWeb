@@ -66,6 +66,7 @@
                 <div class="altar-field">
                     <label class="altar-label">Tel&eacute;fono</label>
                     <input asp-for="Telefono" class="altar-input" />
+                    <span asp-validation-for="Telefono" class="altar-error"></span>
                 </div>
 
                 <div class="altar-grid-2">
@@ -78,6 +79,7 @@
                                 <option value="@g.Id">@g.Nombre</option>
                             }
                         </select>
+                        <span asp-validation-for="CatalogoGeneroId" class="altar-error"></span>
                     </div>
                     <div class="altar-field">
                         <label class="altar-label">Carrera</label>
@@ -88,6 +90,7 @@
                                 <option value="@c.Id">@c.Nombre</option>
                             }
                         </select>
+                        <span asp-validation-for="CatalogoCarreraId" class="altar-error"></span>
                     </div>
                 </div>
 
@@ -95,6 +98,7 @@
                     <label class="altar-label">Autodescripci&oacute;n cultural (opcional)</label>
                     <textarea asp-for="AutodescripcionCultural" class="altar-textarea" rows="3"
                               placeholder="Si te autoadscribes a pueblos originarios, afroamericanos, migrantes u otros grupos culturalmente diversos, cu&eacute;ntanos aqu&iacute;."></textarea>
+                    <span asp-validation-for="AutodescripcionCultural" class="altar-error"></span>
                 </div>
 
                 <div class="altar-grid-2">

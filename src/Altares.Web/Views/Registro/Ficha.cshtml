@@ -73,10 +73,12 @@
                             <option value="@c.Id">@c.Nombre</option>
                         }
                     </select>
+                    <span asp-validation-for="CarreraId" class="altar-error"></span>
                 </div>
                 <div class="altar-field">
                     <label class="altar-label">Lugar de exposici&oacute;n</label>
                     <input asp-for="UbicacionAltar" class="altar-input" disabled="@(!Model.PuedeEditar)" />
+                    <span asp-validation-for="UbicacionAltar" class="altar-error"></span>
                 </div>
             </div>
 

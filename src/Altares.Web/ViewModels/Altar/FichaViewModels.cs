@@ -6,9 +6,11 @@ namespace AltarWeb.ViewModels.Altar
     public class CrearEquipoViewModel
     {
         [Required(ErrorMessage = "Ingresa el nombre del grupo.")]
+        [StringLength(LimitesTexto.NombreEquipo, ErrorMessage = LimitesTexto.Mensaje)]
         public string Nombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del altar.")]
+        [StringLength(LimitesTexto.NombreAltar, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreAltar { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Selecciona la carrera del altar.")]
@@ -17,9 +19,11 @@ namespace AltarWeb.ViewModels.Altar
         [Required(ErrorMessage = "Ingresa la matrícula del maestro encargado.")]
         public string MaestroEncargadoIdentificador { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Ubicacion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? UbicacionAltar { get; set; }
 
         [Required(ErrorMessage = "Ingresa el nombre del difunto.")]
+        [StringLength(LimitesTexto.NombreDifunto, ErrorMessage = LimitesTexto.Mensaje)]
         public string DifuntoNombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa la fecha de defunción.")]
@@ -43,12 +47,15 @@ namespace AltarWeb.ViewModels.Altar
         public string CodigoPublico { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del grupo.")]
+        [StringLength(LimitesTexto.NombreEquipo, ErrorMessage = LimitesTexto.Mensaje)]
         public string Nombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del altar.")]
+        [StringLength(LimitesTexto.NombreAltar, ErrorMessage = LimitesTexto.Mensaje)]
         public string NombreAltar { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el nombre del difunto.")]
+        [StringLength(LimitesTexto.NombreDifunto, ErrorMessage = LimitesTexto.Mensaje)]
         public string DifuntoNombre { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa la fecha de defunción.")]
@@ -61,6 +68,7 @@ namespace AltarWeb.ViewModels.Altar
         [Required(ErrorMessage = "Ingresa la matrícula del maestro encargado.")]
         public string MaestroEncargadoIdentificador { get; set; } = string.Empty;
 
+        [StringLength(LimitesTexto.Ubicacion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? UbicacionAltar { get; set; }
 
 
