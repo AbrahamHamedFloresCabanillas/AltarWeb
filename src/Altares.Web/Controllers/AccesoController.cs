@@ -64,7 +64,7 @@ namespace AltarWeb.Controllers
                 // LOG-01: registra el intento fallido (usuario intentado + IP), nunca la contraseña.
                 _logger.LogWarning("Login fallido de Juez/Admin. Usuario intentado: '{Usuario}', IP: {IP}",
                     entrada, HttpContext.Connection.RemoteIpAddress);
-                return RedirectToAction("Login", "Registro", new { error = "Usuario o contraseña incorrectos", tab = "acceso" });
+                return RegistroController.RedirigirALogin(this, "Usuario o contraseña incorrectos", "acceso");
             }
 
             _limitador.Reiniciar(AmbitoLimite, entrada);
@@ -72,7 +72,7 @@ namespace AltarWeb.Controllers
 
             if (juez.Pendiente)
             {
-                return RedirectToAction("Login", "Registro", new { error = "Tu solicitud aún está pendiente de aprobación por un administrador.", tab = "acceso" });
+                return RegistroController.RedirigirALogin(this, "Tu solicitud aún está pendiente de aprobación por un administrador.", "acceso");
             }
 
             if (requiereRehash)

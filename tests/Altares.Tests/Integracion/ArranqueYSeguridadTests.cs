@@ -78,7 +78,7 @@ public class ArranqueYSeguridadTests
             ("Identificador", "90007"), ("Tipo", "Maestro")));
 
         Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
-        Assert.Contains("error=", respuesta.Headers.Location!.ToString());
+        Assert.Matches(@"^/(\?tab=\w+)?$", respuesta.Headers.Location!.OriginalString); // pantalla de inicio (ruta por defecto)
         var dashboard = await cliente.GetAsync("/Registro/Dashboard");
         Assert.Equal(HttpStatusCode.Redirect, dashboard.StatusCode);
 
@@ -140,7 +140,7 @@ public class ArranqueYSeguridadTests
             ("usuario", AltarWebFactory.AdminUsuario), ("password", "incorrecta")));
 
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        Assert.Contains("error=", login.Headers.Location!.ToString());
+        Assert.Matches(@"^/(\?tab=\w+)?$", login.Headers.Location!.OriginalString); // pantalla de inicio (ruta por defecto)
         var panel = await cliente.GetAsync("/AltarEvaluacion/Historial");
         Assert.Equal(HttpStatusCode.Redirect, panel.StatusCode);
     }

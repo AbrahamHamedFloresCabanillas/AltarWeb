@@ -32,9 +32,20 @@ namespace AltarWeb.Controllers
             _validacionGoogle = validacionGoogle;
         }
 
-        public IActionResult Login(string? error = null, string? tab = null)
+        // M4 (pruebas adversariales 2026-10-21): los avisos de esta pantalla llegaban en ?error= y se mostraba
+        // cualquier texto, asi que un enlace podia hacer pasar un mensaje falso por oficial. Ahora viajan en
+        // TempData, que solo escribe el servidor (RedirigirALogin).
+        public const string ClaveAvisoLogin = "AvisoLogin";
+
+        public static IActionResult RedirigirALogin(Controller controlador, string aviso, string tab)
         {
-            ViewBag.Error = error;
+            controlador.TempData[ClaveAvisoLogin] = aviso;
+            return controlador.RedirectToAction("Login", "Registro", new { tab });
+        }
+
+        public IActionResult Login(string? tab = null)
+        {
+            ViewBag.Error = TempData[ClaveAvisoLogin] as string;
             ViewBag.Tab = tab == "acceso" ? "acceso" : "registro";
             return View(new RegistroLoginViewModel());
         }
@@ -211,7 +222,7 @@ namespace AltarWeb.Controllers
             _context.Jueces.Add(juez);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Login", new { tab = "acceso", error = "Tu solicitud fue enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión." });
+            return RedirigirALogin(this, "Tu solicitud fue enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión.", "acceso");
         }
 
         // --- Google OAuth ---
@@ -246,7 +257,7 @@ namespace AltarWeb.Controllers
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (!result.Succeeded || result.Principal == null)
             {
-                return RedirectToAction("Login", new { tab = "registro", error = "No se pudo completar el inicio de sesión con Google." });
+                return RedirigirALogin(this, "No se pudo completar el inicio de sesión con Google.", "registro");
             }
 
             // La identidad de Google ya se leyo; la sesion real de la app es la de HttpContext.Session
@@ -264,7 +275,7 @@ namespace AltarWeb.Controllers
                 _logger.LogWarning("Identidad de Google rechazada. Motivo: {Motivo}, IP: {IP}",
                     identidad.Motivo, HttpContext.Connection.RemoteIpAddress);
                 var mensaje = ValidacionIdentidadGoogle.MensajeRechazo(identidad.Motivo);
-                return RedirectToAction("Login", new { tab = tabError, error = mensaje });
+                return RedirigirALogin(this, mensaje, tabError);
             }
 
             var email = identidad.Email;
@@ -277,7 +288,7 @@ namespace AltarWeb.Controllers
                 {
                     if (juez.Pendiente)
                     {
-                        return RedirectToAction("Login", new { tab = "acceso", error = "Tu solicitud aún está pendiente de aprobación por un administrador." });
+                        return RedirigirALogin(this, "Tu solicitud aún está pendiente de aprobación por un administrador.", "acceso");
                     }
 
                     HttpContext.Session.SetInt32("JuezId", juez.Id);
@@ -296,7 +307,7 @@ namespace AltarWeb.Controllers
                 {
                     if (!registrante.Activo)
                     {
-                        return RedirectToAction("Login", new { tab = "registro", error = "Tu cuenta fue desactivada. Contacta a un administrador." });
+                        return RedirigirALogin(this, "Tu cuenta fue desactivada. Contacta a un administrador.", "registro");
                     }
 
                     CrearSesionRegistrante(registrante);
@@ -320,7 +331,7 @@ namespace AltarWeb.Controllers
             var (googleValido, emailVerificado, nombreVerificado) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "registrante");
             if (!googleValido)
             {
-                return RedirectToAction("Login", new { tab = "registro", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
+                return RedirigirALogin(this, "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\".", "registro");
             }
 
             var identificador = (model.Identificador ?? string.Empty).Trim();
@@ -396,7 +407,7 @@ namespace AltarWeb.Controllers
             var (googleValido, emailVerificado, nombreVerificado) = IdentidadGoogleVerificada.Obtener(HttpContext.Session, "juez");
             if (!googleValido)
             {
-                return RedirectToAction("Login", new { tab = "acceso", error = "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\"." });
+                return RedirigirALogin(this, "Tu sesión de Google expiró o no es válida. Intenta de nuevo con \"Continuar con Google\".", "acceso");
             }
 
             var identificador = (model.Identificador ?? string.Empty).Trim();
@@ -429,7 +440,7 @@ namespace AltarWeb.Controllers
             await _context.SaveChangesAsync();
 
             IdentidadGoogleVerificada.Limpiar(HttpContext.Session);
-            return RedirectToAction("Login", new { tab = "acceso", error = "Tu solicitud fue enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión." });
+            return RedirigirALogin(this, "Tu solicitud fue enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión.", "acceso");
         }
 
         public async Task<IActionResult> Dashboard()
