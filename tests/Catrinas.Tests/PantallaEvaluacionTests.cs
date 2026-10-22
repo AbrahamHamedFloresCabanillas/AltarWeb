@@ -34,4 +34,17 @@ public class PantallaEvaluacionTests
             Assert.True(guia.Success && WebUtility.HtmlDecode(guia.Groups[1].Value).Trim().Length > 20, $"Criterio sin descripcion: {fila.Groups[1].Value.Trim()}");
         }
     }
+
+    // B4: cerrar como Final usa un modal propio (como Altares), no el confirm() del navegador. El servidor sigue
+    // exigiendo la confirmacion explicita: el boton del modal es el que la envia.
+    [Fact]
+    public async Task CerrarComoFinal_UsaModalPropio_YNoConfirmDelNavegador()
+    {
+        var html = await PantallaAsync();
+
+        Assert.DoesNotContain("confirm(", html);
+        var modal = Regex.Match(html, "<div id=\"catrinas-confirmar-final-modal\"[\\s\\S]*?</form>|<div id=\"catrinas-confirmar-final-modal\"[\\s\\S]*?</div>\\s*</div>\\s*</div>");
+        Assert.True(modal.Success, "No hay modal de confirmacion");
+        Assert.Matches("<button type=\"submit\" form=\"form-evaluacion\" name=\"accion\" value=\"final\"", modal.Value);
+    }
 }

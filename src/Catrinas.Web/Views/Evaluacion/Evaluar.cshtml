@@ -76,7 +76,7 @@
                     {
                         <div class="altar-flex altar-gap-sm">
                             <button type="submit" name="accion" value="preliminar" class="altar-btn altar-btn-outline"><i class="fa-solid fa-floppy-disk"></i> Guardar como Preliminar</button>
-                            <button type="submit" name="accion" value="final" class="altar-btn altar-btn-primary" onclick="return catrinasConfirmarFinal()" @(Model.Faltantes.Count > 0 ? "disabled" : null)><i class="fa-solid fa-lock"></i> Cerrar como Final</button>
+                            <button type="button" class="altar-btn altar-btn-primary" onclick="catrinasConfirmarFinal()" @(Model.Faltantes.Count > 0 ? "disabled" : null)><i class="fa-solid fa-lock"></i> Cerrar como Final</button>
                         </div>
                     }
                 </form>
@@ -84,6 +84,23 @@
         </div>
     </main>
 </div>
+
+@* B4 (2026-10-21): modal propio, igual al de Altares, en lugar del confirm() del navegador. El boton del modal
+   envia el formulario como Final con la confirmacion explicita que exige el servidor. *@
+@if (!esFinal)
+{
+    <div id="catrinas-confirmar-final-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+        <div class="altar-card" style="max-width:420px; margin:0;">
+            <i class="fa-solid fa-triangle-exclamation" style="color:var(--altar-amber); font-size:22px;"></i>
+            <div class="altar-card-title">¿Estás de acuerdo?</div>
+            <p>Vas a cerrar la evaluación como <strong>Final</strong> con nota <strong id="modal-nota"></strong>. Ya no podrá modificarse; solo las evaluaciones Final cuentan para ranking y constancias.</p>
+            <div class="altar-flex altar-gap-sm">
+                <button type="button" class="altar-btn altar-btn-outline" onclick="document.getElementById('catrinas-confirmar-final-modal').style.display='none'">Seguir editando</button>
+                <button type="submit" form="form-evaluacion" name="accion" value="final" class="altar-btn altar-btn-primary" onclick="document.getElementById('confirmacion').value='@EvaluacionController.ConfirmacionFinal'">Sí, cerrar como Final</button>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
@@ -98,9 +115,8 @@
         }
         document.querySelectorAll('#form-evaluacion input[type=range]').forEach(function (s) { s.addEventListener('input', catrinasNota); });
         function catrinasConfirmarFinal() {
-            var ok = confirm('¿Estás de acuerdo? Al cerrar como Final la nota (' + catrinasNota().toFixed(2) + ') ya no podrá modificarse.');
-            if (ok) document.getElementById('confirmacion').value = '@EvaluacionController.ConfirmacionFinal';
-            return ok;
+            document.getElementById('modal-nota').textContent = catrinasNota().toFixed(2);
+            document.getElementById('catrinas-confirmar-final-modal').style.display = 'flex';
         }
     </script>
 }
