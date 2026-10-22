@@ -76,6 +76,9 @@ namespace AltarWeb.ViewModels.Altar
 
         public List<CatalogoCarrera> Carreras { get; set; } = new();
         public List<RegistranteEquipo> Integrantes { get; set; } = new();
+        // A1: invitaciones enviadas que la persona aun no acepta. Solo se muestra la matricula que el organizador
+        // escribio, no el nombre (el organizador no debe enterarse de datos que la persona no compartio).
+        public List<(int Id, string Identificador)> InvitacionesPendientes { get; set; } = new();
 
         // Info de maestro encargado para mostrarlo como "integrante" en la vista.
         public string? MaestroEncargadoNombre { get; set; }

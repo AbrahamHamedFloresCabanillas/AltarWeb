@@ -22,6 +22,11 @@ DELETE FROM EvaluacionesConcurso  WHERE Id IN (SELECT Id FROM @evals);
 DELETE FROM RegistranteEquipos    WHERE EquipoId IN (SELECT Id FROM @equipos);
 DELETE FROM Difuntos              WHERE EquipoId IN (SELECT Id FROM @equipos);
 DELETE FROM EquiposConcurso       WHERE Id IN (SELECT Id FROM @equipos);
+-- A1: las invitaciones pendientes de estas cuentas (la FK hacia Registrantes es Restrict).
+IF OBJECT_ID('InvitacionesEquipo') IS NOT NULL
+    DELETE i FROM InvitacionesEquipo i JOIN Registrantes r ON r.Id = i.RegistranteId
+    WHERE r.CorreoInstitucional LIKE 'carga.%@uabc.edu.mx'
+      AND NOT EXISTS (SELECT 1 FROM RegistranteEquipos re WHERE re.RegistranteId = r.Id);
 DELETE FROM Registrantes          WHERE CorreoInstitucional LIKE 'carga.%@uabc.edu.mx'
     AND NOT EXISTS (SELECT 1 FROM RegistranteEquipos re WHERE re.RegistranteId = Registrantes.Id);
 -- Un juez de carga que haya evaluado un equipo real no se borra (no deberia pasar en staging).

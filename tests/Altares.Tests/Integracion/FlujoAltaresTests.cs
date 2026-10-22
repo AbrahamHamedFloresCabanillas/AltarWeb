@@ -96,7 +96,10 @@ public class FlujoAltaresTests
             ("CodigoPublico", "ALT-2099-1-9999")), "Ficha");
 
         // 4. Integrantes y Narrador.
+        // A1: el organizador invita y el integrante acepta desde su portal.
         AssertRedirect(await PostAsync(organizador, "/Registro/Ficha", "/Registro/AgregarIntegrante", ("identificador", $"1801{sufijo}")), "");
+        var invitacion = Regex.Match(await integrante.GetStringAsync("/Registro/Dashboard"), "name=\"invitacionId\" value=\"(\\d+)\"").Groups[1].Value;
+        AssertRedirect(await PostAsync(integrante, "/Registro/Dashboard", "/Registro/AceptarInvitacion", ("invitacionId", invitacion)), "Dashboard");
         AssertRedirect(await PostAsync(organizador, "/Registro/Ficha", "/Registro/DesignarNarrador", ("registranteId", integranteId.ToString())), "");
 
         using (var scope = _factory.Services.CreateScope())

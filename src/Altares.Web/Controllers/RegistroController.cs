@@ -467,8 +467,23 @@ namespace AltarWeb.Controllers
                 .OrderBy(el => el.Orden)
                 .ToListAsync();
 
+            // A1: con equipo en el periodo ya no puede aceptar otras invitaciones, asi que solo se muestran sin equipo.
+            var invitaciones = equipo != null ? new List<InvitacionRecibidaViewModel>() : await _context.InvitacionesEquipo
+                .Where(i => i.RegistranteId == registrante.Id && i.Periodo == periodo)
+                .OrderBy(i => i.CreadaEn)
+                .Select(i => new InvitacionRecibidaViewModel
+                {
+                    Id = i.Id,
+                    Equipo = i.Equipo.Nombre,
+                    NombreAltar = i.Equipo.NombreAltar,
+                    Carrera = i.Equipo.Carrera.Nombre,
+                    Organizador = i.Equipo.CreadoPorRegistrante != null ? i.Equipo.CreadoPorRegistrante.NombreCompleto : null
+                })
+                .ToListAsync();
+
             return View(new RegistranteDashboardViewModel
             {
+                Invitaciones = invitaciones,
                 Registrante = registrante,
                 Equipo = equipo,
                 EsOrganizador = equipo != null && equipo.CreadoPorRegistranteId == registrante.Id,
@@ -697,26 +712,90 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Ficha");
             }
 
+            // A1 (pruebas adversariales 2026-10-21): antes se agregaba directo, sin consentimiento, y el mensaje
+            // revelaba el nombre y si la persona ya tenia equipo. Ahora se crea una invitacion que la persona acepta
+            // o rechaza desde su portal, y la respuesta es la misma exista o no la cuenta, tenga o no equipo.
             var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == (identificador ?? string.Empty).Trim());
-            if (candidato == null)
+            if (candidato != null && candidato.Id != registrante.Id
+                && !await TieneEquipoActivoAsync(candidato.Id)
+                && !await _context.InvitacionesEquipo.AnyAsync(i => i.EquipoId == equipo!.Id && i.RegistranteId == candidato.Id))
             {
-                TempData["Error"] = "No existe un registrante con esa matrícula o número de empleado.";
-                return RedirectToAction("Ficha");
+                _context.InvitacionesEquipo.Add(new InvitacionEquipo { EquipoId = equipo!.Id, RegistranteId = candidato.Id, Periodo = equipo.Periodo });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateException)
+                {
+                    // Doble envio del mismo formulario: el indice unico (EquipoId, RegistranteId) ya tiene la invitacion.
+                }
             }
 
-            if (await TieneEquipoActivoAsync(candidato.Id))
+            TempData["Mensaje"] = MensajeInvitacionEnviada;
+            return RedirectToAction("Ficha");
+        }
+
+        internal const string MensajeInvitacionEnviada =
+            "Si esa matrícula o número de empleado pertenece a una cuenta registrada que aún no tiene equipo en este periodo, verá tu invitación en su portal y quedará en el equipo cuando la acepte.";
+
+        [HttpPost]
+        public async Task<IActionResult> CancelarInvitacion(int invitacionId)
+        {
+            var registrante = await ObtenerRegistranteSesionAsync();
+            if (registrante == null) return RedirectToAction("Login");
+
+            var equipo = await ObtenerEquipoOrganizadorAsync(registrante.Id);
+            var invitacion = equipo == null ? null
+                : await _context.InvitacionesEquipo.FirstOrDefaultAsync(i => i.Id == invitacionId && i.EquipoId == equipo.Id);
+            if (invitacion != null)
             {
-                TempData["Error"] = $"{candidato.NombreCompleto} ya pertenece a un equipo este periodo.";
-                return RedirectToAction("Ficha");
+                _context.InvitacionesEquipo.Remove(invitacion);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Invitación cancelada.";
+            }
+            return RedirectToAction("Ficha");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AceptarInvitacion(int invitacionId)
+        {
+            var registrante = await ObtenerRegistranteSesionAsync();
+            if (registrante == null) return RedirectToAction("Login");
+
+            // Solo la persona invitada puede aceptar su propia invitacion.
+            var invitacion = await _context.InvitacionesEquipo
+                .Include(i => i.Equipo).ThenInclude(e => e.Evaluacion)
+                .FirstOrDefaultAsync(i => i.Id == invitacionId && i.RegistranteId == registrante.Id);
+            if (invitacion == null)
+            {
+                TempData["Error"] = "La invitación ya no está disponible.";
+                return RedirectToAction("Dashboard");
+            }
+
+            if (await TieneEquipoActivoAsync(registrante.Id))
+            {
+                TempData["Error"] = "Ya perteneces a un equipo este periodo.";
+                return RedirectToAction("Dashboard");
+            }
+
+            // Mismo candado que agregar o quitar integrantes: sin evaluacion y antes de la fecha limite de requisitos.
+            var bloqueo = await BloqueoEdicionIntegrantesAsync(invitacion.Equipo);
+            if (bloqueo != null)
+            {
+                TempData["Error"] = $"No puedes unirte a este equipo: {bloqueo}";
+                return RedirectToAction("Dashboard");
             }
 
             _context.RegistranteEquipos.Add(new RegistranteEquipo
             {
-                RegistranteId = candidato.Id,
-                EquipoId = equipo!.Id,
+                RegistranteId = registrante.Id,
+                EquipoId = invitacion.EquipoId,
                 Rol = RolEquipo.Integrante,
-                Periodo = equipo.Periodo
+                Periodo = invitacion.Periodo
             });
+            // Con equipo en este periodo, sus demas invitaciones del periodo ya no aplican.
+            _context.InvitacionesEquipo.RemoveRange(
+                await _context.InvitacionesEquipo.Where(i => i.RegistranteId == registrante.Id && i.Periodo == invitacion.Periodo).ToListAsync());
 
             try
             {
@@ -724,13 +803,29 @@ namespace AltarWeb.Controllers
             }
             catch (DbUpdateException)
             {
-                // SEC-11: race rara (el candidato se unio a otro equipo justo entre el check y el insert).
-                TempData["Error"] = $"{candidato.NombreCompleto} ya pertenece a un equipo este periodo.";
-                return RedirectToAction("Ficha");
+                // SEC-11: el indice unico (RegistranteId, Periodo) gano la carrera (doble clic o dos invitaciones a la vez).
+                TempData["Error"] = "Ya perteneces a un equipo este periodo.";
+                return RedirectToAction("Dashboard");
             }
 
-            TempData["Mensaje"] = $"{candidato.NombreCompleto} fue agregado al equipo.";
-            return RedirectToAction("Ficha");
+            TempData["Mensaje"] = $"Te uniste al equipo '{invitacion.Equipo.Nombre}'.";
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RechazarInvitacion(int invitacionId)
+        {
+            var registrante = await ObtenerRegistranteSesionAsync();
+            if (registrante == null) return RedirectToAction("Login");
+
+            var invitacion = await _context.InvitacionesEquipo.FirstOrDefaultAsync(i => i.Id == invitacionId && i.RegistranteId == registrante.Id);
+            if (invitacion != null)
+            {
+                _context.InvitacionesEquipo.Remove(invitacion);
+                await _context.SaveChangesAsync();
+                TempData["Mensaje"] = "Invitación rechazada.";
+            }
+            return RedirectToAction("Dashboard");
         }
 
         [HttpPost]
@@ -895,6 +990,12 @@ namespace AltarWeb.Controllers
             vm.ResponsableCorreo = organizador.CorreoInstitucional;
             vm.CreadoEn = equipo.CreadoEn;
             vm.Integrantes = equipo.Integrantes.ToList();
+            vm.InvitacionesPendientes = (await _context.InvitacionesEquipo
+                .Where(i => i.EquipoId == equipo.Id)
+                .OrderBy(i => i.CreadaEn)
+                .Select(i => new { i.Id, i.Registrante.Identificador })
+                .ToListAsync())
+                .Select(i => (i.Id, i.Identificador)).ToList();
             vm.MaestroEncargadoNombre = equipo.MaestroEncargado?.NombreCompleto;
             vm.MaestroEncargadoPendiente = equipo.MaestroEncargado == null && !string.IsNullOrEmpty(equipo.MaestroEncargadoIdentificadorPendiente);
             vm.Carreras = await _context.CatalogoCarreras.Where(c => c.Activo).OrderBy(c => c.Orden).ToListAsync();

@@ -19,6 +19,7 @@ namespace AltarWeb.Models
         public DbSet<Registro.Registrante> Registrantes { get; set; }
         public DbSet<Registro.Equipo> EquiposConcurso { get; set; }
         public DbSet<Registro.RegistranteEquipo> RegistranteEquipos { get; set; }
+        public DbSet<Registro.InvitacionEquipo> InvitacionesEquipo { get; set; }
         public DbSet<Registro.Difunto> Difuntos { get; set; }
         public DbSet<Registro.Elemento> Elementos { get; set; }
         public DbSet<Registro.Evaluacion> EvaluacionesConcurso { get; set; }
@@ -107,6 +108,7 @@ namespace AltarWeb.Models
             modelBuilder.ApplyConfiguration(new Registro.Configurations.EvaluacionCatrinaConfiguration());
             modelBuilder.ApplyConfiguration(new Registro.Configurations.ConfiguracionPeriodoConfiguration());
             modelBuilder.ApplyConfiguration(new Registro.Configurations.ContadorCodigoPublicoConfiguration());
+            modelBuilder.ApplyConfiguration(new Registro.Configurations.InvitacionEquipoConfiguration());
         }
     }
 }

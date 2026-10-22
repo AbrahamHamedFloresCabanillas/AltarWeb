@@ -48,6 +48,26 @@
         <div>
             @if (Model.Equipo == null)
             {
+                @foreach (var invitacion in Model.Invitaciones)
+                {
+                    <div class="altar-card" style="border-color:var(--altar-primary);">
+                        <div class="altar-card-title"><i class="fa-solid fa-envelope-open-text"></i> Invitaci&oacute;n a un equipo</div>
+                        <p class="altar-card-subtitle">
+                            <strong>@invitacion.Organizador</strong> te invit&oacute; a su equipo <strong>@invitacion.Equipo</strong>
+                            (altar &quot;@invitacion.NombreAltar&quot; &middot; @invitacion.Carrera). Solo quedas en el equipo si aceptas.
+                        </p>
+                        <div class="altar-flex altar-gap-sm">
+                            <form asp-controller="Registro" asp-action="AceptarInvitacion" method="post" style="display:inline;">
+                                <input type="hidden" name="invitacionId" value="@invitacion.Id" />
+                                <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-check"></i> Aceptar</button>
+                            </form>
+                            <form asp-controller="Registro" asp-action="RechazarInvitacion" method="post" style="display:inline;">
+                                <input type="hidden" name="invitacionId" value="@invitacion.Id" />
+                                <button type="submit" class="altar-btn altar-btn-outline">Rechazar</button>
+                            </form>
+                        </div>
+                    </div>
+                }
                 <div class="altar-card">
                     <div class="altar-card-title">A&uacute;n no tienes equipo</div>
                     <p class="altar-card-subtitle">Crea tu equipo y llena la Ficha de Registro del Altar para participar en el concurso.</p>

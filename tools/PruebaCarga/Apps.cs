@@ -67,6 +67,7 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
 {
     private static readonly Regex Narrador = new("/Registro/DesignarNarrador\"[^>]*>\\s*<input type=\"hidden\" name=\"registranteId\" value=\"(\\d+)\"");
     private static readonly Regex EquipoBusqueda = new("NuevaEvaluacion\\?equipoId=(\\d+)");
+    private static readonly Regex Invitacion = new("name=\"invitacionId\" value=\"(\\d+)\"");
     private static readonly Regex Detalle = new("/AltarEvaluacion/Detalle/(\\d+)");
 
     public string Nombre => "altares";
@@ -107,6 +108,13 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
         var agregar = await org.PostAsync("/Registro/Ficha", "/Registro/AgregarIntegrante", "preparar agregar integrante",
             ("identificador", Cuentas.Integrante(i).Identificador));
         Exigir(agregar.Codigo == 302, $"agregar integrante al equipo {i}");
+
+        // A1: agregar crea una invitacion; el integrante la acepta desde su portal.
+        var invitacion = Invitacion.Match(await integrante.HtmlAsync("/Registro/Dashboard"));
+        Exigir(invitacion.Success, $"no aparece la invitacion al equipo {i}");
+        var aceptar = await integrante.PostAsync("/Registro/Dashboard", "/Registro/AceptarInvitacion", "preparar aceptar invitacion",
+            ("invitacionId", invitacion.Groups[1].Value));
+        Exigir(aceptar.Codigo == 302, $"aceptar invitacion al equipo {i}");
 
         var m = Narrador.Match(await org.HtmlAsync("/Registro/Ficha"));
         Exigir(m.Success, $"no aparece el boton de narrador del equipo {i}");

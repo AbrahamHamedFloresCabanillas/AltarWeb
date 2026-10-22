@@ -172,12 +172,32 @@
             </div>
         }
 
+        @foreach (var invitacion in Model.InvitacionesPendientes)
+        {
+            <div class="altar-flex altar-gap-sm" style="padding:10px 0; border-top:1px solid var(--altar-border);">
+                <div class="altar-avatar" style="width:28px; height:28px; font-size:11px;"><i class="fa-solid fa-envelope"></i></div>
+                <div style="flex:1;">
+                    @invitacion.Identificador
+                    <span class="altar-text-muted" style="font-size:12px;">&middot; invitaci&oacute;n pendiente de aceptar</span>
+                </div>
+                @if (Model.PuedeEditar)
+                {
+                    <form asp-controller="Registro" asp-action="CancelarInvitacion" method="post" style="display:inline;">
+                        <input type="hidden" name="invitacionId" value="@invitacion.Id" />
+                        <button type="submit" class="altar-btn altar-btn-sm altar-btn-outline" title="Cancelar invitación" aria-label="Cancelar invitación"><i class="fa-solid fa-xmark"></i></button>
+                    </form>
+                }
+            </div>
+        }
+
         @if (Model.PuedeEditar)
         {
+            @* A1 (2026-10-21): se invita; la persona queda en el equipo solo cuando acepta desde su portal. *@
             <form asp-controller="Registro" asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:16px;">
-                <input type="text" name="identificador" class="altar-input" placeholder="Matrícula / No. de empleado del nuevo integrante" style="flex:1;" required />
-                <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
+                <input type="text" name="identificador" class="altar-input" placeholder="Matrícula / No. de empleado de quien quieres invitar" style="flex:1;" required />
+                <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Invitar</button>
             </form>
+            <p class="altar-text-muted" style="font-size:12px; margin-top:6px;">La persona ver&aacute; la invitaci&oacute;n en su portal y entrar&aacute; al equipo cuando la acepte.</p>
         }
         else
         {

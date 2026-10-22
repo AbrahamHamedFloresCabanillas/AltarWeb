@@ -65,5 +65,16 @@ namespace AltarWeb.ViewModels.Altar
         // Cualquier evaluacion (preliminar o final): cierra la edicion de la ficha/integrantes.
         public bool EdicionBloqueada { get; set; }
         public List<Elemento> Elementos { get; set; } = new();
+        // A1: invitaciones a equipos que la persona puede aceptar o rechazar (solo mientras no tiene equipo).
+        public List<InvitacionRecibidaViewModel> Invitaciones { get; set; } = new();
+    }
+
+    public class InvitacionRecibidaViewModel
+    {
+        public int Id { get; set; }
+        public string Equipo { get; set; } = string.Empty;
+        public string NombreAltar { get; set; } = string.Empty;
+        public string Carrera { get; set; } = string.Empty;
+        public string? Organizador { get; set; }
     }
 }

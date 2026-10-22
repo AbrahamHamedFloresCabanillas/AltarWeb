@@ -1271,6 +1271,38 @@ namespace AltarWeb.Migrations
                     b.ToTable("EvaluacionIntegrantes", (string)null);
                 });
 
+            modelBuilder.Entity("AltarWeb.Models.Registro.InvitacionEquipo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreadaEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EquipoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Periodo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("RegistranteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipoId", "RegistranteId")
+                        .IsUnique();
+
+                    b.HasIndex("RegistranteId", "Periodo");
+
+                    b.ToTable("InvitacionesEquipo", (string)null);
+                });
+
             modelBuilder.Entity("AltarWeb.Models.Registro.Registrante", b =>
                 {
                     b.Property<int>("Id")
@@ -1522,6 +1554,25 @@ namespace AltarWeb.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Evaluacion");
+
+                    b.Navigation("Registrante");
+                });
+
+            modelBuilder.Entity("AltarWeb.Models.Registro.InvitacionEquipo", b =>
+                {
+                    b.HasOne("AltarWeb.Models.Registro.Equipo", "Equipo")
+                        .WithMany()
+                        .HasForeignKey("EquipoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AltarWeb.Models.Registro.Registrante", "Registrante")
+                        .WithMany()
+                        .HasForeignKey("RegistranteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Equipo");
 
                     b.Navigation("Registrante");
                 });
