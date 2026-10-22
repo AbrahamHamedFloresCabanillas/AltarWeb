@@ -13,13 +13,56 @@ namespace Catrinas.Web.Controllers
     public class AdminController : Controller
     {
         private readonly CatrinasDbContext _context;
+        private readonly LimitadorIntentosLogin _limitador;
+        private readonly ILogger<AdminController> _logger;
 
-        public AdminController(CatrinasDbContext context) => _context = context;
+        public AdminController(CatrinasDbContext context, LimitadorIntentosLogin limitador, ILogger<AdminController> logger)
+        {
+            _context = context;
+            _limitador = limitador;
+            _logger = logger;
+        }
 
         public async Task<IActionResult> Jurado()
         {
             ViewBag.Nav = this.Nav("Jurado");
-            return View(await _context.Jueces.AsNoTracking().OrderBy(j => !j.Pendiente).ThenBy(j => j.NombreCompleto).ToListAsync());
+            var jurado = await _context.Jueces.AsNoTracking().OrderBy(j => !j.Pendiente).ThenBy(j => j.NombreCompleto).ToListAsync();
+            ViewBag.Bloqueados = jurado.Where(JuezBloqueado).Select(j => j.Id).ToHashSet();
+            return View(jurado);
+        }
+
+        // --- A3 (pruebas adversariales 2026-10-21): desbloqueo de cuentas ---
+        //
+        // Cualquiera puede pausar 5 minutos una cuenta ajena con 5 contraseñas incorrectas. Decision del propietario:
+        // los limites de login NO se relajan; la administracion ve que cuentas estan bloqueadas y puede liberarlas. Un
+        // jurado se intenta por usuario o por correo y ademas se cuenta por id (AccesoController): tres claves.
+        private bool JuezBloqueado(Juez juez) =>
+            _limitador.EstaBloqueada(AccesoController.AmbitoLimite, juez.Usuario, out _)
+            || _limitador.EstaBloqueada(AccesoController.AmbitoLimite, juez.CorreoInstitucional, out _)
+            || _limitador.EstaBloqueada(AccesoController.AmbitoCuentaResuelta, juez.Id.ToString(CultureInfo.InvariantCulture), out _);
+
+        [HttpPost]
+        public async Task<IActionResult> DesbloquearJuez(int id)
+        {
+            var juez = await _context.Jueces.FirstOrDefaultAsync(j => j.Id == id);
+            if (juez == null) return NotFound();
+            if (!string.IsNullOrEmpty(juez.Usuario)) _limitador.Reiniciar(AccesoController.AmbitoLimite, juez.Usuario);
+            if (!string.IsNullOrEmpty(juez.CorreoInstitucional)) _limitador.Reiniciar(AccesoController.AmbitoLimite, juez.CorreoInstitucional);
+            _limitador.Reiniciar(AccesoController.AmbitoCuentaResuelta, juez.Id.ToString(CultureInfo.InvariantCulture));
+            _logger.LogWarning("Cuenta del jurado desbloqueada por la administración. JuezId: {JuezId}, AdminId: {AdminId}", juez.Id, HttpContext.Session.JuezId());
+            TempData["Mensaje"] = "Cuenta desbloqueada: ya puede volver a intentar iniciar sesión.";
+            return RedirectToAction(nameof(Jurado));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DesbloquearParticipante(int id)
+        {
+            var registrante = await _context.Registrantes.FirstOrDefaultAsync(r => r.Id == id);
+            if (registrante == null) return NotFound();
+            _limitador.Reiniciar(RegistroController.AmbitoLimite, registrante.CorreoInstitucional);
+            _logger.LogWarning("Cuenta de participante desbloqueada por la administración. RegistranteId: {RegistranteId}, AdminId: {AdminId}", registrante.Id, HttpContext.Session.JuezId());
+            TempData["Mensaje"] = "Cuenta desbloqueada: ya puede volver a intentar iniciar sesión.";
+            return RedirectToAction(nameof(Participantes));
         }
 
         public IActionResult CrearJuez()
@@ -89,9 +132,13 @@ namespace Catrinas.Web.Controllers
         public async Task<IActionResult> Participantes()
         {
             ViewBag.Nav = this.Nav("Participantes");
-            return View(await _context.Registrantes.AsNoTracking()
+            var participantes = await _context.Registrantes.AsNoTracking()
                 .Include(r => r.CatalogoCarrera).Include(r => r.CatalogoGenero)
-                .OrderBy(r => r.NombreCompleto).ToListAsync());
+                .OrderBy(r => r.NombreCompleto).ToListAsync();
+            ViewBag.Bloqueados = participantes
+                .Where(r => _limitador.EstaBloqueada(RegistroController.AmbitoLimite, r.CorreoInstitucional, out _))
+                .Select(r => r.Id).ToHashSet();
+            return View(participantes);
         }
 
         [HttpPost]

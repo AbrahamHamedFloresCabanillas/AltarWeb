@@ -14,7 +14,7 @@ namespace Catrinas.Web.Controllers
     // jurado y panel del participante.
     public class RegistroController : Controller
     {
-        private const string AmbitoLimite = "registrante";
+        internal const string AmbitoLimite = "registrante";
         private readonly CatrinasDbContext _context;
         private readonly ILogger<RegistroController> _logger;
         private readonly LimitadorIntentosLogin _limitador;

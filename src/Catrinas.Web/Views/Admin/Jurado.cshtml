@@ -1,6 +1,8 @@
 @model List<Juez>
 @{
     ViewData["Title"] = "Jurado";
+    // A3: cuentas en pausa por intentos fallidos de inicio de sesion (ids).
+    var bloqueados = ViewBag.Bloqueados as ISet<int> ?? new HashSet<int>();
 }
 <div class="altar-app">
     <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
@@ -36,8 +38,16 @@
                                 {
                                     <span class="altar-badge altar-badge-success">Activo</span>
                                 }
+                                @if (bloqueados.Contains(j.Id))
+                                {
+                                    <div><span class="altar-badge altar-badge-danger" title="Demasiados intentos fallidos de inicio de sesión."><i class="fa-solid fa-lock"></i> Bloqueada</span></div>
+                                }
                             </td>
                             <td class="altar-flex altar-gap-sm">
+                                @if (bloqueados.Contains(j.Id))
+                                {
+                                    <form asp-action="DesbloquearJuez" method="post" style="display:inline;"><input type="hidden" name="id" value="@j.Id" /><button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);" title="Desbloquear" aria-label="Desbloquear"><i class="fa-solid fa-lock-open"></i></button></form>
+                                }
                                 @if (j.Pendiente && j.Activo)
                                 {
                                     <form asp-action="AprobarJuez" method="post" style="display:inline;"><input type="hidden" name="id" value="@j.Id" /><button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);"><i class="fa-solid fa-check"></i> Aprobar</button></form>

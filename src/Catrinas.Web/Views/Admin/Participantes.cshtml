@@ -1,6 +1,8 @@
 @model List<Registrante>
 @{
     ViewData["Title"] = "Participantes";
+    // A3: cuentas en pausa por intentos fallidos de inicio de sesion (ids).
+    var bloqueados = ViewBag.Bloqueados as ISet<int> ?? new HashSet<int>();
 }
 <div class="altar-app">
     <partial name="_Sidebar" model="(NavContext)ViewBag.Nav" />
@@ -15,13 +17,26 @@
                     @foreach (var r in Model)
                     {
                         <tr>
-                            <td>@r.NombreCompleto @(r.Activo ? "" : "(inactivo)")</td>
+                            <td>
+                                @r.NombreCompleto @(r.Activo ? "" : "(inactivo)")
+                                @if (bloqueados.Contains(r.Id))
+                                {
+                                    <div><span class="altar-badge altar-badge-danger" title="Demasiados intentos fallidos de inicio de sesión."><i class="fa-solid fa-lock"></i> Bloqueada</span></div>
+                                }
+                            </td>
                             <td>@r.Tipo</td>
                             <td>@r.Identificador</td>
                             <td>@r.CorreoInstitucional</td>
                             <td>@(r.CatalogoCarrera?.Nombre ?? "—")</td>
                             <td>@(r.CatalogoGenero?.Nombre ?? "—")</td>
                             <td>
+                                @if (bloqueados.Contains(r.Id))
+                                {
+                                    <form asp-action="DesbloquearParticipante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);" title="Desbloquear" aria-label="Desbloquear"><i class="fa-solid fa-lock-open"></i></button>
+                                    </form>
+                                }
                                 @* B6 (2026-10-21): mismos botones que Altares (la referencia de diseño). *@
                                 @if (r.Activo)
                                 {

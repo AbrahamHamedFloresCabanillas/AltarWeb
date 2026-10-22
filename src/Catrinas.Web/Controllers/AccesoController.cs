@@ -9,8 +9,8 @@ namespace Catrinas.Web.Controllers
     // Acceso del jurado y la administracion de Catrinas (cuentas propias, independientes de Altares).
     public class AccesoController : Controller
     {
-        private const string AmbitoLimite = "jurado";
-        private const string AmbitoCuentaResuelta = "jurado-id";
+        internal const string AmbitoLimite = "jurado";
+        internal const string AmbitoCuentaResuelta = "jurado-id";
         private readonly CatrinasDbContext _context;
         private readonly ILogger<AccesoController> _logger;
         private readonly LimitadorIntentosLogin _limitador;
