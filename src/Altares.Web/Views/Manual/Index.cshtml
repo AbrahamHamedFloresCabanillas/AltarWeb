@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Manuales";
+    var esAdmin = ViewBag.EsAdmin as bool? ?? false;
+    var manuales = new List<(string Accion, string Titulo, string Descripcion, string Icono)>
+    {
+        ("Participante", "Manual del participante", "Crear cuenta y equipo, invitar integrantes, completar la Ficha de Registro y descargar la constancia.", "fa-users"),
+        ("Juez", "Manual del juez", "Entrar, buscar un equipo, calificar el altar, cerrar como Final y obtener las constancias.", "fa-scale-balanced")
+    };
+    if (esAdmin)
+    {
+        manuales.Add(("Administrador", "Manual del administrador", "Todo lo del juez más jueces, registrantes y equipos, configuración del periodo y reporte de cierre.", "fa-user-shield"));
+    }
+}
+
+<div class="altar-app">
+    <partial name="_AltarSidebarPartial" model="(AltarWeb.ViewModels.Altar.AltarNavContext)ViewBag.Nav" />
+
+    <main class="altar-main">
+        <div class="altar-page-title">Manuales de usuario</div>
+        <div class="altar-page-subtitle" style="margin-bottom:20px;">Gu&iacute;as paso a paso por rol, descargables en PDF</div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="altar-error" style="margin-bottom:12px;">@TempData["Error"]</div>
+        }
+
+        <div class="altar-grid-3">
+            @foreach (var m in manuales)
+            {
+                <div class="altar-card">
+                    <div class="altar-card-title"><i class="fa-solid @m.Icono"></i> @m.Titulo</div>
+                    <p class="altar-card-subtitle">@m.Descripcion</p>
+                    <a href="/Manual/@m.Accion" class="altar-btn altar-btn-primary"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</a>
+                </div>
+            }
+        </div>
+    </main>
+</div>
