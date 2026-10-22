@@ -15,16 +15,19 @@ namespace AltarWeb.Controllers
         private readonly ReportePeriodoService _reportePeriodo;
         private readonly ILogger<AltarAdminController> _logger;
         private readonly IWebHostEnvironment _entorno;
+        private readonly EvaluacionCalculoService _calculo;
 
         // Tope de 25 MB para el recorrido en PDF; suficiente para un mapa por carrera sin permitir abusos.
         private const long RecorridoMaxBytes = 25 * 1024 * 1024;
 
-        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger, IWebHostEnvironment entorno)
+        public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger, IWebHostEnvironment entorno,
+            EvaluacionCalculoService calculo)
         {
             _context = context;
             _reportePeriodo = reportePeriodo;
             _logger = logger;
             _entorno = entorno;
+            _calculo = calculo;
         }
 
         // --- Jueces (vistas de backoffice sobre la entidad Juez, que sigue siendo la tabla de auth) ---
@@ -548,6 +551,8 @@ namespace AltarWeb.Controllers
                 return View(await CompletarEditarEquipoViewModelAsync(model, equipo));
             }
 
+            var carreraAnterior = equipo.CarreraId;
+
             equipo.Nombre = nombre;
             equipo.NombreAltar = model.NombreAltar.Trim();
             equipo.CarreraId = model.CarreraId;
@@ -573,6 +578,15 @@ namespace AltarWeb.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            // C3 (pruebas adversariales 2026-10-21): los lugares son por carrera; si un equipo ya cerrado como
+            // Final cambia de carrera, se recalculan las dos (antes conservaba su lugar en la carrera nueva y la
+            // de origen se quedaba sin el). La constancia toma la carrera actual, asi que queda consistente.
+            if (carreraAnterior != equipo.CarreraId && equipo.Evaluacion?.Estado == EstadoEvaluacion.Final)
+            {
+                await _calculo.RecalcularLugaresAsync(carreraAnterior, equipo.Evaluacion.Periodo);
+                await _calculo.RecalcularLugaresAsync(equipo.CarreraId, equipo.Evaluacion.Periodo);
+            }
 
             _logger.LogInformation(
                 "Equipo editado por administracion. EquipoId: {EquipoId}, AdminId: {AdminId}, TeniaEvaluacion: {TeniaEvaluacion}",
