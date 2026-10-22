@@ -26,7 +26,15 @@ namespace Catrinas.Web.Controllers
         [SoloAdmin]
         public IActionResult Administracion() => Pdf(ManualesCatrinas.Administracion);
 
-        private FileContentResult Pdf(ManualUsuario manual) =>
-            File(ManualUsuarioPdf.Generar(manual, DateTime.Today), "application/pdf", manual.NombreArchivo);
+        // ?ver=1 entrega el PDF inline para que el navegador lo abra en su visor (boton "Ver", pestaña nueva); sin el
+        // parametro se descarga como archivo (boton "Descargar PDF").
+        private IActionResult Pdf(ManualUsuario manual)
+        {
+            var pdf = ManualUsuarioPdf.Generar(manual, DateTime.Today);
+            if (Request.Query["ver"] != "1") return File(pdf, "application/pdf", manual.NombreArchivo);
+
+            Response.Headers.ContentDisposition = new System.Net.Mime.ContentDisposition { Inline = true, FileName = manual.NombreArchivo }.ToString();
+            return File(pdf, "application/pdf");
+        }
     }
 }

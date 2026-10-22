@@ -73,3 +73,24 @@ public class ManualesTests
         Assert.Contains("/Manual/Participante", await participante.GetStringAsync("/Registro/Panel"));
     }
 }
+
+// "Ver" (peticion del propietario, 2026-10-22): el mismo PDF, inline, para abrirlo en el visor del navegador.
+[Collection(CatrinasCollection.Nombre)]
+[Trait("Category", "Integracion")]
+public class ManualesVerTests
+{
+    private readonly CatrinasFactory _f;
+    public ManualesVerTests(CatrinasFactory f) => _f = f;
+
+    [Fact]
+    public async Task Ver_EntregaElPdfInline_YLosBotonesAbrenPestanaNueva()
+    {
+        var ver = await _f.Cliente().GetAsync("/Manual/Participante?ver=1");
+        Assert.Equal("application/pdf", ver.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("inline", ver.Content.Headers.ContentDisposition?.DispositionType);
+        Assert.Equal("attachment", (await _f.Cliente().GetAsync("/Manual/Participante")).Content.Headers.ContentDisposition?.DispositionType);
+
+        var jurado = await Escenario.JuradoAsync(_f);
+        Assert.Contains("href=\"/Manual/Jurado?ver=1\" target=\"_blank\"", await jurado.GetStringAsync("/Manual"));
+    }
+}
