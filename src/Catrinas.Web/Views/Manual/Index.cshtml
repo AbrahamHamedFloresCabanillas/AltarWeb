@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Manuales";
+    var nav = (NavContext)ViewBag.Nav;
+    var manuales = new List<(string Accion, string Titulo, string Descripcion, string Icono)>
+    {
+        ("Participante", "Manual del participante", "Crear cuenta e inscripción, invitar integrantes, designar quién personifica y descargar la constancia.", "fa-users"),
+        ("Jurado", "Manual del jurado", "Entrar, evaluar una Catrina, cerrar como Final, consultar el ranking y obtener las constancias.", "fa-scale-balanced")
+    };
+    if (nav.EsAdmin)
+    {
+        manuales.Add(("Administracion", "Manual de administración", "Todo lo del jurado más cuentas del jurado, participantes y configuración del periodo.", "fa-user-shield"));
+    }
+}
+<div class="altar-app">
+    <partial name="_Sidebar" model="nav" />
+    <main class="altar-main">
+        <div class="altar-page-title">Manuales de usuario</div>
+        <div class="altar-page-subtitle">Guías paso a paso por rol, descargables en PDF.</div>
+        <partial name="_Mensajes" />
+        <div class="altar-grid-3">
+            @foreach (var m in manuales)
+            {
+                <div class="altar-card">
+                    <div class="altar-card-title"><i class="fa-solid @m.Icono"></i> @m.Titulo</div>
+                    <p class="altar-card-subtitle">@m.Descripcion</p>
+                    <a href="/Manual/@m.Accion" class="altar-btn altar-btn-primary"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</a>
+                </div>
+            }
+        </div>
+    </main>
+</div>

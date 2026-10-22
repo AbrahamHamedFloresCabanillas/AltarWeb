@@ -20,6 +20,8 @@
             <a asp-controller="Admin" asp-action="Participantes" class="altar-sidebar-nav-item @(Model.Activo == "Participantes" ? "active" : "")"><i class="fa-solid fa-users"></i> Participantes</a>
             <a asp-controller="Admin" asp-action="Configuracion" class="altar-sidebar-nav-item @(Model.Activo == "Configuracion" ? "active" : "")"><i class="fa-solid fa-gear"></i> Configuración</a>
         }
+        @* Manuales de usuario (2026-10-22): para el jurado y la administracion, al final del menu. *@
+        <a href="/Manual" class="altar-sidebar-nav-item @(Model.Activo == "Manuales" ? "active" : "")"><i class="fa-solid fa-book"></i> Manuales</a>
     </div>
     <div class="altar-flex" style="justify-content:center; margin-bottom:12px;"><partial name="_TemaPartial" /></div>
     <div class="altar-sidebar-user">
