@@ -31,12 +31,16 @@ public class CorreoSmtpTests
         using var escucha = new TcpListener(IPAddress.Loopback, 0);
         escucha.Start();
         var puerto = ((IPEndPoint)escucha.LocalEndpoint).Port;
-        _ = escucha.AcceptTcpClientAsync();
+        // La conexion aceptada se conserva hasta el final: si se descartaba, el recolector de basura podia
+        // finalizar el socket y cerrar la conexion, y el cliente recibia SmtpException en vez del timeout
+        // (la prueba fallaba de forma intermitente en las corridas completas).
+        var aceptada = escucha.AcceptTcpClientAsync();
 
         var reloj = Stopwatch.StartNew();
         var error = await Assert.ThrowsAsync<TimeoutException>(() => Enviar(Servicio(puerto, timeoutSegundos: 2)));
         Assert.True(reloj.Elapsed < TimeSpan.FromSeconds(15), $"Tardo {reloj.Elapsed.TotalSeconds:F1} s.");
         Assert.Contains("2 s", error.Message);
+        (await aceptada).Dispose();
     }
 
     [Fact]
