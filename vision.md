@@ -558,7 +558,7 @@ la FIM. Se modela `Carrera` como **tabla editable desde el admin** (no `enum` fi
 código) para poder ajustar nombres o agregar programas nuevos sin tocar el código fuente.
 
 1. Lic. en Sistemas Computacionales
-2. Bioingeniero
+2. Ing. en Bioingeniería *(antes "Bioingeniero"; renombrado por decisión del propietario el 2026-10-22, migración `RenombrarCarreraBioingenieria` en ambas apps)*
 3. Ing. Aeroespacial
 4. Ing. Civil
 5. Ing. en Computación
