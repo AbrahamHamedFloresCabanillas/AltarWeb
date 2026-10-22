@@ -129,7 +129,7 @@ namespace AltarWeb.Controllers
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
-                ModelState.AddModelError(nameof(model.Identificador), "Ya existe un registrante con ese identificador.");
+                ModelState.AddModelError(nameof(model.Identificador), "Ya existe un registrante con esa matrícula o número de empleado.");
             }
 
             if (await _context.Registrantes.AnyAsync(r => r.CorreoInstitucional.ToLower() == registrante.CorreoInstitucional))
@@ -351,7 +351,7 @@ namespace AltarWeb.Controllers
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
-                ModelState.AddModelError(nameof(model.Identificador), "Ya existe un registrante con ese identificador.");
+                ModelState.AddModelError(nameof(model.Identificador), "Ya existe un registrante con esa matrícula o número de empleado.");
             }
 
             if (!ModelState.IsValid)
@@ -686,7 +686,7 @@ namespace AltarWeb.Controllers
             var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == (identificador ?? string.Empty).Trim());
             if (candidato == null)
             {
-                TempData["Error"] = "No existe un registrante con ese identificador.";
+                TempData["Error"] = "No existe un registrante con esa matrícula o número de empleado.";
                 return RedirectToAction("Ficha");
             }
 

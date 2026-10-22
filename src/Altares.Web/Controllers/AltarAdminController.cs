@@ -412,7 +412,7 @@ namespace AltarWeb.Controllers
             // identificador, reactivarlo despues chocaria.
             if (await _context.Registrantes.IgnoreQueryFilters().AnyAsync(r => r.Id != registrante.Id && r.Identificador == identificador))
             {
-                ModelState.AddModelError(nameof(model.Identificador), "Ya existe otro registrante con ese identificador.");
+                ModelState.AddModelError(nameof(model.Identificador), "Ya existe otro registrante con esa matrícula o número de empleado.");
             }
             if (await _context.Registrantes.IgnoreQueryFilters().AnyAsync(r => r.Id != registrante.Id && r.CorreoInstitucional.ToLower() == correo))
             {
@@ -625,7 +625,7 @@ namespace AltarWeb.Controllers
             var candidato = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == (identificador ?? string.Empty).Trim());
             if (candidato == null)
             {
-                TempData["Error"] = "No existe un registrante activo con ese identificador.";
+                TempData["Error"] = "No existe un registrante activo con esa matrícula o número de empleado.";
                 return RedirectToAction("EditarEquipo", new { id = equipoId });
             }
 

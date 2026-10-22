@@ -35,8 +35,8 @@ namespace AltarWeb.ViewModels.Altar
         public string NombreCompleto { get; set; } = string.Empty;
         public string CorreoInstitucional { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Ingresa tu identificador.")]
-        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "El identificador debe tener 5 dígitos (maestro/administrativo) o 7 dígitos (alumno).")]
+        [Required(ErrorMessage = "Ingresa tu matrícula o número de empleado.")]
+        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "La matrícula o número de empleado debe tener 7 dígitos (alumno) o 5 dígitos (maestro/administrativo).")]
         public string Identificador { get; set; } = string.Empty;
 
         [StringLength(LimitesTexto.Telefono, ErrorMessage = LimitesTexto.Mensaje)]

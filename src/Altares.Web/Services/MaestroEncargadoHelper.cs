@@ -31,7 +31,7 @@ namespace AltarWeb.Services
 
             if (candidato.Tipo == TipoRegistrante.Alumno)
             {
-                return (null, null, "Ese identificador pertenece a un alumno; el maestro encargado debe ser maestro o administrativo.");
+                return (null, null, "Esa matrícula pertenece a un alumno; el maestro encargado debe ser maestro o administrativo.");
             }
 
             if (candidato.Tipo == TipoRegistrante.Administrativo)

@@ -100,7 +100,7 @@ namespace AltarWeb.ViewModels.Altar
         // con la misma regla del modelo (Registrante.Validate).
         public TipoRegistrante Tipo { get; set; }
 
-        [Required(ErrorMessage = "Ingresa el identificador.")]
+        [Required(ErrorMessage = "Ingresa la matrícula o número de empleado.")]
         public string Identificador { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa el correo institucional.")]

@@ -14,7 +14,7 @@
                 </div>
             </div>
             <div class="altar-eyebrow" style="margin-top:40px;">Portal de Registro</div>
-            <div class="altar-landing-heading">Reg&iacute;strate con tu identificador.</div>
+            <div class="altar-landing-heading">Reg&iacute;strate con tu matr&iacute;cula o n&uacute;mero de empleado.</div>
             <p style="opacity:0.9; max-width:420px;">
                 Alumnos, maestros y administrativos de la FIM pueden crear su cuenta con su correo institucional.
             </p>
@@ -48,11 +48,11 @@
 
                 <div class="altar-hint">
                     <i class="fa-solid fa-circle-info"></i>
-                    Identificador: matr&iacute;cula de <strong>7 d&iacute;gitos</strong> si eres alumno, o de <strong>5 d&iacute;gitos</strong> si eres maestro o administrativo &mdash; el tipo se detecta autom&aacute;ticamente por la cantidad de d&iacute;gitos.
+                    Matr&iacute;cula / No. de empleado: <strong>7 d&iacute;gitos</strong> si eres alumno (matr&iacute;cula), o <strong>5 d&iacute;gitos</strong> si eres maestro o administrativo (n&uacute;mero de empleado) &mdash; el tipo se detecta autom&aacute;ticamente por la cantidad de d&iacute;gitos.
                 </div>
 
                 <div class="altar-field">
-                    <label class="altar-label">Identificador<span class="altar-required" aria-hidden="true">*</span></label>
+                    <label class="altar-label">Matr&iacute;cula / No. de empleado<span class="altar-required" aria-hidden="true">*</span></label>
                     <input asp-for="Identificador" class="altar-input" inputmode="numeric" maxlength="7" placeholder="7 dígitos (alumno) o 5 dígitos (maestro/administrativo)" />
                     <span asp-validation-for="Identificador" class="altar-error"></span>
                 </div>

@@ -175,7 +175,7 @@
         @if (Model.PuedeEditar)
         {
             <form asp-controller="Registro" asp-action="AgregarIntegrante" method="post" class="altar-flex altar-gap-sm" style="margin-top:16px;">
-                <input type="text" name="identificador" class="altar-input" placeholder="Identificador del nuevo integrante" style="flex:1;" required />
+                <input type="text" name="identificador" class="altar-input" placeholder="Matrícula / No. de empleado del nuevo integrante" style="flex:1;" required />
                 <button type="submit" class="altar-btn altar-btn-primary"><i class="fa-solid fa-user-plus"></i> Agregar</button>
             </form>
         }

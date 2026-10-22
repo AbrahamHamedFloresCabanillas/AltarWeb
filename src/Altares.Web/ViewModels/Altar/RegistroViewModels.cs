@@ -23,8 +23,8 @@ namespace AltarWeb.ViewModels.Altar
         // El Tipo ya no se elige a mano: se infiere de la longitud (7 dígitos = Alumno,
         // 5 dígitos = Maestro/Administrativo) para evitar inconsistencias entre el selector
         // y el identificador capturado.
-        [Required(ErrorMessage = "Ingresa tu identificador.")]
-        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "El identificador debe tener 5 dígitos (maestro/administrativo) o 7 dígitos (alumno).")]
+        [Required(ErrorMessage = "Ingresa tu matrícula o número de empleado.")]
+        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "La matrícula o número de empleado debe tener 7 dígitos (alumno) o 5 dígitos (maestro/administrativo).")]
         public string Identificador { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa tu correo institucional.")]
