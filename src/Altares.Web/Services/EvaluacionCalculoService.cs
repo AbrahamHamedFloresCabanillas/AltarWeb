@@ -82,12 +82,34 @@ namespace AltarWeb.Services
                     .OrderByDescending(e => e.NotaFinal)
                     .ToListAsync();
 
-                for (int i = 0; i < finales.Count; i++)
+                foreach (var evaluacion in finales)
                 {
-                    finales[i].Lugar = i < 3 ? i + 1 : null;
+                    // Lugar de competencia: 1 + cuantos quedan estrictamente por delante (empates: 1, 1, 3).
+                    var lugar = 1 + finales.Count(otra => Compara(otra, evaluacion) > 0);
+                    evaluacion.Lugar = lugar <= 3 ? lugar : null;
                 }
 
                 await _context.SaveChangesAsync();
             });
+
+        // C4 (pruebas adversariales 2026-10-21): antes los empates recibian lugares distintos segun el orden en que
+        // los devolvia la base, y ese lugar se imprime en las constancias. Decision del propietario (hibrido):
+        //  1. desempata la Creatividad (EsenciaPersonalidad con su bonus). Es un criterio PROVISIONAL mientras el
+        //     comite ratifica la regla (vision.md §13.11); para cambiarlo basta tocar CriterioDesempate;
+        //  2. si persiste el empate, comparten lugar y TieneEmpateSinResolver lo marca en pantalla para el comite.
+        private static decimal CriterioDesempate(Evaluacion e) => e.EsenciaPersonalidadFinal ?? e.EsenciaPersonalidad;
+
+        // > 0 si 'a' va por delante de 'b'.
+        private static int Compara(Evaluacion a, Evaluacion b)
+        {
+            var porNota = (a.NotaFinal ?? 0).CompareTo(b.NotaFinal ?? 0);
+            return porNota != 0 ? porNota : CriterioDesempate(a).CompareTo(CriterioDesempate(b));
+        }
+
+        // True si la evaluacion comparte su lugar (1º a 3º) con otra Final de la misma carrera y periodo, es decir,
+        // si el criterio de desempate no alcanzo y le toca resolver al comite.
+        public static bool TieneEmpateSinResolver(Evaluacion evaluacion, IEnumerable<Evaluacion> finalesDeLaCarrera) =>
+            evaluacion.Lugar != null
+            && finalesDeLaCarrera.Any(otra => otra.Id != evaluacion.Id && otra.Lugar == evaluacion.Lugar);
     }
 }

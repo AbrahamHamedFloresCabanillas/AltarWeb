@@ -130,6 +130,48 @@ public class EvaluacionCalculoServiceTests
         Assert.Null(e1.EvaluacionCatrina!.LugarCatrina);
     }
 
+    // C4 (pruebas adversariales 2026-10-21): tres notas identicas quedaban 1º, 2º y 3º segun el orden en que las
+    // devolvia la base. Decision del propietario (hibrido): desempata la Creatividad (criterio provisional hasta que
+    // el comite lo ratifique, vision.md §13.11); si persiste el empate, comparten lugar y se marca para el comite.
+    [Fact]
+    public async Task RecalcularLugares_EmpateEnNota_DesempataLaCreatividad_YSiPersisteCompartenLugar()
+    {
+        await using var context = CrearContextoEnMemoria();
+        var carrera = new CatalogoCarrera { Id = 1, Nombre = "Sistemas" };
+        context.CatalogoCarreras.Add(carrera);
+
+        Evaluacion Agregar(int id, decimal nota, decimal creatividadFinal)
+        {
+            var equipo = new Equipo { Id = id, Nombre = $"E{id}", NombreAltar = $"A{id}", Carrera = carrera, Periodo = "2026-2" };
+            var eval = new Evaluacion
+            {
+                Id = id, Equipo = equipo, Periodo = "2026-2", Estado = EstadoEvaluacion.Final, NotaFinal = nota,
+                EsenciaPersonalidad = creatividadFinal, EsenciaPersonalidadFinal = creatividadFinal
+            };
+            context.EquiposConcurso.Add(equipo);
+            context.EvaluacionesConcurso.Add(eval);
+            return eval;
+        }
+
+        var masCreativo = Agregar(1, 8.5m, 9m);
+        var empatadoA = Agregar(2, 8.5m, 7m);
+        var empatadoB = Agregar(3, 8.5m, 7m);
+        var cuarto = Agregar(4, 8.0m, 10m);
+        await context.SaveChangesAsync();
+
+        await new EvaluacionCalculoService(context).RecalcularLugaresAsync(carrera.Id, "2026-2");
+
+        Assert.Equal(1, masCreativo.Lugar);
+        Assert.Equal(2, empatadoA.Lugar);
+        Assert.Equal(2, empatadoB.Lugar);
+        Assert.Null(cuarto.Lugar); // 1, 2, 2: el siguiente seria 4º
+        var finales = new[] { masCreativo, empatadoA, empatadoB, cuarto };
+        Assert.False(EvaluacionCalculoService.TieneEmpateSinResolver(masCreativo, finales));
+        Assert.True(EvaluacionCalculoService.TieneEmpateSinResolver(empatadoA, finales));
+        Assert.True(EvaluacionCalculoService.TieneEmpateSinResolver(empatadoB, finales));
+        Assert.False(EvaluacionCalculoService.TieneEmpateSinResolver(cuarto, finales));
+    }
+
     private static AltarDbContext CrearContextoEnMemoria() =>
         new(new DbContextOptionsBuilder<AltarDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())

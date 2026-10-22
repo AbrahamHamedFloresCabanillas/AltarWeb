@@ -12,6 +12,8 @@ namespace AltarWeb.ViewModels.Altar
         public string Difunto { get; set; } = string.Empty;
         public decimal? NotaFinal { get; set; }
         public int? Lugar { get; set; }
+        // C4: comparte su lugar con otro equipo y el criterio de desempate no alcanzo; lo resuelve el comite.
+        public bool EmpateSinResolver { get; set; }
         public EstadoEvaluacion Estado { get; set; }
     }
 
@@ -43,6 +45,7 @@ namespace AltarWeb.ViewModels.Altar
         public decimal Narrador { get; set; }
         public decimal? NotaFinal { get; set; }
         public int? Lugar { get; set; }
+        public bool EmpateSinResolver { get; set; }
 
         public EstadoEvaluacion Estado { get; set; }
 

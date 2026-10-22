@@ -58,7 +58,13 @@
                                 <td>@row.Carrera</td>
                                 <td>@row.Difunto</td>
                                 <td>@(row.NotaFinal?.ToString("0.0") ?? "—")</td>
-                                <td>@(row.Lugar != null ? row.Lugar + "°" : "—")</td>
+                                <td>
+                                    @(row.Lugar != null ? row.Lugar + "°" : "—")
+                                    @if (row.EmpateSinResolver)
+                                    {
+                                        <div><span class="altar-badge altar-badge-warning" title="Comparte el lugar con otro equipo y la Creatividad no lo desempató.">Empate: lo resuelve el comit&eacute;</span></div>
+                                    }
+                                </td>
                                 <td>
                                     @if (row.Estado == AltarWeb.Models.Registro.EstadoEvaluacion.Final)
                                     {

@@ -42,6 +42,8 @@ namespace AltarWeb.Controllers
                 .CountAsync();
 
             var finales = evaluaciones.Where(e => e.Estado == EstadoEvaluacion.Final && e.NotaFinal != null).ToList();
+            // C4: empates que el criterio de desempate no resolvio, por carrera y periodo.
+            var finalesPorCarrera = finales.ToLookup(e => (e.Periodo, e.Equipo.CarreraId));
 
             var vm = new HistorialViewModel
             {
@@ -62,6 +64,8 @@ namespace AltarWeb.Controllers
                         Difunto = e.Equipo.Difunto?.Nombre ?? string.Empty,
                         NotaFinal = e.NotaFinal,
                         Lugar = e.Lugar,
+                        EmpateSinResolver = e.Estado == EstadoEvaluacion.Final
+                            && EvaluacionCalculoService.TieneEmpateSinResolver(e, finalesPorCarrera[(e.Periodo, e.Equipo.CarreraId)]),
                         Estado = e.Estado
                     }).ToList())
             };
@@ -82,6 +86,15 @@ namespace AltarWeb.Controllers
 
             if (eval == null) return NotFound();
 
+            var empateSinResolver = false;
+            if (eval.Estado == EstadoEvaluacion.Final && eval.Lugar != null)
+            {
+                var finalesDeLaCarrera = await _context.EvaluacionesConcurso.AsNoTracking()
+                    .Where(e => e.Estado == EstadoEvaluacion.Final && e.Periodo == eval.Periodo && e.Equipo.CarreraId == eval.Equipo.CarreraId)
+                    .ToListAsync();
+                empateSinResolver = EvaluacionCalculoService.TieneEmpateSinResolver(eval, finalesDeLaCarrera);
+            }
+
             return View(new EvaluacionDetalleViewModel
             {
                 EvaluacionId = eval.Id,
@@ -99,6 +112,7 @@ namespace AltarWeb.Controllers
                 Narrador = eval.Narrador,
                 NotaFinal = eval.NotaFinal,
                 Lugar = eval.Lugar,
+                EmpateSinResolver = empateSinResolver,
                 Estado = eval.Estado
             });
         }

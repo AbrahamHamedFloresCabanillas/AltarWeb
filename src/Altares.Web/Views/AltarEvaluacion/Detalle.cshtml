@@ -36,6 +36,10 @@
                     <div class="altar-flex altar-gap-sm" style="margin-bottom:16px;">
                         <span class="altar-badge altar-badge-muted">@Model.TipoAltar</span>
                         <span class="altar-badge altar-badge-success">@(Model.Lugar != null ? Model.Lugar + "° lugar" : "Sin posición")</span>
+                        @if (Model.EmpateSinResolver)
+                        {
+                            <span class="altar-badge altar-badge-warning" title="Comparte el lugar con otro equipo y la Creatividad no lo desempató.">Empate: lo resuelve el comit&eacute;</span>
+                        }
                     </div>
 
                     <div class="altar-grid-2" style="margin-bottom:20px;">
