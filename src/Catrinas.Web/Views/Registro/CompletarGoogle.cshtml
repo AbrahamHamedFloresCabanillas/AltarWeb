@@ -10,8 +10,10 @@
         <form asp-action="CompletarGoogle" method="post">
             <div asp-validation-summary="ModelOnly" class="altar-error"></div>
             <partial name="_DatosPersonales" model="Model" />
+            <partial name="_AvisoSimplificado" model="true" />
             <button type="submit" class="altar-btn altar-btn-primary altar-btn-block">Entrar al portal</button>
         </form>
+        <partial name="_EnlacesLegales" />
     </div>
 </div>
 

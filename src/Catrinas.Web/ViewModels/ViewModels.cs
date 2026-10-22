@@ -46,6 +46,10 @@ namespace Catrinas.Web.ViewModels
         [StringLength(500)]
         public string? AutodescripcionCultural { get; set; }
 
+        // Avisos legales (2026-10-22): aceptacion obligatoria y consentimiento expreso para datos sensibles.
+        public bool AceptoAvisoYTerminos { get; set; }
+        public bool ConsentimientoDatosSensibles { get; set; }
+
         public List<CatalogoGenero> Generos { get; set; } = new();
         public List<CatalogoCarrera> Carreras { get; set; } = new();
     }
@@ -96,6 +100,9 @@ namespace Catrinas.Web.ViewModels
         [DataType(DataType.Password)]
         [Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden.")]
         public string? ConfirmarPassword { get; set; }
+
+        // Avisos legales (2026-10-22).
+        public bool AceptoAvisoYTerminos { get; set; }
 
         public bool DesdeGoogle { get; set; }
     }

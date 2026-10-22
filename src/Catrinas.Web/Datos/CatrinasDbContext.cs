@@ -46,6 +46,7 @@ namespace Catrinas.Web.Datos
                 e.Property(x => x.NombreCompleto).HasMaxLength(200).IsRequired();
                 e.Property(x => x.Identificador).HasMaxLength(7).IsRequired();
                 e.Property(x => x.CorreoInstitucional).HasMaxLength(254).IsRequired();
+                e.Property(x => x.AvisoPrivacidadVersion).HasMaxLength(20);
                 e.Property(x => x.Telefono).HasMaxLength(20);
                 e.Property(x => x.ProveedorAuth).HasMaxLength(20);
                 e.Property(x => x.AutodescripcionCultural).HasMaxLength(500);
@@ -64,6 +65,7 @@ namespace Catrinas.Web.Datos
                 e.Property(x => x.NombreCompleto).HasMaxLength(200).IsRequired();
                 e.Property(x => x.CorreoInstitucional).HasMaxLength(254);
                 e.Property(x => x.Identificador).HasMaxLength(7);
+                e.Property(x => x.AvisoPrivacidadVersion).HasMaxLength(20);
                 e.Property(x => x.ProveedorAuth).HasMaxLength(20);
                 e.HasIndex(x => x.Usuario).IsUnique().HasFilter("[Usuario] IS NOT NULL");
                 e.HasIndex(x => x.CorreoInstitucional).IsUnique().HasFilter("[CorreoInstitucional] IS NOT NULL");

@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Términos de uso";
+    string correo = ViewBag.Correo, version = ViewBag.Version;
+}
+@* Terminos de uso del Concurso de Catrinas (2026-10-22). Borrador; debe revisarlo el area juridica de la UABC. *@
+<div style="max-width:860px; margin:0 auto; padding:28px 24px; line-height:1.6;">
+    <a asp-controller="Registro" asp-action="Login" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión</a>
+    <h1 style="font-weight:800; margin-top:12px;">Términos de uso</h1>
+    <p class="altar-text-muted">Concurso de Catrinas · Facultad de Ingeniería, UABC · Versión @version</p>
+
+    <h2>1. Objeto</h2>
+    <p>Este sistema sirve para inscribirse al Concurso de Catrinas de la Facultad de Ingeniería de la UABC, que el jurado evalúe la personificación y emitir constancias. Al crear una cuenta o usar el sistema aceptas estos términos y el <a href="/Legal/Privacidad">Aviso de privacidad</a>.</p>
+
+    <h2>2. Cuentas</h2>
+    <ul>
+        <li>Es para la comunidad de la UABC: debes usar tu correo institucional y tu propia matrícula o número de empleado.</li>
+        <li>Una cuenta por persona. Eres responsable de lo que se haga con ella; no compartas tu contraseña.</li>
+        <li>Las cuentas del jurado se aprueban o crean por la administración del concurso.</li>
+    </ul>
+
+    <h2>3. Uso aceptable</h2>
+    <p>No está permitido: hacerse pasar por otra persona; capturar datos falsos o de terceros sin su autorización; invitar o agregar a personas sin su consentimiento; intentar acceder a cuentas o información ajenas; alterar formularios o peticiones para obtener resultados indebidos; usar herramientas automatizadas contra el sistema; ni publicar contenido ofensivo o irrespetuoso.</p>
+
+    <h2>4. Participación y evaluación</h2>
+    <ul>
+        <li>Las reglas del concurso (requisitos, fechas, criterios y premiación) las fija el comité organizador en su convocatoria; el sistema las aplica.</li>
+        <li>Las evaluaciones cerradas como Final y los lugares que resultan son definitivos, salvo lo que resuelva el comité organizador.</li>
+        <li>Lo que captures en tu inscripción debe ser veraz. Después de la fecha límite o de la evaluación ya no se puede modificar.</li>
+    </ul>
+
+    <h2>5. Constancias</h2>
+    <p>Las constancias se generan con los datos registrados en el sistema. Si encuentras un error, repórtalo a la administración del concurso.</p>
+
+    <h2>6. Suspensión de cuentas</h2>
+    <p>La administración puede desactivar cuentas o retirar inscripciones que incumplan estos términos o las reglas del concurso. Por seguridad, varios intentos fallidos de inicio de sesión ponen la cuenta en pausa por unos minutos.</p>
+
+    <h2>7. Disponibilidad y responsabilidad</h2>
+    <p>Procuramos que el sistema esté disponible durante el concurso, pero puede haber interrupciones por mantenimiento o causas ajenas. El sistema se ofrece como herramienta de apoyo al concurso; la UABC no responde por daños derivados de un uso indebido de las cuentas.</p>
+
+    <h2>8. Propiedad intelectual</h2>
+    <p>El sistema, su diseño y sus contenidos pertenecen a la UABC o se usan con autorización. Los textos que captures siguen siendo tuyos; autorizas su uso para los fines del concurso.</p>
+
+    <h2>9. Cambios y legislación aplicable</h2>
+    <p>Estos términos pueden actualizarse; la versión vigente es la publicada en esta página. Se rigen por la legislación de los Estados Unidos Mexicanos y la normativa universitaria de la UABC.</p>
+
+    <h2>10. Contacto</h2>
+    <p>Dudas sobre estos términos: <partial name="_Dato" model="correo" />.</p>
+</div>

@@ -161,11 +161,14 @@ public static class Http
         return await cliente.PostAsync(accion, new FormUrlEncodedContent(datos));
     }
 
+    // acepta: marca la casilla del aviso de privacidad y los terminos (obligatoria desde 2026-10-22).
     public static Task<HttpResponseMessage> SignupAsync(HttpClient cliente, string nombre, string identificador, string correo,
-        string password = "Participante-2026!", params (string, string)[] extra) =>
+        string password = "Participante-2026!", bool acepta = true, params (string, string)[] extra) =>
         PostAsync(cliente, "/Registro/Signup",
             new[] { ("NombreCompleto", nombre), ("Identificador", identificador), ("CorreoInstitucional", correo),
-                    ("Password", password), ("ConfirmarPassword", password) }.Concat(extra).ToArray());
+                    ("Password", password), ("ConfirmarPassword", password) }
+                .Concat(acepta ? new[] { ("AceptoAvisoYTerminos", "true") } : Array.Empty<(string, string)>())
+                .Concat(extra).ToArray());
 
     public static Task<HttpResponseMessage> LoginJuradoAsync(HttpClient cliente, string usuario, string password) =>
         PostAsync(cliente, "/Acceso/Login", ("usuario", usuario), ("password", password));

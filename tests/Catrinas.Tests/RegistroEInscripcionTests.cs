@@ -74,7 +74,7 @@ public class RegistroTests
         var correo = $"jurado.solicitud{n}@uabc.edu.mx";
         Http.Redirige(await Http.PostAsync(_f.Cliente(), "/Registro/SolicitarJurado",
             ("NombreCompleto", "Jurado Solicitante"), ("CorreoInstitucional", correo), ("Identificador", "54321"),
-            ("Password", "Solicitud-2026!"), ("ConfirmarPassword", "Solicitud-2026!")), "tab=jurado");
+            ("Password", "Solicitud-2026!"), ("ConfirmarPassword", "Solicitud-2026!"), ("AceptoAvisoYTerminos", "true")), "tab=jurado");
 
         var solicitante = _f.Cliente();
         var pendiente = await Http.LoginJuradoAsync(solicitante, correo, "Solicitud-2026!");

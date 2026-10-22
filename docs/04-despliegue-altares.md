@@ -182,6 +182,7 @@ despliegue y solo las ve ese sitio. Sustituyen a `appsettings.json` (que **no** 
 | `AllowedHosts` | `altares.<dominio>` | No |
 | `SEED_ADMIN_USUARIO` | tu usuario de admin (si no, `abram`) | No |
 | `SEED_ADMIN_PASSWORD` | contraseña **temporal** larga | **Sí — se borra tras el primer login** |
+| `Legal__CorreoPrivacidad`, `Legal__Domicilio`, `Legal__PlazoConservacion` | correo para derechos ARCO, domicilio del responsable y plazo de conservación que defina la UABC (aviso de privacidad, 2026-10-22). Sin definir, el aviso muestra **[POR DEFINIR]** | No |
 
 Notas:
 - **No** definas `Seguridad__ForwardedHeaders__*` hasta cerrar el gate R6 (B.5).

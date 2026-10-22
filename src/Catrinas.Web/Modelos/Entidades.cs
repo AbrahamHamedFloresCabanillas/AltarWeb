@@ -67,6 +67,12 @@ namespace Catrinas.Web.Modelos
         public bool Activo { get; set; } = true;
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 
+        // Avisos legales (2026-10-22): cuando acepto el aviso de privacidad y los terminos, y que version; y cuando dio
+        // su consentimiento expreso para los datos sensibles (null si no los dio). Null en cuentas anteriores.
+        public DateTime? AvisoPrivacidadAceptadoEn { get; set; }
+        public string? AvisoPrivacidadVersion { get; set; }
+        public DateTime? ConsentimientoSensiblesEn { get; set; }
+
         public ICollection<MiembroInscripcion> Membresias { get; set; } = new List<MiembroInscripcion>();
 
         // Alumno = matricula de 7 digitos; Maestro/Administrativo = 5 digitos; correo @uabc.edu.mx.
@@ -105,6 +111,10 @@ namespace Catrinas.Web.Modelos
         public bool DebeCambiarPassword { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime? FechaBaja { get; set; }
+
+        // Avisos legales (2026-10-22): aceptacion al solicitar la cuenta. Null en cuentas creadas por la administracion.
+        public DateTime? AvisoPrivacidadAceptadoEn { get; set; }
+        public string? AvisoPrivacidadVersion { get; set; }
     }
 
     public static class RolesJuez

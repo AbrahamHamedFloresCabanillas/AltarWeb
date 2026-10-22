@@ -164,6 +164,7 @@ No se relaja nada sin decisión explícita del propietario. Opciones, de más a 
 ## 6. Antes de abrir el registro real
 
 - [ ] Gate de privacidad (ADR §8.4) cerrado por el propietario/UABC.
+- [ ] Aviso de privacidad y términos (`/Legal/Privacidad`, `/Legal/Terminos`) revisados por el área jurídica de la UABC y `Legal__CorreoPrivacidad`, `Legal__Domicilio`, `Legal__PlazoConservacion` configurados en ambos sitios (ya no debe verse **[POR DEFINIR]**).
 - [ ] R6 y R7 cerrados.
 - [ ] Carga en el hosting dentro del criterio.
 - [ ] Datos ficticios borrados; `verificar-limpieza-*.sql` en cero en ambas bases.

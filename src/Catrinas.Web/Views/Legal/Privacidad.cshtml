@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Aviso de privacidad";
+    string correo = ViewBag.Correo, domicilio = ViewBag.Domicilio, plazo = ViewBag.Plazo, version = ViewBag.Version;
+}
+@* Aviso de privacidad integral del Concurso de Catrinas (2026-10-22). Borrador redactado con base en la normativa
+   mexicana de proteccion de datos personales en posesion de sujetos obligados; debe revisarlo el area juridica o de
+   transparencia de la UABC antes de cargar datos reales (gate ADR §8.4). *@
+<div style="max-width:860px; margin:0 auto; padding:28px 24px; line-height:1.6;">
+    <a asp-controller="Registro" asp-action="Login" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión</a>
+    <h1 style="font-weight:800; margin-top:12px;">Aviso de privacidad integral</h1>
+    <p class="altar-text-muted">Concurso de Catrinas · Facultad de Ingeniería, UABC · Versión @version</p>
+
+    <h2>1. Responsable</h2>
+    <p>La <strong>Universidad Autónoma de Baja California (UABC)</strong>, a través de la <strong>Facultad de Ingeniería, campus Mexicali</strong>, organizadora del Concurso de Catrinas, es responsable del tratamiento de los datos personales que proporcionas en este sistema. Domicilio: <partial name="_Dato" model="domicilio" />.</p>
+
+    <h2>2. Datos personales que recabamos</h2>
+    <ul>
+        <li><strong>Identificación y contacto:</strong> nombre completo, matrícula o número de empleado, correo institucional (@@uabc.edu.mx) y, si lo proporcionas, teléfono.</li>
+        <li><strong>Académicos:</strong> carrera y tipo de participante (alumno, maestro o administrativo).</li>
+        <li><strong>Del concurso:</strong> tu inscripción (nombre, carrera con la que concursa, maestro encargado y, si la capturas, la referencia a un equipo del Concurso de Altares), tu rol (por ejemplo, quien personifica a la Catrina) y las evaluaciones del jurado.</li>
+        <li><strong>De la cuenta:</strong> contraseña (guardada cifrada de forma irreversible) o, si entras con Google, el nombre y correo institucional verificados por Google. Para la seguridad del sistema se registran la fecha, la cuenta intentada y la dirección IP de los inicios de sesión.</li>
+        <li><strong>Del jurado y la administración:</strong> nombre, usuario o correo institucional y matrícula o número de empleado.</li>
+    </ul>
+    <p><strong>Datos personales sensibles.</strong> De forma <strong>opcional</strong> puedes indicar tu <strong>género</strong> y una <strong>autodescripción cultural</strong> (por ejemplo, pertenencia a un pueblo originario), que la ley considera datos personales sensibles. Solo los guardamos si das tu <strong>consentimiento expreso</strong> al registrarte; si no los proporcionas, puedes participar igual.</p>
+
+    <h2>3. Finalidades</h2>
+    <p><strong>Necesarias para participar:</strong> crear y administrar tu cuenta; registrar tu inscripción y a sus integrantes; gestionar invitaciones; que el jurado evalúe la personificación; calcular lugares por carrera; emitir y enviarte por correo tu constancia; y proteger el sistema contra accesos indebidos.</p>
+    <p><strong>Adicional:</strong> elaborar estadísticas <strong>agregadas</strong> del concurso (participación por carrera, género y autodescripción cultural). Las categorías con pocas personas se agrupan como “Otros / grupo reducido” para que nadie pueda ser identificado. Los datos sensibles solo se usan para esta finalidad, nunca se muestran por persona y puedes negarte a ella sin afectar tu participación (basta no proporcionarlos).</p>
+
+    <h2>4. Fundamento</h2>
+    <p>Tratamos tus datos con base en las atribuciones de la UABC para organizar actividades académicas y culturales, en la legislación aplicable en materia de protección de datos personales en posesión de sujetos obligados (ley general y ley del Estado de Baja California) y en tu consentimiento.</p>
+
+    <h2>5. Con quién se comparten y dónde se guardan</h2>
+    <ul>
+        <li><strong>Almacenamiento en Estados Unidos.</strong> El sistema se aloja con un proveedor de hospedaje cuyos servidores están en <strong>Estados Unidos</strong>; ahí se guardan todos los datos, incluidos los sensibles. El proveedor solo los resguarda por cuenta de la UABC.</li>
+        <li><strong>Correo:</strong> para enviarte constancias se usa un servicio de correo electrónico que procesa tu nombre y correo.</li>
+        <li><strong>Google:</strong> si eliges “Continuar con Google”, Google confirma tu identidad institucional conforme a sus propias políticas.</li>
+        <li><strong>Autoridades:</strong> cuando una autoridad competente lo requiera conforme a la ley.</li>
+    </ul>
+    <p>Los nombres de las inscripciones, sus integrantes y los lugares obtenidos pueden darse a conocer en las actividades del concurso y aparecen en las constancias. No vendemos ni cedemos tus datos. El Concurso de Catrinas y el Concurso de Altares son sistemas independientes: tus datos de uno no se comparten con el otro; la referencia a un equipo de Altares que captures es solo un texto que no se consulta en ese sistema.</p>
+
+    <h2>6. Derechos ARCO y revocación del consentimiento</h2>
+    <p>Puedes ejercer tus derechos de <strong>Acceso, Rectificación, Cancelación y Oposición (ARCO)</strong>, así como revocar tu consentimiento (por ejemplo, para que se borren tus datos sensibles), escribiendo a <partial name="_Dato" model="correo" />. Indica tu nombre, tu matrícula o número de empleado, el derecho que quieres ejercer y, si aplica, la corrección solicitada; acompaña una identificación. Responderemos en los plazos que establece la ley. Si no estás conforme con la respuesta, puedes acudir a la autoridad garante competente en materia de protección de datos personales.</p>
+
+    <h2>7. Conservación</h2>
+    <p>Conservamos tus datos durante el periodo del concurso y el tiempo necesario para emitir constancias y reportes; después se suprimen o se anonimizan. Plazo de conservación: <partial name="_Dato" model="plazo" />.</p>
+
+    <h2>8. Cookies y almacenamiento en tu navegador</h2>
+    <p>Solo usamos <strong>cookies estrictamente necesarias</strong>: la de tu sesión y la de protección de formularios. Tu preferencia de tema claro u oscuro se guarda en tu propio navegador. No usamos cookies de publicidad ni de analítica.</p>
+
+    <h2>9. Cambios a este aviso</h2>
+    <p>Cualquier cambio se publicará en esta misma página con una nueva versión y fecha. Si el cambio afecta finalidades que requieren tu consentimiento, te lo pediremos de nuevo.</p>
+
+    <p class="altar-text-muted" style="margin-top:24px;">Consulta también los <a href="/Legal/Terminos">Términos de uso</a>.</p>
+</div>

@@ -44,6 +44,7 @@ detiene o actualiza sin tocar Altares.
 | `AllowedHosts` | `catrinas.<dominio>` | No |
 | `SEED_ADMIN_USUARIO` | tu usuario de admin (si no, `admin-catrinas`) | No |
 | `SEED_ADMIN_PASSWORD` | contraseña **temporal** larga y **distinta** de la de Altares | **Sí — se borra tras el primer login** |
+| `Legal__CorreoPrivacidad`, `Legal__Domicilio`, `Legal__PlazoConservacion` | correo para derechos ARCO, domicilio del responsable y plazo de conservación que defina la UABC (aviso de privacidad, 2026-10-22). Sin definir, el aviso muestra **[POR DEFINIR]** | No |
 
 Igual que en Altares: no definas `Seguridad__ForwardedHeaders__*` hasta cerrar R6; sin
 `GoogleAuth__ClientId/ClientSecret` la app no arranca y lo dice; no borres `App_Data/keys` al

@@ -128,6 +128,7 @@ namespace Catrinas.Web.Controllers
             var correo = model.CorreoInstitucional.Trim().ToLowerInvariant();
             if (!DominioInstitucional.EsCorreoInstitucional(correo)) ModelState.AddModelError(nameof(model.CorreoInstitucional), "Usa tu correo @uabc.edu.mx.");
             if (await _context.Jueces.AnyAsync(j => j.CorreoInstitucional == correo)) ModelState.AddModelError(nameof(model.CorreoInstitucional), "Ya existe una cuenta con ese correo.");
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos);
             if (!ModelState.IsValid) return View(model);
 
             if (!await GuardarSolicitudJuradoAsync(model.NombreCompleto, correo, model.Identificador, PasswordHashService.HashPassword(model.Password!), "Local"))
@@ -237,6 +238,7 @@ namespace Catrinas.Web.Controllers
             model.DesdeGoogle = true;
             ModelState.Remove(nameof(model.CorreoInstitucional));
             if (await _context.Jueces.AnyAsync(j => j.CorreoInstitucional == email)) ModelState.AddModelError(string.Empty, "Ya existe una cuenta con ese correo.");
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos);
             if (!ModelState.IsValid) return View(model);
 
             // Cuentas de Google: la contraseña local es aleatoria e inutilizable (solo entran con Google).
@@ -320,13 +322,17 @@ namespace Catrinas.Web.Controllers
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 CatalogoGeneroId = model.CatalogoGeneroId is > 0 && await _context.Generos.AnyAsync(g => g.Id == model.CatalogoGeneroId && g.Activo) ? model.CatalogoGeneroId : null,
                 CatalogoCarreraId = model.CatalogoCarreraId is > 0 && await _context.Carreras.AnyAsync(c => c.Id == model.CatalogoCarreraId && c.Activo) ? model.CatalogoCarreraId : null,
-                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim()
+                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim(),
+                AvisoPrivacidadAceptadoEn = DateTime.UtcNow,
+                AvisoPrivacidadVersion = AvisosLegales.Version,
+                ConsentimientoSensiblesEn = DaDatosSensibles(model.CatalogoGeneroId, model.AutodescripcionCultural) ? DateTime.UtcNow : null
             };
 
             foreach (var error in registrante.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(registrante)))
             {
                 foreach (var miembro in error.MemberNames) ModelState.AddModelError(miembro, error.ErrorMessage ?? "Dato inválido.");
             }
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos, model.CatalogoGeneroId, model.AutodescripcionCultural, model.ConsentimientoDatosSensibles);
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == identificador))
             {
                 ModelState.AddModelError(nameof(model.Identificador), "Ya existe una cuenta con esa matrícula o número de empleado.");
@@ -338,6 +344,25 @@ namespace Catrinas.Web.Controllers
 
             return ModelState.IsValid ? registrante : null;
         }
+
+        // Avisos legales (2026-10-22): sin aceptar el aviso de privacidad y los terminos no se crea la cuenta, y el genero
+        // o la autodescripcion cultural (datos sensibles) solo se guardan con consentimiento expreso.
+        private void ValidarAvisosLegales(bool acepto, int? generoId = null, string? autodescripcion = null, bool consentimientoSensibles = true)
+        {
+            if (!acepto)
+            {
+                ModelState.AddModelError(nameof(DatosPersonalesViewModel.AceptoAvisoYTerminos),
+                    "Para crear tu cuenta debes aceptar el aviso de privacidad y los términos de uso.");
+            }
+            if (DaDatosSensibles(generoId, autodescripcion) && !consentimientoSensibles)
+            {
+                ModelState.AddModelError(nameof(DatosPersonalesViewModel.ConsentimientoDatosSensibles),
+                    "Para guardar tu género o tu autodescripción cultural necesitamos tu consentimiento expreso: marca la casilla o deja esos campos vacíos.");
+            }
+        }
+
+        private static bool DaDatosSensibles(int? generoId, string? autodescripcion) =>
+            generoId is > 0 || !string.IsNullOrWhiteSpace(autodescripcion);
 
         // El indice unico de la BD resuelve la carrera de dos registros simultaneos con los mismos datos.
         private async Task<bool> GuardarRegistranteAsync(Registrante registrante)
@@ -366,7 +391,10 @@ namespace Catrinas.Web.Controllers
                 Password = hash,
                 ProveedorAuth = proveedor,
                 Rol = RolesJuez.Juez,
-                Pendiente = true
+                Pendiente = true,
+                // Solo se llega aqui despues de ValidarAvisosLegales: la solicitud acepto el aviso y los terminos.
+                AvisoPrivacidadAceptadoEn = DateTime.UtcNow,
+                AvisoPrivacidadVersion = AvisosLegales.Version
             };
             _context.Jueces.Add(juez);
             try

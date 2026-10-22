@@ -530,6 +530,13 @@ namespace Catrinas.Web.Datos.Migraciones
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("AvisoPrivacidadAceptadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AvisoPrivacidadVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("CorreoInstitucional")
                         .HasMaxLength(254)
                         .HasColumnType("nvarchar(254)");
@@ -638,11 +645,21 @@ namespace Catrinas.Web.Datos.Migraciones
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("AvisoPrivacidadAceptadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AvisoPrivacidadVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int?>("CatalogoCarreraId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CatalogoGeneroId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("ConsentimientoSensiblesEn")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("CorreoInstitucional")
                         .IsRequired()
