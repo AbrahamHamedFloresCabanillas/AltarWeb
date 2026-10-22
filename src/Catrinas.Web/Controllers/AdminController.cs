@@ -142,6 +142,21 @@ namespace Catrinas.Web.Controllers
             {
                 ModelState.AddModelError(nameof(model.UmbralAgrupacionDemografica), $"El umbral no puede ser menor que {PrivacidadReporteHelper.UmbralMinimo}.");
             }
+            // M3 (pruebas adversariales 2026-10-21): se aceptaba el año 0009 (dejo la inscripcion cerrada en las
+            // pruebas manuales) y una fecha de requisitos anterior a la de inscripcion.
+            static bool FueraDeRango(DateTime? fecha) => fecha is { Year: < 2000 or > 2099 };
+            if (FueraDeRango(model.FechaLimiteInscripcion))
+            {
+                ModelState.AddModelError(nameof(model.FechaLimiteInscripcion), "La fecha límite de inscripción debe estar entre los años 2000 y 2099.");
+            }
+            if (FueraDeRango(model.FechaLimiteRequisitos))
+            {
+                ModelState.AddModelError(nameof(model.FechaLimiteRequisitos), "La fecha límite de requisitos debe estar entre los años 2000 y 2099.");
+            }
+            if (model.FechaLimiteInscripcion != null && model.FechaLimiteRequisitos != null && model.FechaLimiteRequisitos < model.FechaLimiteInscripcion)
+            {
+                ModelState.AddModelError(nameof(model.FechaLimiteRequisitos), "La fecha límite de requisitos no puede ser anterior a la de inscripción.");
+            }
             if (!ModelState.IsValid)
             {
                 ViewBag.Nav = this.Nav("Configuracion");
