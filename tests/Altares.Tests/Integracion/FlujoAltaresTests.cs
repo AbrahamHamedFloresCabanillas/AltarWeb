@@ -39,7 +39,7 @@ public class FlujoAltaresTests
     private static Task<HttpResponseMessage> SignupAsync(HttpClient cliente, string nombre, string identificador, string correo) =>
         PostAsync(cliente, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", nombre), ("Identificador", identificador), ("CorreoInstitucional", correo),
-            ("Password", "Participante-2026!"), ("ConfirmarPassword", "Participante-2026!"));
+            ("Password", "Participante-2026!"), ("ConfirmarPassword", "Participante-2026!"), ("AceptoAvisoYTerminos", "true"));
 
     private static void AssertRedirect(HttpResponseMessage r, string contiene)
     {

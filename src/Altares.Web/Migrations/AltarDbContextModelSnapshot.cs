@@ -283,6 +283,13 @@ namespace AltarWeb.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AvisoPrivacidadAceptadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AvisoPrivacidadVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("CorreoInstitucional")
                         .HasColumnType("nvarchar(max)");
 
@@ -1317,11 +1324,21 @@ namespace AltarWeb.Migrations
                     b.Property<string>("AutodescripcionCultural")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("AvisoPrivacidadAceptadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AvisoPrivacidadVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int?>("CatalogoCarreraId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CatalogoGeneroId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("ConsentimientoSensiblesEn")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("CorreoInstitucional")
                         .IsRequired()

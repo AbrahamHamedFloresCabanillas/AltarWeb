@@ -1,0 +1,37 @@
+@model bool
+@* Aviso de privacidad simplificado y casillas de aceptacion, en cada formulario que crea una cuenta (2026-10-22).
+   Model = true si el formulario pide datos sensibles (genero y autodescripcion cultural). Los nombres de los campos
+   coinciden con los ViewModels: AceptoAvisoYTerminos y ConsentimientoDatosSensibles. *@
+@{
+    var pideSensibles = Model;
+    bool Marcado(string campo) => ViewContext.ViewData.ModelState.TryGetValue(campo, out var e) && e.AttemptedValue == "true";
+    string? Error(string campo) => ViewContext.ViewData.ModelState.TryGetValue(campo, out var e) ? e.Errors.FirstOrDefault()?.ErrorMessage : null;
+}
+<div class="altar-hint" style="font-size:12px; line-height:1.5;">
+    <strong>Aviso de privacidad simplificado.</strong>
+    La UABC, a trav&eacute;s de la Facultad de Ingenier&iacute;a, trata tus datos personales para registrarte en el Concurso de Altares,
+    gestionar tu equipo, la evaluaci&oacute;n y tus constancias, y para estad&iacute;sticas agregadas del concurso. Los datos se guardan
+    con un proveedor de hospedaje en Estados Unidos.
+    @if (pideSensibles)
+    {
+        <text>El g&eacute;nero y la autodescripci&oacute;n cultural son datos sensibles y opcionales: solo se guardan con tu consentimiento expreso.</text>
+    }
+    Puedes ejercer tus derechos ARCO como se indica en el <a href="/Legal/Privacidad" target="_blank" rel="noopener">aviso de privacidad integral</a>.
+</div>
+<div class="altar-field">
+    <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; cursor:pointer;">
+        <input type="checkbox" name="AceptoAvisoYTerminos" value="true" checked="@Marcado("AceptoAvisoYTerminos")" style="margin-top:3px;" />
+        <span>He le&iacute;do y acepto el <a href="/Legal/Privacidad" target="_blank" rel="noopener">aviso de privacidad</a> y los <a href="/Legal/Terminos" target="_blank" rel="noopener">t&eacute;rminos de uso</a>.<span class="altar-required" aria-hidden="true">*</span></span>
+    </label>
+    @if (Error("AceptoAvisoYTerminos") is { } e1) { <span class="altar-error">@e1</span> }
+</div>
+@if (pideSensibles)
+{
+    <div class="altar-field">
+        <label style="display:flex; gap:8px; align-items:flex-start; font-size:13px; cursor:pointer;">
+            <input type="checkbox" name="ConsentimientoDatosSensibles" value="true" checked="@Marcado("ConsentimientoDatosSensibles")" style="margin-top:3px;" />
+            <span>Doy mi consentimiento expreso para que se traten mi g&eacute;nero y mi autodescripci&oacute;n cultural (solo si los capturo).</span>
+        </label>
+        @if (Error("ConsentimientoDatosSensibles") is { } e2) { <span class="altar-error">@e2</span> }
+    </div>
+}

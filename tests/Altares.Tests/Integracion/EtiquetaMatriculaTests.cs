@@ -77,7 +77,7 @@ public class EtiquetaMatriculaTests
         var participante = _factory.CrearCliente();
         Assert.Equal(HttpStatusCode.Redirect, (await PostAsync(participante, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", "Participante Etiqueta"), ("Identificador", identificador), ("CorreoInstitucional", correo),
-            ("Password", Password), ("ConfirmarPassword", Password))).StatusCode);
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"))).StatusCode);
         var carrera = await CarreraAsync();
         Assert.Equal(HttpStatusCode.Redirect, (await PostAsync(participante, "/Registro/CrearEquipo", "/Registro/CrearEquipo",
             ("Nombre", equipo), ("NombreAltar", "Altar Etiqueta"), ("CarreraId", carrera.ToString()), ("MaestroEncargadoIdentificador", "54321"),

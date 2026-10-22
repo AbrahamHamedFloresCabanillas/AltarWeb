@@ -90,7 +90,7 @@ public class ManualesTests
         await cliente.PostAsync("/Registro/Signup", new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["NombreCompleto"] = "Participante Manual", ["Identificador"] = "1508899", ["CorreoInstitucional"] = "participante.manual@uabc.edu.mx",
-            ["Password"] = Password, ["ConfirmarPassword"] = Password, ["__RequestVerificationToken"] = token
+            ["Password"] = Password, ["ConfirmarPassword"] = Password, ["AceptoAvisoYTerminos"] = "true", ["__RequestVerificationToken"] = token
         }));
 
         Assert.Contains("/Manual/Participante", await cliente.GetStringAsync("/Registro/Dashboard"));

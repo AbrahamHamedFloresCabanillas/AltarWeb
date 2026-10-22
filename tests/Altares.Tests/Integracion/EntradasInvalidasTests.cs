@@ -50,7 +50,7 @@ public class EntradasInvalidasTests
         var campos = new Dictionary<string, string>
         {
             ["NombreCompleto"] = $"Participante Entradas {n}", ["Identificador"] = $"17{n:D5}",
-            ["CorreoInstitucional"] = $"entradas.{n}@uabc.edu.mx", ["Password"] = Password, ["ConfirmarPassword"] = Password
+            ["CorreoInstitucional"] = $"entradas.{n}@uabc.edu.mx", ["Password"] = Password, ["ConfirmarPassword"] = Password, ["AceptoAvisoYTerminos"] = "true"
         };
         foreach (var (campo, valor) in cambios)
         {
@@ -89,7 +89,7 @@ public class EntradasInvalidasTests
     {
         var n = Siguiente();
         var respuesta = await PostAsync(_factory.CrearCliente(), "/Registro/Signup", "/Registro/Signup",
-            Signup(n, ("NombreCompleto", new string('A', 200)), ("Telefono", new string('5', 20)), ("AutodescripcionCultural", new string('x', 500))));
+            Signup(n, ("NombreCompleto", new string('A', 200)), ("Telefono", new string('5', 20)), ("AutodescripcionCultural", new string('x', 500)), ("ConsentimientoDatosSensibles", "true")));
 
         Assert.Equal(HttpStatusCode.Redirect, respuesta.StatusCode);
         Assert.True(ExisteRegistrante(n));
@@ -101,7 +101,7 @@ public class EntradasInvalidasTests
         var n = Siguiente();
         var respuesta = await PostAsync(_factory.CrearCliente(), "/Registro/SignupJuez", "/Registro/SignupJuez",
             ("NombreCompleto", "Juez Entradas"), ("CorreoInstitucional", $"juez.entradas.{n}@uabc.edu.mx"), ("Identificador", "   "),
-            ("Password", Password), ("ConfirmarPassword", Password));
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"));
         AssertSin500(respuesta);
     }
 

@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Aviso de privacidad";
+    string correo = ViewBag.Correo, domicilio = ViewBag.Domicilio, plazo = ViewBag.Plazo, version = ViewBag.Version;
+}
+@* Aviso de privacidad integral del Concurso de Altares (2026-10-22). Borrador redactado con base en la normativa
+   mexicana de proteccion de datos personales en posesion de sujetos obligados; debe revisarlo el area juridica o de
+   transparencia de la UABC antes de cargar datos reales (gate ADR §8.4). *@
+<div style="max-width:860px; margin:0 auto; padding:28px 24px; line-height:1.6;">
+    <a asp-controller="Registro" asp-action="Login" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesi&oacute;n</a>
+    <h1 style="font-weight:800; margin-top:12px;">Aviso de privacidad integral</h1>
+    <p class="altar-text-muted">Concurso de Altares &middot; Facultad de Ingenier&iacute;a, UABC &middot; Versi&oacute;n @version</p>
+
+    <h2>1. Responsable</h2>
+    <p>La <strong>Universidad Aut&oacute;noma de Baja California (UABC)</strong>, a trav&eacute;s de la <strong>Facultad de Ingenier&iacute;a, campus Mexicali</strong>, organizadora del Concurso de Altares, es responsable del tratamiento de los datos personales que proporcionas en este sistema. Domicilio: <partial name="_Dato" model="domicilio" />.</p>
+
+    <h2>2. Datos personales que recabamos</h2>
+    <ul>
+        <li><strong>Identificaci&oacute;n y contacto:</strong> nombre completo, matr&iacute;cula o n&uacute;mero de empleado, correo institucional (@@uabc.edu.mx) y, si lo proporcionas, tel&eacute;fono.</li>
+        <li><strong>Acad&eacute;micos:</strong> programa educativo, tipo de participante (alumno, maestro o administrativo) y el equipo al que perteneces.</li>
+        <li><strong>Del concurso:</strong> datos de tu equipo y de su altar (nombre, ubicaci&oacute;n, nombre y fecha de defunci&oacute;n de la persona a quien se dedica, semblanza), tu rol (por ejemplo, Narrador) y las evaluaciones del jurado.</li>
+        <li><strong>De la cuenta:</strong> contrase&ntilde;a (guardada cifrada de forma irreversible) o, si entras con Google, el nombre y correo institucional verificados por Google. Para la seguridad del sistema se registran la fecha, la cuenta intentada y la direcci&oacute;n IP de los inicios de sesi&oacute;n.</li>
+        <li><strong>Del jurado y la administraci&oacute;n:</strong> nombre, usuario o correo institucional y matr&iacute;cula o n&uacute;mero de empleado.</li>
+    </ul>
+    <p><strong>Datos personales sensibles.</strong> De forma <strong>opcional</strong> puedes indicar tu <strong>g&eacute;nero</strong> y una <strong>autodescripci&oacute;n cultural</strong> (por ejemplo, pertenencia a un pueblo originario), que la ley considera datos personales sensibles. Solo los guardamos si das tu <strong>consentimiento expreso</strong> al registrarte; si no los proporcionas, puedes participar igual.</p>
+
+    <h2>3. Finalidades</h2>
+    <p><strong>Necesarias para participar:</strong> crear y administrar tu cuenta; registrar tu equipo y su Ficha de Registro; gestionar invitaciones a equipos; que el jurado eval&uacute;e los altares; calcular lugares por programa educativo; emitir y enviarte por correo tu constancia; y proteger el sistema contra accesos indebidos.</p>
+    <p><strong>Adicional:</strong> elaborar el <strong>Reporte de Cierre de Periodo</strong> con estad&iacute;sticas <strong>agregadas</strong> (participaci&oacute;n por programa educativo, g&eacute;nero y autodescripci&oacute;n cultural). Las categor&iacute;as con pocas personas se agrupan como &ldquo;Otros / grupo reducido&rdquo; para que nadie pueda ser identificado. Los datos sensibles solo se usan para esta finalidad, nunca se muestran por persona y puedes negarte a ella sin afectar tu participaci&oacute;n (basta no proporcionarlos).</p>
+
+    <h2>4. Fundamento</h2>
+    <p>Tratamos tus datos con base en las atribuciones de la UABC para organizar actividades acad&eacute;micas y culturales, en la legislaci&oacute;n aplicable en materia de protecci&oacute;n de datos personales en posesi&oacute;n de sujetos obligados (ley general y ley del Estado de Baja California) y en tu consentimiento.</p>
+
+    <h2>5. Con qui&eacute;n se comparten y d&oacute;nde se guardan</h2>
+    <ul>
+        <li><strong>Almacenamiento en Estados Unidos.</strong> El sistema se aloja con un proveedor de hospedaje cuyos servidores est&aacute;n en <strong>Estados Unidos</strong>; ah&iacute; se guardan todos los datos, incluidos los sensibles. El proveedor solo los resguarda por cuenta de la UABC.</li>
+        <li><strong>Correo:</strong> para enviarte constancias se usa un servicio de correo electr&oacute;nico que procesa tu nombre y correo.</li>
+        <li><strong>Google:</strong> si eliges &ldquo;Continuar con Google&rdquo;, Google confirma tu identidad institucional conforme a sus propias pol&iacute;ticas.</li>
+        <li><strong>Autoridades:</strong> cuando una autoridad competente lo requiera conforme a la ley.</li>
+    </ul>
+    <p>Los nombres de los equipos, sus integrantes y los lugares obtenidos pueden darse a conocer en las actividades del concurso y aparecen en las constancias. No vendemos ni cedemos tus datos. El Concurso de Altares y el Concurso de Catrinas son sistemas independientes: tus datos de uno no se comparten con el otro.</p>
+
+    <h2>6. Derechos ARCO y revocaci&oacute;n del consentimiento</h2>
+    <p>Puedes ejercer tus derechos de <strong>Acceso, Rectificaci&oacute;n, Cancelaci&oacute;n y Oposici&oacute;n (ARCO)</strong>, as&iacute; como revocar tu consentimiento (por ejemplo, para que se borren tus datos sensibles), escribiendo a <partial name="_Dato" model="correo" />. Indica tu nombre, tu matr&iacute;cula o n&uacute;mero de empleado, el derecho que quieres ejercer y, si aplica, la correcci&oacute;n solicitada; acompa&ntilde;a una identificaci&oacute;n. Responderemos en los plazos que establece la ley. Si no est&aacute;s conforme con la respuesta, puedes acudir a la autoridad garante competente en materia de protecci&oacute;n de datos personales.</p>
+
+    <h2>7. Conservaci&oacute;n</h2>
+    <p>Conservamos tus datos durante el periodo del concurso y el tiempo necesario para emitir constancias y reportes; despu&eacute;s se suprimen o se anonimizan. Plazo de conservaci&oacute;n: <partial name="_Dato" model="plazo" />.</p>
+
+    <h2>8. Cookies y almacenamiento en tu navegador</h2>
+    <p>Solo usamos <strong>cookies estrictamente necesarias</strong>: la de tu sesi&oacute;n y la de protecci&oacute;n de formularios. Tu preferencia de tema claro u oscuro se guarda en tu propio navegador. No usamos cookies de publicidad ni de anal&iacute;tica.</p>
+
+    <h2>9. Cambios a este aviso</h2>
+    <p>Cualquier cambio se publicar&aacute; en esta misma p&aacute;gina con una nueva versi&oacute;n y fecha. Si el cambio afecta finalidades que requieren tu consentimiento, te lo pediremos de nuevo.</p>
+
+    <p class="altar-text-muted" style="margin-top:24px;">Consulta tambi&eacute;n los <a href="/Legal/Terminos">T&eacute;rminos de uso</a>.</p>
+</div>

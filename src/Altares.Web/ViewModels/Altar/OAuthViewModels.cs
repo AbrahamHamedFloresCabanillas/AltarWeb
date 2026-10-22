@@ -26,6 +26,9 @@ namespace AltarWeb.ViewModels.Altar
         [DataType(DataType.Password)]
         [Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden.")]
         public string ConfirmarPassword { get; set; } = string.Empty;
+
+        // Avisos legales (2026-10-22).
+        public bool AceptoAvisoYTerminos { get; set; }
     }
 
     // Se llega aqui despues de un login con Google cuyo correo no coincide con ningun
@@ -46,6 +49,10 @@ namespace AltarWeb.ViewModels.Altar
         [StringLength(LimitesTexto.Autodescripcion, ErrorMessage = LimitesTexto.Mensaje)]
         public string? AutodescripcionCultural { get; set; }
 
+        // Avisos legales (2026-10-22).
+        public bool AceptoAvisoYTerminos { get; set; }
+        public bool ConsentimientoDatosSensibles { get; set; }
+
         public List<CatalogoGenero> Generos { get; set; } = new();
         public List<CatalogoCarrera> Carreras { get; set; } = new();
     }
@@ -60,5 +67,8 @@ namespace AltarWeb.ViewModels.Altar
         [Required(ErrorMessage = "Ingresa tu matrícula o número de empleado.")]
         [RegularExpression(@"^\d{5}$", ErrorMessage = "La matrícula o número de empleado debe tener exactamente 5 dígitos.")]
         public string Identificador { get; set; } = string.Empty;
+
+        // Avisos legales (2026-10-22).
+        public bool AceptoAvisoYTerminos { get; set; }
     }
 }

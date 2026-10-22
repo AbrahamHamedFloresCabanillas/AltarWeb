@@ -1,0 +1,10 @@
+@model string
+@* Dato de contacto del aviso: si aun no esta configurado se marca en rojo para que no pase desapercibido. *@
+@if (Model == AltarWeb.Services.AvisosLegales.PorDefinir)
+{
+    <strong style="color:var(--altar-danger);">@Model</strong>
+}
+else
+{
+    <strong>@Model</strong>
+}

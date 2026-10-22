@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Términos de uso";
+    string correo = ViewBag.Correo, version = ViewBag.Version;
+}
+@* Terminos de uso del Concurso de Altares (2026-10-22). Borrador; debe revisarlo el area juridica de la UABC. *@
+<div style="max-width:860px; margin:0 auto; padding:28px 24px; line-height:1.6;">
+    <a asp-controller="Registro" asp-action="Login" class="altar-text-muted"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesi&oacute;n</a>
+    <h1 style="font-weight:800; margin-top:12px;">T&eacute;rminos de uso</h1>
+    <p class="altar-text-muted">Concurso de Altares &middot; Facultad de Ingenier&iacute;a, UABC &middot; Versi&oacute;n @version</p>
+
+    <h2>1. Objeto</h2>
+    <p>Este sistema sirve para inscribir equipos al Concurso de Altares de la Facultad de Ingenier&iacute;a de la UABC, completar su Ficha de Registro, que el jurado los eval&uacute;e y emitir constancias. Al crear una cuenta o usar el sistema aceptas estos t&eacute;rminos y el <a href="/Legal/Privacidad">Aviso de privacidad</a>.</p>
+
+    <h2>2. Cuentas</h2>
+    <ul>
+        <li>Es para la comunidad de la UABC: debes usar tu correo institucional y tu propia matr&iacute;cula o n&uacute;mero de empleado.</li>
+        <li>Una cuenta por persona. Eres responsable de lo que se haga con ella; no compartas tu contrase&ntilde;a.</li>
+        <li>Las cuentas del jurado se aprueban o crean por la administraci&oacute;n del concurso.</li>
+    </ul>
+
+    <h2>3. Uso aceptable</h2>
+    <p>No est&aacute; permitido: hacerse pasar por otra persona; capturar datos falsos o de terceros sin su autorizaci&oacute;n; invitar o agregar a personas sin su consentimiento; intentar acceder a cuentas o informaci&oacute;n ajenas; alterar formularios o peticiones para obtener resultados indebidos; usar herramientas automatizadas contra el sistema; ni publicar contenido ofensivo o irrespetuoso, en especial sobre las personas a quienes se dedican los altares.</p>
+
+    <h2>4. Participaci&oacute;n y evaluaci&oacute;n</h2>
+    <ul>
+        <li>Las reglas del concurso (requisitos, fechas, criterios y premiaci&oacute;n) las fija el comit&eacute; organizador en su convocatoria; el sistema las aplica.</li>
+        <li>Las evaluaciones cerradas como Final y los lugares que resultan son definitivos, salvo lo que resuelva el comit&eacute; organizador (por ejemplo, en empates).</li>
+        <li>Lo que captures en la Ficha de Registro debe ser veraz. Despu&eacute;s de la fecha l&iacute;mite o de la evaluaci&oacute;n ya no se puede modificar.</li>
+    </ul>
+
+    <h2>5. Constancias</h2>
+    <p>Las constancias se generan con los datos registrados en el sistema. Si encuentras un error, rep&oacute;rtalo a la administraci&oacute;n del concurso.</p>
+
+    <h2>6. Suspensi&oacute;n de cuentas</h2>
+    <p>La administraci&oacute;n puede desactivar cuentas o retirar equipos que incumplan estos t&eacute;rminos o las reglas del concurso. Por seguridad, varios intentos fallidos de inicio de sesi&oacute;n ponen la cuenta en pausa por unos minutos.</p>
+
+    <h2>7. Disponibilidad y responsabilidad</h2>
+    <p>Procuramos que el sistema est&eacute; disponible durante el concurso, pero puede haber interrupciones por mantenimiento o causas ajenas. El sistema se ofrece como herramienta de apoyo al concurso; la UABC no responde por da&ntilde;os derivados de un uso indebido de las cuentas.</p>
+
+    <h2>8. Propiedad intelectual</h2>
+    <p>El sistema, su dise&ntilde;o y sus contenidos pertenecen a la UABC o se usan con autorizaci&oacute;n. Los textos que captures siguen siendo tuyos; autorizas su uso para los fines del concurso.</p>
+
+    <h2>9. Cambios y legislaci&oacute;n aplicable</h2>
+    <p>Estos t&eacute;rminos pueden actualizarse; la versi&oacute;n vigente es la publicada en esta p&aacute;gina. Se rigen por la legislaci&oacute;n de los Estados Unidos Mexicanos y la normativa universitaria de la UABC.</p>
+
+    <h2>10. Contacto</h2>
+    <p>Dudas sobre estos t&eacute;rminos: <partial name="_Dato" model="correo" />.</p>
+</div>

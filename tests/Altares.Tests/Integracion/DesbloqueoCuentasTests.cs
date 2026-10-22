@@ -64,7 +64,7 @@ public class DesbloqueoCuentasTests
         var cuenta = _factory.CrearCliente();
         Assert.Equal(HttpStatusCode.Redirect, (await PostAsync(cuenta, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", "Registrante Saboteado"), ("Identificador", "1307701"), ("CorreoInstitucional", correo),
-            ("Password", Password), ("ConfirmarPassword", Password))).StatusCode);
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"))).StatusCode);
 
         var atacante = _factory.CrearCliente();
         for (var i = 0; i < 5; i++) await Login.RegistranteAsync(atacante, await Login.TokenAsync(atacante), "198.51.100.30", correo);

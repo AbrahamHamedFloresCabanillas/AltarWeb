@@ -39,7 +39,7 @@ public class HallazgosBajosTests
         var cliente = _factory.CrearCliente();
         Assert.Equal(HttpStatusCode.Redirect, (await PostAsync(cliente, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", $"Participante Bajos {n}"), ("Identificador", $"14{n:D5}"), ("CorreoInstitucional", correo),
-            ("Password", Password), ("ConfirmarPassword", Password))).StatusCode);
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"))).StatusCode);
         var id = await ConContextoAsync(c => c.Registrantes.Where(r => r.CorreoInstitucional == correo).Select(r => r.Id).SingleAsync());
         return (cliente, correo, id);
     }

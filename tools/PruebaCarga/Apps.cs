@@ -94,7 +94,7 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
         {
             var r = await cliente.PostAsync("/Registro/Signup", "/Registro/Signup", "preparar signup",
                 ("NombreCompleto", cuenta.Nombre), ("Identificador", cuenta.Identificador), ("CorreoInstitucional", cuenta.Correo),
-                ("Password", password), ("ConfirmarPassword", password));
+                ("Password", password), ("ConfirmarPassword", password), ("AceptoAvisoYTerminos", "true"));
             Exigir(r.Codigo == 302, $"signup de {cuenta.Correo} devolvio {r.Codigo}", r.Cuerpo);
         }
 
@@ -228,7 +228,7 @@ public sealed class AppCatrinas : AppBase, IAppBajoPrueba
         {
             var r = await cliente.PostAsync("/Registro/Signup", "/Registro/Signup", "preparar signup",
                 ("NombreCompleto", cuenta.Nombre), ("Identificador", cuenta.Identificador), ("CorreoInstitucional", cuenta.Correo),
-                ("Password", password), ("ConfirmarPassword", password));
+                ("Password", password), ("ConfirmarPassword", password), ("AceptoAvisoYTerminos", "true"));
             Exigir(r.Codigo == 302, $"signup de {cuenta.Correo} devolvio {r.Codigo}", r.Cuerpo);
         }
 

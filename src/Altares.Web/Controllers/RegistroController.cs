@@ -127,7 +127,10 @@ namespace AltarWeb.Controllers
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 CatalogoGeneroId = model.CatalogoGeneroId,
                 CatalogoCarreraId = model.CatalogoCarreraId,
-                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim()
+                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim(),
+                AvisoPrivacidadAceptadoEn = DateTime.Now,
+                AvisoPrivacidadVersion = AvisosLegales.Version,
+                ConsentimientoSensiblesEn = DaDatosSensibles(model.CatalogoGeneroId, model.AutodescripcionCultural) ? DateTime.Now : null
             };
 
             var erroresDominio = registrante.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(registrante));
@@ -140,6 +143,7 @@ namespace AltarWeb.Controllers
             }
 
             await ValidarCatalogosAsync(model.CatalogoGeneroId, model.CatalogoCarreraId);
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos, model.CatalogoGeneroId, model.AutodescripcionCultural, model.ConsentimientoDatosSensibles);
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
@@ -208,6 +212,7 @@ namespace AltarWeb.Controllers
             {
                 ModelState.AddModelError(nameof(model.Identificador), "Ya existe una solicitud o cuenta con esa matrícula.");
             }
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos);
 
             if (!ModelState.IsValid) return View(model);
 
@@ -219,7 +224,9 @@ namespace AltarWeb.Controllers
                 Password = AccesoController.HashPassword(model.Password),
                 ProveedorAuth = "Local",
                 Rol = "Juez",
-                Pendiente = true
+                Pendiente = true,
+                AvisoPrivacidadAceptadoEn = DateTime.Now,
+                AvisoPrivacidadVersion = AvisosLegales.Version
             };
 
             _context.Jueces.Add(juez);
@@ -349,7 +356,10 @@ namespace AltarWeb.Controllers
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 CatalogoGeneroId = model.CatalogoGeneroId,
                 CatalogoCarreraId = model.CatalogoCarreraId,
-                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim()
+                AutodescripcionCultural = string.IsNullOrWhiteSpace(model.AutodescripcionCultural) ? null : model.AutodescripcionCultural.Trim(),
+                AvisoPrivacidadAceptadoEn = DateTime.Now,
+                AvisoPrivacidadVersion = AvisosLegales.Version,
+                ConsentimientoSensiblesEn = DaDatosSensibles(model.CatalogoGeneroId, model.AutodescripcionCultural) ? DateTime.Now : null
             };
 
             var erroresDominio = registrante.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(registrante));
@@ -362,6 +372,7 @@ namespace AltarWeb.Controllers
             }
 
             await ValidarCatalogosAsync(model.CatalogoGeneroId, model.CatalogoCarreraId);
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos, model.CatalogoGeneroId, model.AutodescripcionCultural, model.ConsentimientoDatosSensibles);
 
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == registrante.Identificador))
             {
@@ -420,6 +431,7 @@ namespace AltarWeb.Controllers
             {
                 ModelState.AddModelError(nameof(model.Identificador), "Ya existe una solicitud o cuenta con esa matrícula.");
             }
+            ValidarAvisosLegales(model.AceptoAvisoYTerminos);
 
             if (!ModelState.IsValid)
             {
@@ -436,7 +448,9 @@ namespace AltarWeb.Controllers
                 Password = AccesoController.HashPassword(Guid.NewGuid().ToString()),
                 ProveedorAuth = "Google",
                 Rol = "Juez",
-                Pendiente = true
+                Pendiente = true,
+                AvisoPrivacidadAceptadoEn = DateTime.Now,
+                AvisoPrivacidadVersion = AvisosLegales.Version
             };
 
             _context.Jueces.Add(juez);
@@ -928,6 +942,25 @@ namespace AltarWeb.Controllers
         // La regla vive en MaestroEncargadoHelper porque el admin (EditarEquipo) usa la misma.
         private Task<(int? MaestroId, string? Pendiente, string? Error)> ResolverMaestroEncargadoAsync(string identificadorCrudo) =>
             MaestroEncargadoHelper.ResolverAsync(_context, identificadorCrudo);
+
+        // Avisos legales (2026-10-22): sin aceptar el aviso de privacidad y los terminos no se crea la cuenta, y el genero
+        // o la autodescripcion cultural (datos sensibles) solo se guardan con consentimiento expreso.
+        private void ValidarAvisosLegales(bool acepto, int? generoId = null, string? autodescripcion = null, bool consentimientoSensibles = true)
+        {
+            if (!acepto)
+            {
+                ModelState.AddModelError(nameof(RegistroSignupViewModel.AceptoAvisoYTerminos),
+                    "Para crear tu cuenta debes aceptar el aviso de privacidad y los términos de uso.");
+            }
+            if (DaDatosSensibles(generoId, autodescripcion) && !consentimientoSensibles)
+            {
+                ModelState.AddModelError(nameof(RegistroSignupViewModel.ConsentimientoDatosSensibles),
+                    "Para guardar tu género o tu autodescripción cultural necesitamos tu consentimiento expreso: marca la casilla o deja esos campos vacíos.");
+            }
+        }
+
+        private static bool DaDatosSensibles(int? generoId, string? autodescripcion) =>
+            generoId != null || !string.IsNullOrWhiteSpace(autodescripcion);
 
         // M1 (pruebas adversariales 2026-10-21): un id de catalogo inexistente (formulario alterado) llegaba hasta
         // la base y terminaba en una violacion de llave foranea (error 500). Ambos son opcionales en el registro.

@@ -38,6 +38,14 @@ namespace AltarWeb.Models.Registro
         public bool Activo { get; set; } = true;
         public DateTime CreadoEn { get; set; } = DateTime.Now;
 
+        // Avisos legales (2026-10-22): cuando acepto el aviso de privacidad y los terminos, y que version. Null en
+        // cuentas anteriores o creadas por la administracion.
+        public DateTime? AvisoPrivacidadAceptadoEn { get; set; }
+        [MaxLength(20)]
+        public string? AvisoPrivacidadVersion { get; set; }
+        // Consentimiento expreso para guardar datos sensibles (genero y autodescripcion cultural). Null si no los dio.
+        public DateTime? ConsentimientoSensiblesEn { get; set; }
+
         public virtual ICollection<RegistranteEquipo> Equipos { get; set; } = new List<RegistranteEquipo>();
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -73,7 +73,7 @@ public class FechasValidacionTests
         var cliente = _factory.CrearCliente();
         var r = await PostAsync(cliente, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", $"Participante Fechas {n}"), ("Identificador", $"16{n:D5}"), ("CorreoInstitucional", $"fechas.{n}@uabc.edu.mx"),
-            ("Password", Password), ("ConfirmarPassword", Password));
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"));
         Assert.Equal(HttpStatusCode.Redirect, r.StatusCode);
         return cliente;
     }

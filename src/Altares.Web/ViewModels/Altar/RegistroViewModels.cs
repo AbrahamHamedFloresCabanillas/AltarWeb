@@ -49,6 +49,10 @@ namespace AltarWeb.ViewModels.Altar
         [Compare(nameof(Password), ErrorMessage = "Las contraseñas no coinciden.")]
         public string ConfirmarPassword { get; set; } = string.Empty;
 
+        // Avisos legales (2026-10-22): aceptacion obligatoria y consentimiento expreso para datos sensibles.
+        public bool AceptoAvisoYTerminos { get; set; }
+        public bool ConsentimientoDatosSensibles { get; set; }
+
         public List<CatalogoGenero> Generos { get; set; } = new();
         public List<CatalogoCarrera> Carreras { get; set; } = new();
     }

@@ -31,6 +31,12 @@ namespace AltarWeb.Models
         // (cuenta admin semilla u otras marcadas explicitamente).
         public bool DebeCambiarPassword { get; set; } = false;
 
+        // Avisos legales (2026-10-22): aceptacion del aviso de privacidad y los terminos al solicitar la cuenta.
+        // Null en cuentas creadas por la administracion o anteriores.
+        public DateTime? AvisoPrivacidadAceptadoEn { get; set; }
+        [MaxLength(20)]
+        public string? AvisoPrivacidadVersion { get; set; }
+
         // --- Soft Delete ---
         public bool IsDeleted { get; set; } = false;
         public DateTime? FechaEliminado { get; set; }

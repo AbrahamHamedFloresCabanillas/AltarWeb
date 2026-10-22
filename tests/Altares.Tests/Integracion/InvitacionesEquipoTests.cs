@@ -46,7 +46,7 @@ public class InvitacionesEquipoTests
         var cliente = _factory.CrearCliente();
         Assert.Equal(HttpStatusCode.Redirect, (await PostAsync(cliente, "/Registro/Signup", "/Registro/Signup",
             ("NombreCompleto", nombre), ("Identificador", matricula), ("CorreoInstitucional", $"invitaciones.{n}@uabc.edu.mx"),
-            ("Password", Password), ("ConfirmarPassword", Password))).StatusCode);
+            ("Password", Password), ("ConfirmarPassword", Password), ("AceptoAvisoYTerminos", "true"))).StatusCode);
         var id = await ConContextoAsync(c => c.Registrantes.Where(r => r.Identificador == matricula).Select(r => r.Id).SingleAsync());
         return new Persona(cliente, id, matricula, nombre);
     }
