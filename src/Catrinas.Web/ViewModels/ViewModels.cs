@@ -32,8 +32,8 @@ namespace Catrinas.Web.ViewModels
         [StringLength(200)]
         public string NombreCompleto { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Ingresa tu identificador.")]
-        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "El identificador debe tener 5 dígitos (maestro/administrativo) o 7 dígitos (alumno).")]
+        [Required(ErrorMessage = "Ingresa tu matrícula o número de empleado.")]
+        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "La matrícula o número de empleado debe tener 7 dígitos (alumno) o 5 dígitos (maestro/administrativo).")]
         public string Identificador { get; set; } = string.Empty;
 
         // Solo para identificadores de 5 digitos: "Maestro" (por defecto) o "Administrativo".
@@ -86,7 +86,7 @@ namespace Catrinas.Web.ViewModels
         public string CorreoInstitucional { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ingresa tu número de empleado o matrícula.")]
-        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "El identificador debe tener 5 o 7 dígitos.")]
+        [RegularExpression(@"^\d{5}$|^\d{7}$", ErrorMessage = "La matrícula o número de empleado debe tener 5 o 7 dígitos.")]
         public string Identificador { get; set; } = string.Empty;
 
         [DataType(DataType.Password)]

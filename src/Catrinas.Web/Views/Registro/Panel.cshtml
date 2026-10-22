@@ -36,7 +36,7 @@
             <div class="altar-card-title">Aún no estás en ninguna inscripción</div>
             @if (Model.PuedeCrear)
             {
-                <p class="altar-card-subtitle">Crea la inscripción de tu equipo (puede ser de una sola persona) o pide al responsable de otra inscripción que te agregue con tu identificador <strong>@r.Identificador</strong>.</p>
+                <p class="altar-card-subtitle">Crea la inscripción de tu equipo (puede ser de una sola persona) o pide al responsable de otra inscripción que te agregue con tu matrícula o número de empleado <strong>@r.Identificador</strong>.</p>
                 <a asp-controller="Inscripcion" asp-action="Crear" class="altar-btn altar-btn-primary"><i class="fa-solid fa-plus"></i> Crear inscripción</a>
             }
             else

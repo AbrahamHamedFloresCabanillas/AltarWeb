@@ -309,7 +309,7 @@ namespace Catrinas.Web.Controllers
             }
             if (await _context.Registrantes.AnyAsync(r => r.Identificador == identificador))
             {
-                ModelState.AddModelError(nameof(model.Identificador), "Ya existe una cuenta con ese identificador.");
+                ModelState.AddModelError(nameof(model.Identificador), "Ya existe una cuenta con esa matrícula o número de empleado.");
             }
             if (await _context.Registrantes.AnyAsync(r => r.CorreoInstitucional == correo))
             {
@@ -331,7 +331,7 @@ namespace Catrinas.Web.Controllers
             catch (DbUpdateException)
             {
                 _context.Entry(registrante).State = EntityState.Detached;
-                ModelState.AddModelError(string.Empty, "Ya existe una cuenta con ese identificador o correo.");
+                ModelState.AddModelError(string.Empty, "Ya existe una cuenta con esa matrícula o número de empleado, o con ese correo.");
                 return false;
             }
         }

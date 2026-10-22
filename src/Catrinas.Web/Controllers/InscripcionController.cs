@@ -146,7 +146,7 @@ namespace Catrinas.Web.Controllers
             // de invitacion. Para no convertir el formulario en un buscador de personas, todos los rechazos
             // usan el mismo mensaje (no distingue "no existe" de "ya esta en otra inscripcion") y la
             // confirmacion no repite el nombre.
-            const string rechazoGenerico = "No se pudo agregar a esa persona. Verifica el identificador: debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.";
+            const string rechazoGenerico = "No se pudo agregar a esa persona. Verifica la matrícula o número de empleado: debe tener cuenta en el Concurso de Catrinas y no estar en otra inscripción de este periodo.";
             var id = (identificador ?? string.Empty).Trim();
             var registrante = await _context.Registrantes.FirstOrDefaultAsync(r => r.Identificador == id && r.Activo);
             if (registrante == null || await _context.Miembros.AnyAsync(m => m.RegistranteId == registrante.Id && m.Periodo == inscripcion.Periodo))
