@@ -548,12 +548,12 @@ namespace AltarWeb.Controllers
                 ModelState.AddModelError(nameof(model.MaestroEncargadoIdentificador), maestroError);
             }
 
-            // Misma regla de "minimo un anio de fallecido" que aplica al participante, si el periodo la exige.
+            // Misma regla de fecha de defuncion que aplica al participante (A2: tambien sin registro de configuracion).
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == equipo.Periodo);
-            if (config?.ExigirMinimoUnAnioFallecimiento == true
-                && model.DifuntoFechaDefuncion > DateOnly.FromDateTime(DateTime.Today.AddYears(-1)))
+            var errorFecha = FechaDefuncionHelper.Validar(model.DifuntoFechaDefuncion, config);
+            if (errorFecha != null)
             {
-                ModelState.AddModelError(nameof(model.DifuntoFechaDefuncion), "La fecha de defunción debe ser de al menos 1 año atrás.");
+                ModelState.AddModelError(nameof(model.DifuntoFechaDefuncion), errorFecha);
             }
 
             if (!ModelState.IsValid)
@@ -921,6 +921,8 @@ namespace AltarWeb.Controllers
                     $"El umbral de agrupación demográfica no puede ser menor a {PrivacidadReporteHelper.UmbralMinimo}.");
             }
 
+            ValidarFechasLimite(model.FechaLimiteInscripcion, model.FechaLimiteRequisitos);
+
             // Validacion del PDF del recorrido (solo si el admin adjunto uno): extension, tipo y tamaño.
             var archivo = model.ArchivoRecorrido;
             if (archivo != null && archivo.Length > 0)
@@ -970,6 +972,27 @@ namespace AltarWeb.Controllers
             await _context.SaveChangesAsync();
             TempData["Mensaje"] = "Configuración del periodo actualizada.";
             return RedirectToAction("Configuracion");
+        }
+
+        // M3 (pruebas adversariales 2026-10-21): se aceptaba el año 0009 (que deja la inscripcion cerrada) y una
+        // fecha de requisitos anterior a la de inscripcion. Errores a nivel de modelo: la vista solo muestra ese
+        // resumen para esta seccion.
+        private void ValidarFechasLimite(DateTime? inscripcion, DateTime? requisitos)
+        {
+            static bool FueraDeRango(DateTime? fecha) => fecha is { Year: < 2000 or > 2099 };
+
+            if (FueraDeRango(inscripcion))
+            {
+                ModelState.AddModelError(string.Empty, "La fecha límite de inscripción debe estar entre los años 2000 y 2099.");
+            }
+            if (FueraDeRango(requisitos))
+            {
+                ModelState.AddModelError(string.Empty, "La fecha límite de requisitos debe estar entre los años 2000 y 2099.");
+            }
+            if (inscripcion != null && requisitos != null && requisitos < inscripcion)
+            {
+                ModelState.AddModelError(string.Empty, "La fecha límite de requisitos no puede ser anterior a la de inscripción.");
+            }
         }
 
         // --- Reporte de Cierre de Periodo (vision.md seccion 12) ---

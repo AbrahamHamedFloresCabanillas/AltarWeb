@@ -838,12 +838,10 @@ namespace AltarWeb.Controllers
         private async Task ValidarFechaDefuncionAsync(string periodo, DateOnly fecha, string campo)
         {
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
-            if (config?.ExigirMinimoUnAnioFallecimiento != true) return;
-
-            var limite = DateOnly.FromDateTime(DateTime.Today.AddYears(-1));
-            if (fecha > limite)
+            var error = FechaDefuncionHelper.Validar(fecha, config);
+            if (error != null)
             {
-                ModelState.AddModelError(campo, "La fecha de defunción debe ser de al menos 1 año atrás.");
+                ModelState.AddModelError(campo, error);
             }
         }
 
@@ -881,7 +879,7 @@ namespace AltarWeb.Controllers
 
             var periodo = equipo.Periodo;
             var config = await _context.ConfiguracionesPeriodo.FirstOrDefaultAsync(c => c.Periodo == periodo);
-            vm.ExigirMinimoUnAnioFallecimiento = config?.ExigirMinimoUnAnioFallecimiento ?? true;
+            vm.ExigirMinimoUnAnioFallecimiento = FechaDefuncionHelper.ExigeMinimoUnAnio(config);
             vm.FechaLimiteRequisitosPasada = FechaPasada(config?.FechaLimiteRequisitos);
             vm.FechaLimiteRequisitos = config?.FechaLimiteRequisitos;
             vm.FichaFaltantes = EquipoValidacionHelper.FaltantesFicha(equipo);
