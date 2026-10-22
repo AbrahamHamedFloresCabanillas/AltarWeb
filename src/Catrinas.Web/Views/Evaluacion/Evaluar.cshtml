@@ -3,13 +3,20 @@
 @{
     ViewData["Title"] = "Evaluar Catrina";
     string Inv(decimal v) => v.ToString(CultureInfo.InvariantCulture);
-    var criterios = new (string Campo, string Etiqueta, decimal Peso, decimal Valor)[]
+    // B3 (2026-10-21): cada criterio lleva una guia breve de que evaluar, como las de Altares. Texto propuesto,
+    // pendiente de que el comite lo ratifique (vision.md §7.5 solo define nombres y pesos).
+    var criterios = new (string Campo, string Etiqueta, decimal Peso, decimal Valor, string Guia)[]
     {
-        ("vestuario", "Vestuario", Model.Pesos.PesoVestuario, Model.Vestuario),
-        ("maquillaje", "Maquillaje", Model.Pesos.PesoMaquillaje, Model.Maquillaje),
-        ("accesorios", "Accesorios", Model.Pesos.PesoAccesorios, Model.Accesorios),
-        ("originalidadCreatividad", "Originalidad y creatividad", Model.Pesos.PesoOriginalidadCreatividad, Model.OriginalidadCreatividad),
-        ("apegoTradiciones", "Apego a las tradiciones", Model.Pesos.PesoApegoTradiciones, Model.ApegoTradiciones)
+        ("vestuario", "Vestuario", Model.Pesos.PesoVestuario, Model.Vestuario,
+            "Confección, calidad y coherencia del atuendo con la figura de la Catrina."),
+        ("maquillaje", "Maquillaje", Model.Pesos.PesoMaquillaje, Model.Maquillaje,
+            "Técnica, detalle y acabado del maquillaje de calavera."),
+        ("accesorios", "Accesorios", Model.Pesos.PesoAccesorios, Model.Accesorios,
+            "Complementos (sombrero, flores, joyería, abanico…) y cómo enriquecen la caracterización."),
+        ("originalidadCreatividad", "Originalidad y creatividad", Model.Pesos.PesoOriginalidadCreatividad, Model.OriginalidadCreatividad,
+            "Qué tan propia, novedosa y bien lograda es la interpretación de la Catrina."),
+        ("apegoTradiciones", "Apego a las tradiciones", Model.Pesos.PesoApegoTradiciones, Model.ApegoTradiciones,
+            "Respeto a los elementos tradicionales de la Catrina y del Día de Muertos.")
     };
     var notaInicial = criterios.Sum(c => c.Valor * c.Peso);
     var esFinal = Model.Estado == EstadoEvaluacion.Final;
@@ -58,6 +65,7 @@
                                 <span id="out-@c.Campo">@c.Valor.ToString("0.0")</span>
                             </div>
                             <input type="range" min="0" max="10" step="0.1" name="@c.Campo" value="@Inv(c.Valor)" class="altar-slider" data-peso="@Inv(c.Peso)" @(esFinal ? "disabled" : null) />
+                            <div class="altar-slider-hint">@c.Guia</div>
                         </div>
                     }
                     <div class="altar-flex" style="justify-content:space-between; margin:16px 0;">
