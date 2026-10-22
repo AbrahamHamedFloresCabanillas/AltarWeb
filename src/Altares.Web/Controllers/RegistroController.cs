@@ -65,7 +65,10 @@ namespace AltarWeb.Controllers
                     _limitador.NormalizarCuenta(correo), HttpContext.Connection.RemoteIpAddress, (int)Math.Ceiling(espera.TotalSeconds));
                 return new ResultadoLimiteExcedido(espera);
             }
-            var registrante = await _context.Registrantes
+            // IgnoreQueryFilters: con el filtro global de Activo una cuenta desactivada no se encontraba y veia
+            // "Correo o contraseña incorrectos" (prueba adversarial 2026-10-21). Solo tras la contraseña correcta
+            // se le dice que esta desactivada, asi que no revela nada a quien no la conoce.
+            var registrante = await _context.Registrantes.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(r => r.CorreoInstitucional.ToLower() == correo);
 
             var (esValido, requiereRehash) = PasswordHashService.Verificar(model.Password, registrante?.PasswordHash);
@@ -774,7 +777,15 @@ namespace AltarWeb.Controllers
                 return RedirectToAction("Ficha");
             }
 
-            foreach (var integrante in equipo!.Integrantes)
+            // Misma regla que el admin (DesignarNarradorEquipo): con un id ajeno al equipo (peticion alterada) el
+            // bucle quitaba al Narrador actual sin designar a nadie (prueba adversarial 2026-10-21).
+            if (equipo!.Integrantes.All(i => i.RegistranteId != registranteId))
+            {
+                TempData["Error"] = "Ese registrante no es integrante del equipo.";
+                return RedirectToAction("Ficha");
+            }
+
+            foreach (var integrante in equipo.Integrantes)
             {
                 integrante.Rol = integrante.RegistranteId == registranteId ? RolEquipo.Narrador : RolEquipo.Integrante;
             }
