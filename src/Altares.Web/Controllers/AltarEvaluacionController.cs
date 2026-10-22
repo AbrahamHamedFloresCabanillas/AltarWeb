@@ -3,6 +3,7 @@ using AltarWeb.Models.Registro;
 using AltarWeb.Services;
 using AltarWeb.ViewModels.Altar;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Equipo = AltarWeb.Models.Registro.Equipo;
 using Evaluacion = AltarWeb.Models.Registro.Evaluacion;
@@ -242,6 +243,21 @@ namespace AltarWeb.Controllers
             {
                 TempData["Error"] = "Esta evaluación ya fue cerrada como Final.";
                 return RedirectToAction("Detalle", new { id = equipo.Evaluacion.Id });
+            }
+
+            // C1 (pruebas adversariales 2026-10-21): los sliders van de 0 a 10, pero el servidor aceptaba cualquier
+            // numero (999 daba nota 405.6 y 1er lugar; 1000 desbordaba decimal(5,2) con un 500). Misma regla que Catrinas.
+            // Un valor no numerico (formulario alterado) llega como 0 con ModelState invalido: tambien se rechaza.
+            // Se revisa campo por campo y no ModelState.IsValid: una semblanza vacia lo invalidaria sin ser un error.
+            var criterios = new (string Campo, decimal Valor)[]
+            {
+                (nameof(esenciaPersonalidad), esenciaPersonalidad), (nameof(valoracionGeneral), valoracionGeneral),
+                (nameof(distribucionNiveles), distribucionNiveles), (nameof(narrador), narrador)
+            };
+            if (criterios.Any(c => c.Valor < 0 || c.Valor > 10 || ModelState[c.Campo]?.ValidationState == ModelValidationState.Invalid))
+            {
+                TempData["Error"] = "Cada criterio debe calificarse entre 0 y 10.";
+                return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
             }
 
             // SEC-13: vision.md §4.2 exige un Narrador por equipo; una evaluacion Final tambien implica
