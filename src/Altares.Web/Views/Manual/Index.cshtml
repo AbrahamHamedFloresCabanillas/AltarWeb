@@ -30,7 +30,10 @@
                 <div class="altar-card">
                     <div class="altar-card-title"><i class="fa-solid @m.Icono"></i> @m.Titulo</div>
                     <p class="altar-card-subtitle">@m.Descripcion</p>
-                    <a href="/Manual/@m.Accion" class="altar-btn altar-btn-primary"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</a>
+                    <div class="altar-flex altar-gap-sm">
+                        <a href="/Manual/@(m.Accion)?ver=1" target="_blank" rel="noopener" class="altar-btn altar-btn-primary"><i class="fa-solid fa-eye"></i> Ver</a>
+                        <a href="/Manual/@m.Accion" class="altar-btn altar-btn-outline"><i class="fa-solid fa-file-pdf"></i> Descargar PDF</a>
+                    </div>
                 </div>
             }
         </div>

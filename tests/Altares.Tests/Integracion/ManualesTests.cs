@@ -96,3 +96,32 @@ public class ManualesTests
         Assert.Contains("/Manual/Participante", await cliente.GetStringAsync("/Registro/Dashboard"));
     }
 }
+
+// "Ver" (peticion del propietario, 2026-10-22): el mismo PDF, pero inline para que el navegador lo abra en su visor
+// en una pestaña nueva en vez de descargarlo.
+[Collection(AppCollection.Nombre)]
+[Trait("Category", "Integracion")]
+public class ManualesVerTests
+{
+    private readonly AltarWebFactory _factory;
+    public ManualesVerTests(AltarWebFactory factory) => _factory = factory;
+
+    [Fact]
+    public async Task Ver_EntregaElPdfInline_YLosBotonesAbrenPestanaNueva()
+    {
+        var cliente = _factory.CrearCliente();
+        var ver = await cliente.GetAsync("/Manual/Participante?ver=1");
+        Assert.Equal("application/pdf", ver.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("inline", ver.Content.Headers.ContentDisposition?.DispositionType);
+
+        var descargar = await cliente.GetAsync("/Manual/Participante");
+        Assert.Equal("attachment", descargar.Content.Headers.ContentDisposition?.DispositionType);
+
+        await _factory.CrearJuezAsync("juez-manuales-ver", "Manuales-Ver-2026!");
+        var juez = _factory.CrearCliente();
+        var token = System.Text.RegularExpressions.Regex.Match(await juez.GetStringAsync("/Registro/Login"), "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"").Groups[1].Value;
+        await juez.PostAsync("/Acceso/Login", new FormUrlEncodedContent(new Dictionary<string, string> { ["usuario"] = "juez-manuales-ver", ["password"] = "Manuales-Ver-2026!", ["__RequestVerificationToken"] = token }));
+        var pagina = await juez.GetStringAsync("/Manual");
+        Assert.Contains("href=\"/Manual/Juez?ver=1\" target=\"_blank\"", pagina);
+    }
+}
