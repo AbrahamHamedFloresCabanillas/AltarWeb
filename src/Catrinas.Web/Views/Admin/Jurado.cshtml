@@ -40,15 +40,16 @@
                             <td class="altar-flex altar-gap-sm">
                                 @if (j.Pendiente && j.Activo)
                                 {
-                                    <form asp-action="AprobarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-primary" type="submit">Aprobar</button></form>
+                                    <form asp-action="AprobarJuez" method="post" style="display:inline;"><input type="hidden" name="id" value="@j.Id" /><button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);"><i class="fa-solid fa-check"></i> Aprobar</button></form>
                                 }
+                                @* B6 (2026-10-21): mismos botones que Altares (la referencia de diseño). *@
                                 @if (j.Activo)
                                 {
-                                    <form asp-action="DesactivarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-outline altar-btn-danger" type="submit">Desactivar</button></form>
+                                    <form asp-action="DesactivarJuez" method="post" style="display:inline;" onsubmit="return confirm('¿Desactivar este usuario?');"><input type="hidden" name="id" value="@j.Id" /><button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-danger);" title="Desactivar" aria-label="Desactivar"><i class="fa-solid fa-user-slash"></i></button></form>
                                 }
                                 else
                                 {
-                                    <form asp-action="ReactivarJuez" method="post"><input type="hidden" name="id" value="@j.Id" /><button class="altar-btn altar-btn-sm altar-btn-outline" type="submit">Reactivar</button></form>
+                                    <form asp-action="ReactivarJuez" method="post" style="display:inline;"><input type="hidden" name="id" value="@j.Id" /><button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);" title="Reactivar" aria-label="Reactivar"><i class="fa-solid fa-rotate-left"></i></button></form>
                                 }
                             </td>
                         </tr>

@@ -19,13 +19,18 @@
                 <p class="altar-text-muted" style="font-size:12px;">El día indicado cuenta completo (calendario de Mexicali). Vacío = sin límite.</p>
             </div>
             <div class="altar-card">
-                <div class="altar-card-title">Pesos de los criterios (deben sumar 100%)</div>
+                <div class="altar-card-title">Pesos de los criterios</div>
+                <p class="altar-card-subtitle">Define qué tanto vale cada criterio en la Nota de Catrina. Los porcentajes deben sumar 100%.</p>
                 <div class="altar-grid-3">
-                    <div class="altar-field"><label class="altar-label" asp-for="PesoVestuarioPct">Vestuario (%)</label><input asp-for="PesoVestuarioPct" type="number" step="1" class="altar-input" /></div>
-                    <div class="altar-field"><label class="altar-label" asp-for="PesoMaquillajePct">Maquillaje (%)</label><input asp-for="PesoMaquillajePct" type="number" step="1" class="altar-input" /></div>
-                    <div class="altar-field"><label class="altar-label" asp-for="PesoAccesoriosPct">Accesorios (%)</label><input asp-for="PesoAccesoriosPct" type="number" step="1" class="altar-input" /></div>
-                    <div class="altar-field"><label class="altar-label" asp-for="PesoOriginalidadCreatividadPct">Originalidad y creatividad (%)</label><input asp-for="PesoOriginalidadCreatividadPct" type="number" step="1" class="altar-input" /></div>
-                    <div class="altar-field"><label class="altar-label" asp-for="PesoApegoTradicionesPct">Apego a las tradiciones (%)</label><input asp-for="PesoApegoTradicionesPct" type="number" step="1" class="altar-input" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoVestuarioPct">Vestuario (%)</label><input asp-for="PesoVestuarioPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoMaquillajePct">Maquillaje (%)</label><input asp-for="PesoMaquillajePct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoAccesoriosPct">Accesorios (%)</label><input asp-for="PesoAccesoriosPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoOriginalidadCreatividadPct">Originalidad y creatividad (%)</label><input asp-for="PesoOriginalidadCreatividadPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" /></div>
+                    <div class="altar-field"><label class="altar-label" asp-for="PesoApegoTradicionesPct">Apego a las tradiciones (%)</label><input asp-for="PesoApegoTradicionesPct" type="number" step="1" class="altar-input altar-peso-input" oninput="AltarPesos.recalcular()" /></div>
+                </div>
+                <div class="altar-flex" style="justify-content:space-between;">
+                    <span>Suma total</span>
+                    <span id="altar-suma-pesos" style="font-weight:800; color:@(Model.SumaPesos == 100 ? "var(--altar-primary)" : "var(--altar-danger)");">@Model.SumaPesos.ToString("0.##")%</span>
                 </div>
             </div>
             <div class="altar-card">
@@ -36,3 +41,21 @@
         </form>
     </main>
 </div>
+
+@* B6 (2026-10-21): suma de pesos en vivo, igual que en Altares. *@
+@section Scripts {
+    <script>
+        var AltarPesos = (function () {
+            function recalcular() {
+                var suma = 0;
+                document.querySelectorAll('.altar-peso-input').forEach(function (input) {
+                    suma += Number(input.value) || 0;
+                });
+                var el = document.getElementById('altar-suma-pesos');
+                el.textContent = suma + '%';
+                el.style.color = suma === 100 ? 'var(--altar-primary)' : 'var(--altar-danger)';
+            }
+            return { recalcular: recalcular };
+        })();
+    </script>
+}

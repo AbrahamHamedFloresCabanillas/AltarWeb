@@ -1,3 +1,4 @@
+using System.Globalization;
 using Catrinas.Web.Datos;
 using Catrinas.Web.Modelos;
 using Catrinas.Web.ViewModels;
@@ -123,14 +124,19 @@ namespace Catrinas.Web.Controllers
                 Periodo = periodo,
                 FechaLimiteInscripcion = c.FechaLimiteInscripcion,
                 FechaLimiteRequisitos = c.FechaLimiteRequisitos,
-                PesoVestuarioPct = c.PesoVestuario * 100,
-                PesoMaquillajePct = c.PesoMaquillaje * 100,
-                PesoAccesoriosPct = c.PesoAccesorios * 100,
-                PesoOriginalidadCreatividadPct = c.PesoOriginalidadCreatividad * 100,
-                PesoApegoTradicionesPct = c.PesoApegoTradiciones * 100,
+                PesoVestuarioPct = Porcentaje(c.PesoVestuario),
+                PesoMaquillajePct = Porcentaje(c.PesoMaquillaje),
+                PesoAccesoriosPct = Porcentaje(c.PesoAccesorios),
+                PesoOriginalidadCreatividadPct = Porcentaje(c.PesoOriginalidadCreatividad),
+                PesoApegoTradicionesPct = Porcentaje(c.PesoApegoTradiciones),
                 UmbralAgrupacionDemografica = c.UmbralAgrupacionDemografica
             });
         }
+
+        // B6 (2026-10-21): la columna es decimal(5,4), asi que 0.2500 * 100 se mostraba como "25.00". Se quita la
+        // escala sobrante para mostrar "25", como Altares (la referencia de diseño).
+        private static decimal Porcentaje(decimal fraccion) =>
+            decimal.Parse((fraccion * 100).ToString("0.##", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
 
         [HttpPost]
         public async Task<IActionResult> Configuracion(ConfiguracionViewModel model)

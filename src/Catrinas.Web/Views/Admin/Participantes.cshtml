@@ -22,10 +22,21 @@
                             <td>@(r.CatalogoCarrera?.Nombre ?? "—")</td>
                             <td>@(r.CatalogoGenero?.Nombre ?? "—")</td>
                             <td>
-                                <form asp-action="@(r.Activo ? "DesactivarParticipante" : "ReactivarParticipante")" method="post">
-                                    <input type="hidden" name="id" value="@r.Id" />
-                                    <button class="altar-btn altar-btn-sm altar-btn-outline" type="submit">@(r.Activo ? "Desactivar" : "Reactivar")</button>
-                                </form>
+                                @* B6 (2026-10-21): mismos botones que Altares (la referencia de diseño). *@
+                                @if (r.Activo)
+                                {
+                                    <form asp-action="DesactivarParticipante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-danger);" title="Desactivar" aria-label="Desactivar"><i class="fa-solid fa-user-slash"></i></button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="ReactivarParticipante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);" title="Reactivar" aria-label="Reactivar"><i class="fa-solid fa-rotate-left"></i></button>
+                                    </form>
+                                }
                             </td>
                         </tr>
                     }
