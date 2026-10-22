@@ -16,13 +16,15 @@ namespace AltarWeb.Controllers
         private readonly ILogger<AltarAdminController> _logger;
         private readonly IWebHostEnvironment _entorno;
         private readonly EvaluacionCalculoService _calculo;
+        private readonly LimitadorIntentosLogin _limitador;
 
         // Tope de 25 MB para el recorrido en PDF; suficiente para un mapa por carrera sin permitir abusos.
         private const long RecorridoMaxBytes = 25 * 1024 * 1024;
 
         public AltarAdminController(AltarDbContext context, ReportePeriodoService reportePeriodo, ILogger<AltarAdminController> logger, IWebHostEnvironment entorno,
-            EvaluacionCalculoService calculo)
+            EvaluacionCalculoService calculo, LimitadorIntentosLogin limitador)
         {
+            _limitador = limitador;
             _context = context;
             _reportePeriodo = reportePeriodo;
             _logger = logger;
@@ -41,7 +43,51 @@ namespace AltarWeb.Controllers
             // desactivados no aparecen y el boton "Reactivar" de la vista queda inalcanzable
             // (mismo criterio que RegistrantesYEquipos, que ya listaba inactivos).
             var jueces = _context.Jueces.IgnoreQueryFilters().OrderBy(j => j.NombreCompleto).ToList();
+            ViewBag.Bloqueados = jueces.Where(JuezBloqueado).Select(j => j.Id).ToHashSet();
             return View(jueces);
+        }
+
+        // --- A3 (pruebas adversariales 2026-10-21): desbloqueo de cuentas ---
+        //
+        // Cualquiera puede bloquear 5 minutos una cuenta ajena con 5 contraseñas incorrectas (p. ej. a un juez el dia
+        // del concurso). Decision del propietario: los limites de login NO se relajan; la administracion ve que
+        // cuentas estan bloqueadas y puede liberarlas. Un juez se intenta por usuario o por correo y ademas se
+        // cuenta por id (AccesoController), asi que se revisan y limpian las tres claves.
+        private bool JuezBloqueado(Juez juez) =>
+            _limitador.EstaBloqueada(AccesoController.AmbitoLimite, juez.Usuario, out _)
+            || _limitador.EstaBloqueada(AccesoController.AmbitoLimite, juez.CorreoInstitucional, out _)
+            || _limitador.EstaBloqueada(AccesoController.AmbitoCuentaResuelta, juez.Id.ToString(System.Globalization.CultureInfo.InvariantCulture), out _);
+
+        [HttpPost]
+        public IActionResult DesbloquearJuez(int id)
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+            var juez = _context.Jueces.IgnoreQueryFilters().FirstOrDefault(j => j.Id == id);
+            if (juez != null)
+            {
+                if (!string.IsNullOrEmpty(juez.Usuario)) _limitador.Reiniciar(AccesoController.AmbitoLimite, juez.Usuario);
+                if (!string.IsNullOrEmpty(juez.CorreoInstitucional)) _limitador.Reiniciar(AccesoController.AmbitoLimite, juez.CorreoInstitucional);
+                _limitador.Reiniciar(AccesoController.AmbitoCuentaResuelta, juez.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                _logger.LogWarning("Cuenta de Juez/Admin desbloqueada por administracion. JuezId: {JuezId}, AdminId: {AdminId}",
+                    juez.Id, HttpContext.Session.GetInt32("JuezId"));
+                TempData["Mensaje"] = $"'{juez.Usuario ?? juez.CorreoInstitucional}' desbloqueado: ya puede volver a intentar iniciar sesión.";
+            }
+            return RedirectToAction("Jueces");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DesbloquearRegistrante(int id)
+        {
+            if (!EsAdmin()) return RedirigirSinPermisos();
+            var registrante = await _context.Registrantes.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id);
+            if (registrante != null)
+            {
+                _limitador.Reiniciar(RegistroController.AmbitoLimite, registrante.CorreoInstitucional);
+                _logger.LogWarning("Cuenta de Registrante desbloqueada por administracion. RegistranteId: {RegistranteId}, AdminId: {AdminId}",
+                    registrante.Id, HttpContext.Session.GetInt32("JuezId"));
+                TempData["Mensaje"] = $"'{registrante.NombreCompleto}' desbloqueado: ya puede volver a intentar iniciar sesión.";
+            }
+            return RedirectToAction("RegistrantesYEquipos", new { tab = "registrantes" });
         }
 
         public IActionResult CrearJuez()
@@ -308,6 +354,11 @@ namespace AltarWeb.Controllers
                     Activo = r.Activo
                 })
                 .ToListAsync();
+
+            foreach (var r in registrantes)
+            {
+                r.Bloqueada = _limitador.EstaBloqueada(RegistroController.AmbitoLimite, r.CorreoInstitucional, out _);
+            }
 
             return View("RegistrantesYEquiposRegistrantes", registrantes);
         }

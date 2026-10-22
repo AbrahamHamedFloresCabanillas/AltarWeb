@@ -13,8 +13,8 @@ namespace AltarWeb.Controllers
         private readonly LimitadorIntentosLogin _limitador;
 
         // Ambito del contador de intentos por cuenta (SEC-04): cuentas de backoffice.
-        private const string AmbitoLimite = "juez";
-        private const string AmbitoCuentaResuelta = "juez-id";
+        internal const string AmbitoLimite = "juez";
+        internal const string AmbitoCuentaResuelta = "juez-id";
 
         public AccesoController(AltarDbContext context, ILogger<AccesoController> logger, LimitadorIntentosLogin limitador)
         {

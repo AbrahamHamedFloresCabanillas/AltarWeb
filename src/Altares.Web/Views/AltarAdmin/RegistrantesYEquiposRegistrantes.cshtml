@@ -48,9 +48,22 @@
                             <td>@r.Identificador</td>
                             <td>@r.Carrera</td>
                             <td>@r.Genero</td>
-                            <td>@(r.Activo ? "Activo" : "Inactivo")</td>
+                            <td>
+                                @(r.Activo ? "Activo" : "Inactivo")
+                                @if (r.Bloqueada)
+                                {
+                                    <div><span class="altar-badge altar-badge-danger" title="Demasiados intentos fallidos de inicio de sesión."><i class="fa-solid fa-lock"></i> Bloqueada</span></div>
+                                }
+                            </td>
                             <td>
                                 <a asp-controller="AltarAdmin" asp-action="EditarRegistrante" asp-route-id="@r.Id" class="altar-btn altar-btn-sm altar-btn-outline" style="margin-right:6px;" title="Editar"><i class="fa-solid fa-pen"></i></a>
+                                @if (r.Bloqueada)
+                                {
+                                    <form asp-controller="AltarAdmin" asp-action="DesbloquearRegistrante" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="altar-btn-sm altar-btn-outline" style="color:var(--altar-primary);" title="Desbloquear" aria-label="Desbloquear"><i class="fa-solid fa-lock-open"></i></button>
+                                    </form>
+                                }
                                 @if (r.Activo)
                                 {
                                     <form asp-controller="AltarAdmin" asp-action="DesactivarRegistrante" method="post" style="display:inline;">

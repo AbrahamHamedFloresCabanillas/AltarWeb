@@ -14,6 +14,8 @@ namespace AltarWeb.ViewModels.Altar
         public string? Carrera { get; set; }
         public string? Genero { get; set; }
         public bool Activo { get; set; }
+        // A3: en pausa por intentos fallidos de inicio de sesion; la administracion puede desbloquearla.
+        public bool Bloqueada { get; set; }
     }
 
     public class EquipoAdminCardViewModel

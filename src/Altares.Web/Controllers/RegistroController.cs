@@ -21,7 +21,7 @@ namespace AltarWeb.Controllers
         private readonly IOptions<ValidacionGoogleOptions> _validacionGoogle;
 
         // Ambito del contador de intentos por cuenta (SEC-04): participantes del Portal de Registro.
-        private const string AmbitoLimite = "registrante";
+        internal const string AmbitoLimite = "registrante";
 
         public RegistroController(AltarDbContext context, ILogger<RegistroController> logger, LimitadorIntentosLogin limitador,
             IOptions<ValidacionGoogleOptions> validacionGoogle)
