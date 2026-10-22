@@ -177,6 +177,7 @@
             <form asp-controller="AltarEvaluacion" asp-action="GuardarEvaluacion" method="post" id="form-evaluacion">
                 <input type="hidden" name="equipoId" value="@Model.EquipoId" />
                 <input type="hidden" name="accion" id="input-accion" value="preliminar" />
+                <input type="hidden" name="version" value="@Model.Version" />
 
                 <div id="tab-altar" style="display:none;">
                     <div class="altar-grid-2">

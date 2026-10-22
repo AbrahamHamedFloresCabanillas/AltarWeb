@@ -162,6 +162,8 @@ public sealed class AppAltares : AppBase, IAppBajoPrueba
         {
             campos.Add(($"Satisfaccion_{m.Groups[1].Value}", Util.Azar.Next(3) switch { 0 => "NoLoTiene", 1 => "Regular", _ => "Bueno" }));
         }
+        // Version de la evaluacion abierta (C2): sin ella el servidor rechaza el guardado de una Preliminar existente.
+        campos.Add(("version", Regex.Match(html.Cuerpo, "name=\"version\" value=\"([^\"]*)\"").Groups[1].Value));
         await juez.PostAsync($"/AltarEvaluacion/NuevaEvaluacion?equipoId={equipoId}", "/AltarEvaluacion/GuardarEvaluacion",
             final ? "guardar Final" : "guardar Preliminar", campos.Distinct().ToArray());
     }

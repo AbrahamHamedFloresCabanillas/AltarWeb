@@ -1,3 +1,4 @@
+using System.Globalization;
 using AltarWeb.Models;
 using AltarWeb.Models.Registro;
 using AltarWeb.Services;
@@ -148,6 +149,7 @@ namespace AltarWeb.Controllers
 
                 vm.EquipoId = equipo.Id;
                 vm.EvaluacionId = eval?.Id;
+                vm.Version = eval?.ActualizadoEn?.Ticks.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
                 vm.SoloLectura = eval?.Estado == EstadoEvaluacion.Final;
                 vm.EsPreliminarExistente = eval?.Estado == EstadoEvaluacion.Preliminar;
                 vm.NombreEquipo = equipo.Nombre;
@@ -226,7 +228,7 @@ namespace AltarWeb.Controllers
             int equipoId, int niveles, string tipoAltar, string semblanza,
             decimal esenciaPersonalidad, decimal valoracionGeneral,
             decimal distribucionNiveles, decimal narrador,
-            string accion)
+            string accion, string? version)
         {
             var juezId = HttpContext.Session.GetInt32("JuezId");
             if (juezId == null) return RedirectToAction("Login", "Acceso");
@@ -278,6 +280,17 @@ namespace AltarWeb.Controllers
             var config = await ObtenerConfiguracionAsync(periodo);
 
             var esNueva = equipo.Evaluacion == null;
+            var ahora = DateTime.Now;
+
+            // C2 (pruebas adversariales 2026-10-21): un segundo juez con la pantalla vieja reemplazaba en silencio
+            // la Preliminar de otro. Va despues de todas las validaciones porque toma la version: si una validacion
+            // rechazara despues, la pantalla del propio juez quedaria vieja sin haber guardado nada.
+            if (!esNueva && !await TomarVersionAsync(equipo.Evaluacion!.Id, version, ahora))
+            {
+                TempData["Error"] = "Otro juez modificó esta evaluación mientras la tenías abierta. Revisa los valores actuales antes de volver a guardar.";
+                return RedirectToAction("NuevaEvaluacion", new { equipoId = equipo.Id });
+            }
+
             var eval = equipo.Evaluacion ?? new Evaluacion { EquipoId = equipo.Id };
             if (esNueva) _context.EvaluacionesConcurso.Add(eval);
 
@@ -292,7 +305,7 @@ namespace AltarWeb.Controllers
             eval.SnapshotNombreAltar = equipo.NombreAltar;
             eval.SnapshotDifuntoNombre = equipo.Difunto?.Nombre ?? string.Empty;
             eval.SnapshotDifuntoFechaDefuncion = equipo.Difunto?.FechaDefuncion;
-            eval.ActualizadoEn = DateTime.Now;
+            eval.ActualizadoEn = ahora;
             eval.Estado = accion == "final" ? EstadoEvaluacion.Final : EstadoEvaluacion.Preliminar;
 
             if (equipo.Difunto != null)
@@ -428,6 +441,27 @@ namespace AltarWeb.Controllers
             ViewBag.Avance = avance;
 
             return View();
+        }
+
+        // Compara-y-actualiza atomico sobre ActualizadoEn (en vez de una columna rowversion, para no migrar el
+        // esquema). De dos guardados simultaneos con la misma version vista solo uno actualiza la fila; el otro
+        // recibe 0 filas. Version vacia = la pantalla se abrio sin evaluacion (o con una historica sin fecha).
+        private async Task<bool> TomarVersionAsync(int evaluacionId, string? version, DateTime ahora)
+        {
+            DateTime? vista = null;
+            if (!string.IsNullOrEmpty(version))
+            {
+                if (!long.TryParse(version, NumberStyles.None, CultureInfo.InvariantCulture, out var ticks) || ticks > DateTime.MaxValue.Ticks)
+                {
+                    return false;
+                }
+                vista = new DateTime(ticks);
+            }
+
+            var filas = await _context.EvaluacionesConcurso
+                .Where(e => e.Id == evaluacionId && e.ActualizadoEn == vista)
+                .ExecuteUpdateAsync(s => s.SetProperty(e => e.ActualizadoEn, ahora));
+            return filas == 1;
         }
 
         private async Task<ConfiguracionPeriodo> ObtenerConfiguracionAsync(string periodo)

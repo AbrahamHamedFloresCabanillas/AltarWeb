@@ -122,17 +122,19 @@ public class FlujoAltaresTests
         Assert.DoesNotContain("Catrina", evaluacionHtml);
         Assert.DoesNotContain("tab-catrina", evaluacionHtml);
 
-        (string, string)[] Calificacion(string accion) => new[]
+        var rutaEvaluacion = $"/AltarEvaluacion/NuevaEvaluacion?equipoId={equipo.Id}";
+        // La pantalla lleva la version de la evaluacion abierta (C2); se lee de nuevo antes de cada guardado.
+        async Task<(string, string)[]> Calificacion(string accion) => new[]
         {
             ("equipoId", equipo.Id.ToString()), ("niveles", "7"), ("tipoAltar", "Tradicional"), ("semblanza", "Gustaba del mar"),
             ("esenciaPersonalidad", "9"), ("valoracionGeneral", "8"), ("distribucionNiveles", "7"), ("narrador", "10"),
             // Campos de Catrina que una version vieja del formulario podria seguir enviando: se ignoran.
             ("vestuario", "10"), ("maquillaje", "10"), ("accesorios", "10"), ("originalidadCreatividad", "10"), ("apegoTradiciones", "10"),
-            ("accion", accion)
+            ("accion", accion),
+            ("version", Regex.Match(await juez.GetStringAsync(rutaEvaluacion), "name=\"version\" value=\"([^\"]*)\"").Groups[1].Value)
         };
-        var rutaEvaluacion = $"/AltarEvaluacion/NuevaEvaluacion?equipoId={equipo.Id}";
-        AssertRedirect(await PostAsync(juez, rutaEvaluacion, "/AltarEvaluacion/GuardarEvaluacion", Calificacion("preliminar")), "NuevaEvaluacion");
-        AssertRedirect(await PostAsync(juez, rutaEvaluacion, "/AltarEvaluacion/GuardarEvaluacion", Calificacion("final")), "Detalle");
+        AssertRedirect(await PostAsync(juez, rutaEvaluacion, "/AltarEvaluacion/GuardarEvaluacion", await Calificacion("preliminar")), "NuevaEvaluacion");
+        AssertRedirect(await PostAsync(juez, rutaEvaluacion, "/AltarEvaluacion/GuardarEvaluacion", await Calificacion("final")), "Detalle");
 
         Evaluacion evaluacion;
         using (var scope = _factory.Services.CreateScope())

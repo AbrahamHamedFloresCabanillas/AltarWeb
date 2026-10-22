@@ -35,6 +35,10 @@ namespace AltarWeb.ViewModels.Altar
 
         public int? EquipoId { get; set; }
         public int? EvaluacionId { get; set; }
+
+        // Version de la evaluacion que el juez abrio (ActualizadoEn en ticks; vacia si aun no existia). El
+        // servidor rechaza el guardado si cambio mientras tanto (C2: dos jueces sobre la misma Preliminar).
+        public string Version { get; set; } = string.Empty;
         public bool SoloLectura { get; set; }
         public bool EsPreliminarExistente { get; set; }
 
