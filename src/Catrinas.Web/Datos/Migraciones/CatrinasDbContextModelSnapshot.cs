@@ -60,7 +60,7 @@ namespace Catrinas.Web.Datos.Migraciones
                         {
                             Id = 2,
                             Activo = true,
-                            Nombre = "Bioingeniero",
+                            Nombre = "Ing. en Bioingeniería",
                             Orden = 2
                         },
                         new

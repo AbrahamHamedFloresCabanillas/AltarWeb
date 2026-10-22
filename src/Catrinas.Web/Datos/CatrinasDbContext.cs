@@ -189,7 +189,8 @@ namespace Catrinas.Web.Datos
         public static readonly CatalogoCarrera[] Carreras =
         {
             new() { Id = 1, Nombre = "Lic. en Sistemas Computacionales", Orden = 1 },
-            new() { Id = 2, Nombre = "Bioingeniero", Orden = 2 },
+            // B2 (2026-10-22, decision del propietario): "Ing. en Bioingeniería" en lugar de "Bioingeniero".
+            new() { Id = 2, Nombre = "Ing. en Bioingeniería", Orden = 2 },
             new() { Id = 3, Nombre = "Ing. Aeroespacial", Orden = 3 },
             new() { Id = 4, Nombre = "Ing. Civil", Orden = 4 },
             new() { Id = 5, Nombre = "Ing. en Computación", Orden = 5 },
